@@ -1,3 +1,8 @@
+export const TOTAL_VERSES = 31102;
+export const TOTAL_OT_BOOKS = 39;
+export const TOTAL_NT_BOOKS = 27;
+export const TOTAL_BOOKS = TOTAL_OT_BOOKS + TOTAL_NT_BOOKS;
+
 export type Book = {
   readonly name: string;
   readonly chapters: number;

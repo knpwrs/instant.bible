@@ -2,7 +2,7 @@
   "name": "instant.bible-text",
   "private": true,
   "scripts": {
-    "start": "echo \"Error: no test specified\" && exit 1",
+    "start": "DEBUG=* ts-node ./src/download",
     "test": "jest",
     "test:watch": "npm run test -- --watch"
   },
