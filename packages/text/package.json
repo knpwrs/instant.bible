@@ -21,6 +21,7 @@
   "license": "MIT",
   "dependencies": {
     "debug": "^4.1.1",
+    "fast-glob": "^3.0.4",
     "got": "^9.6.0"
   },
   "devDependencies": {
