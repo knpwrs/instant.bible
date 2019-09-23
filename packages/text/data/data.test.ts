@@ -18,12 +18,6 @@ const offsets = {
   },
 };
 
-const nameMaps = {
-  NET: {
-    'Song of Solomon': 'The Song of Songs',
-  },
-};
-
 translations.forEach(t => {
   const abbrev = basename(t, '.json');
   const data = require(t);
@@ -37,9 +31,7 @@ translations.forEach(t => {
 
   books.forEach(b => {
     test(`${abbrev} has correct number of verses for book: ${b.name}`, () => {
-      expect(counts[get(nameMaps, [abbrev, b.name], b.name)]).toBe(
-        b.verses + get(offsets, [abbrev, b.name], 0),
-      );
+      expect(counts[b.name]).toBe(b.verses + get(offsets, [abbrev, b.name], 0));
     });
   });
 });

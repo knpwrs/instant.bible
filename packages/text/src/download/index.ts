@@ -1,3 +1,2 @@
-import downloadNet from './net';
-
-downloadNet();
+import './kjv';
+import './net';

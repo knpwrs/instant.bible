@@ -1,10 +1,7 @@
 import * as got from 'got';
-import debug from 'debug';
 import { books } from '../meta';
-import { Verse, serialize } from '../util';
-
-const abbrev = 'NET';
-const d = debug(`download:${abbrev}`);
+import base, { Downloader } from './base';
+import { Verse } from '../util';
 
 const makeUrl = (book: string, chapter: number) => {
   const passage = `${book} ${chapter}`;
@@ -21,7 +18,7 @@ type ResponseVerse = {
   text: string;
 };
 
-export default async () => {
+const download: Downloader = async ({ d }) => {
   const data: Array<ResponseVerse> = [];
 
   for (const { name, chapters } of books) {
@@ -32,7 +29,7 @@ export default async () => {
         json: true,
       })) as { body: Array<ResponseVerse> };
 
-      data.push(...body);
+      data.push(...body.map(b => ({ ...b, bookname: name })));
     }
   }
 
@@ -43,5 +40,7 @@ export default async () => {
     text: v.text,
   }));
 
-  await serialize(abbrev, verses);
+  return verses;
 };
+
+base('NET', download);
