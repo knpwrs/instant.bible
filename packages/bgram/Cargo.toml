@@ -1,0 +1,6 @@
+[package]
+name = "bgram"
+version = "0.0.0"
+publish = false
+authors = ["Kenneth Powers <ken@kenpowers.net> (https://knpw.rs)"]
+edition = "2018"
