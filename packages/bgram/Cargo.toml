@@ -4,3 +4,6 @@ version = "0.0.0"
 publish = false
 authors = ["Kenneth Powers <ken@kenpowers.net> (https://knpw.rs)"]
 edition = "2018"
+
+[dependencies]
+itertools = "0.8.0"
