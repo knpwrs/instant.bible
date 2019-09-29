@@ -10,9 +10,17 @@ struct JsonVerse {
     text: String,
 }
 
-struct GramIndexEntry {
+#[derive(Clone, Debug)]
+struct TranslationResult {
+    score: f64,
+    highlights: Vec<(usize, usize)>,
+}
+
+struct BGramIndexVerseEntry {
     // Map translations to gram vectors
     grams: HashMap<String, Vec<IndexedBGram>>,
+    // Map translations to highlights for this bgram
+    highlights: HashMap<String, Vec<(usize, usize)>>,
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
@@ -23,7 +31,7 @@ struct IndexedBGram(usize, BGram);
 struct VerseKey(String, u8, u8);
 
 struct BGramIndex {
-    index: HashMap<BGram, HashMap<VerseKey, GramIndexEntry>>,
+    index: HashMap<BGram, HashMap<VerseKey, BGramIndexVerseEntry>>,
 }
 
 fn make_bgrams(text: &String) -> Vec<IndexedBGram> {
@@ -67,46 +75,69 @@ impl BGramIndex {
     pub fn insert_verse(&mut self, translation: &String, verse: JsonVerse) {
         let grams = make_bgrams(&verse.text);
         let verse_key = VerseKey(verse.book, verse.chapter, verse.verse);
-        for IndexedBGram(_, gram) in &grams {
+        for IndexedBGram(i, gram) in &grams {
             let entry = self
                 .index
                 .entry(gram.clone())
                 .or_insert(HashMap::new())
                 .entry(verse_key.clone())
-                .or_insert(GramIndexEntry {
+                .or_insert(BGramIndexVerseEntry {
                     grams: HashMap::new(),
+                    highlights: HashMap::new(),
                 });
             entry.grams.insert(translation.clone(), grams.clone());
+            entry
+                .highlights
+                .entry(translation.clone())
+                .or_insert(vec![])
+                .push((*i, i + 2));
         }
     }
 
-    pub fn search(&self, text: &String) -> Vec<(VerseKey, HashMap<String, f64>)> {
+    pub fn search(&self, text: &String) -> Vec<(VerseKey, HashMap<String, TranslationResult>)> {
         let search_grams = make_gram_set(&make_bgrams(text));
         // Map verse keys to mappings of translations to jaccard indices
-        let mut verse_ranks: HashMap<VerseKey, HashMap<String, f64>> = HashMap::new();
+        let mut verse_ranks: HashMap<VerseKey, HashMap<String, TranslationResult>> = HashMap::new();
         for gram in &search_grams {
             if let Some(gram_entries) = self.index.get(gram) {
+                // Loop over index entries for the current search gram
                 for (verse_key, entry) in gram_entries {
+                    // If we haven't added this matching verse to the ranked results, do so
                     if !verse_ranks.contains_key(&verse_key) {
-                        let mut translation_scores: HashMap<String, f64> = HashMap::new();
+                        let mut translation_scores: HashMap<String, TranslationResult> =
+                            HashMap::new();
                         for (translation, verse_grams) in &entry.grams {
+                            let score = jaccard_index(&make_gram_set(verse_grams), &search_grams);
                             translation_scores.insert(
                                 translation.clone(),
-                                jaccard_index(&make_gram_set(verse_grams), &search_grams),
+                                TranslationResult {
+                                    score,
+                                    highlights: vec![],
+                                },
                             );
                         }
                         verse_ranks.insert(verse_key.clone(), translation_scores);
                     }
+                    // Add highlights for this matching gram to the output, make sure this is done for every gram
+                    for (translation, highlights) in &entry.highlights {
+                        if let Some(ranked_verse) = verse_ranks.get_mut(&verse_key) {
+                            if let Some(ranked_translation) = ranked_verse.get_mut(translation) {
+                                for hl in highlights {
+                                    ranked_translation.highlights.push(hl.clone());
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
-        let mut results: Vec<(VerseKey, HashMap<String, f64>)> = verse_ranks
+        let mut results: Vec<(VerseKey, HashMap<String, TranslationResult>)> = verse_ranks
             .iter()
-            .map(|(key, scores)| (key.clone(), scores.clone()))
+            .map(|(key, results)| (key.clone(), results.clone()))
             .collect();
-        results.sort_by(|(_, a_scores), (_, b_scores)| {
-            let a_sum: f64 = a_scores.values().sum();
-            let b_sum: f64 = b_scores.values().sum();
+        results.sort_by(|(_, a_res), (_, b_res)| {
+            let a_sum: f64 = a_res.values().map(|v| v.score).sum();
+            let b_sum: f64 = b_res.values().map(|v| v.score).sum();
             // Descending sort
             b_sum.partial_cmp(&a_sum).unwrap()
         });
