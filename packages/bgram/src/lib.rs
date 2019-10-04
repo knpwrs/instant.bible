@@ -16,11 +16,14 @@ struct TranslationResult {
     highlights: Vec<(usize, usize)>,
 }
 
-struct BGramIndexVerseEntry {
-    // Map translations to gram vectors
-    grams: HashMap<String, Vec<IndexedBGram>>,
+struct BGramIndexGramEntry {
     // Map translations to highlights for this bgram
     highlights: HashMap<String, Vec<(usize, usize)>>,
+}
+
+struct BGramIndexVerseEntry {
+    // Map translations to gram sets
+    grams: HashMap<String, HashSet<BGram>>,
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
@@ -31,7 +34,8 @@ struct IndexedBGram(usize, BGram);
 struct VerseKey(String, u8, u8);
 
 struct BGramIndex {
-    index: HashMap<BGram, HashMap<VerseKey, BGramIndexVerseEntry>>,
+    gram_index: HashMap<BGram, HashMap<VerseKey, BGramIndexGramEntry>>,
+    verse_index: HashMap<VerseKey, BGramIndexVerseEntry>,
 }
 
 fn make_bgrams(text: &String) -> Vec<IndexedBGram> {
@@ -68,24 +72,32 @@ fn jaccard_index<T: Eq + Hash>(first: &HashSet<T>, second: &HashSet<T>) -> f64 {
 impl BGramIndex {
     pub fn new() -> BGramIndex {
         BGramIndex {
-            index: HashMap::new(),
+            gram_index: HashMap::new(),
+            verse_index: HashMap::new(),
         }
     }
 
     pub fn insert_verse(&mut self, translation: &String, verse: JsonVerse) {
         let grams = make_bgrams(&verse.text);
         let verse_key = VerseKey(verse.book, verse.chapter, verse.verse);
+
+        self.verse_index
+            .entry(verse_key.clone())
+            .or_insert(BGramIndexVerseEntry {
+                grams: HashMap::new(),
+            })
+            .grams
+            .insert(translation.clone(), make_gram_set(&grams));
+
         for IndexedBGram(i, gram) in &grams {
             let entry = self
-                .index
+                .gram_index
                 .entry(gram.clone())
                 .or_insert(HashMap::new())
                 .entry(verse_key.clone())
-                .or_insert(BGramIndexVerseEntry {
-                    grams: HashMap::new(),
+                .or_insert(BGramIndexGramEntry {
                     highlights: HashMap::new(),
                 });
-            entry.grams.insert(translation.clone(), grams.clone());
             entry
                 .highlights
                 .entry(translation.clone())
@@ -99,22 +111,24 @@ impl BGramIndex {
         // Map verse keys to mappings of translations to jaccard indices
         let mut verse_ranks: HashMap<VerseKey, HashMap<String, TranslationResult>> = HashMap::new();
         for gram in &search_grams {
-            if let Some(gram_entries) = self.index.get(gram) {
+            if let Some(gram_entries) = self.gram_index.get(gram) {
                 // Loop over index entries for the current search gram
                 for (verse_key, entry) in gram_entries {
                     // If we haven't added this matching verse to the ranked results, do so
                     if !verse_ranks.contains_key(&verse_key) {
                         let mut translation_scores: HashMap<String, TranslationResult> =
                             HashMap::new();
-                        for (translation, verse_grams) in &entry.grams {
-                            let score = jaccard_index(&make_gram_set(verse_grams), &search_grams);
-                            translation_scores.insert(
-                                translation.clone(),
-                                TranslationResult {
-                                    score,
-                                    highlights: vec![],
-                                },
-                            );
+                        if let Some(verse_entries) = self.verse_index.get(verse_key) {
+                            for (translation, verse_grams) in &verse_entries.grams {
+                                let score = jaccard_index(&verse_grams, &search_grams);
+                                translation_scores.insert(
+                                    translation.clone(),
+                                    TranslationResult {
+                                        score,
+                                        highlights: vec![],
+                                    },
+                                );
+                            }
                         }
                         verse_ranks.insert(verse_key.clone(), translation_scores);
                     }
