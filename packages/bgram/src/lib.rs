@@ -1,17 +1,18 @@
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
-#[derive(Clone)]
-struct JsonVerse {
-    book: String,
-    chapter: u8,
-    verse: u8,
-    text: String,
+#[derive(Clone, Deserialize)]
+pub struct JsonVerse {
+    pub book: String,
+    pub chapter: u8,
+    pub verse: u8,
+    pub text: String,
 }
 
-#[derive(Clone, Debug)]
-struct TranslationResult {
+#[derive(Clone, Debug, Serialize)]
+pub struct TranslationResult {
     score: f64,
     highlights: Vec<(usize, usize)>,
 }
@@ -30,10 +31,10 @@ struct BGramIndexVerseEntry {
 struct BGram(char, char, char);
 #[derive(PartialEq, Eq, Clone, Debug)]
 struct IndexedBGram(usize, BGram);
-#[derive(PartialEq, Eq, Hash, Clone, Debug)]
-struct VerseKey(String, u8, u8);
+#[derive(PartialEq, Eq, Hash, Clone, Debug, Serialize)]
+pub struct VerseKey(String, u8, u8);
 
-struct BGramIndex {
+pub struct BGramIndex {
     gram_index: HashMap<BGram, HashMap<VerseKey, BGramIndexGramEntry>>,
     verse_index: HashMap<VerseKey, BGramIndexVerseEntry>,
 }
@@ -77,8 +78,9 @@ impl BGramIndex {
         }
     }
 
-    pub fn insert_verse(&mut self, translation: &String, verse: JsonVerse) {
+    pub fn insert_verse(&mut self, translation: &String, verse: &JsonVerse) {
         let grams = make_bgrams(&verse.text);
+        let verse = verse.clone();
         let verse_key = VerseKey(verse.book, verse.chapter, verse.verse);
 
         self.verse_index
@@ -262,18 +264,18 @@ mod tests {
             text: String::from("I Paul have written it with mine own hand, I will repay it: albeit I do not say to thee how thou owest unto me even thine own self besides."),
             ..v6_net.clone()
         };
-        index.insert_verse(&String::from("NET"), v1.clone());
-        index.insert_verse(&String::from("KJV"), v1.clone());
-        index.insert_verse(&String::from("NET"), v2_net);
-        index.insert_verse(&String::from("KJV"), v2_kjv);
-        index.insert_verse(&String::from("NET"), v3_net);
-        index.insert_verse(&String::from("KJV"), v3_kjv);
-        index.insert_verse(&String::from("NET"), v4_net);
-        index.insert_verse(&String::from("KJV"), v4_kjv);
-        index.insert_verse(&String::from("NET"), v5_net);
-        index.insert_verse(&String::from("KJV"), v5_kjv);
-        index.insert_verse(&String::from("NET"), v6_net);
-        index.insert_verse(&String::from("KJV"), v6_kjv);
+        index.insert_verse(&String::from("NET"), &v1.clone());
+        index.insert_verse(&String::from("KJV"), &v1.clone());
+        index.insert_verse(&String::from("NET"), &v2_net);
+        index.insert_verse(&String::from("KJV"), &v2_kjv);
+        index.insert_verse(&String::from("NET"), &v3_net);
+        index.insert_verse(&String::from("KJV"), &v3_kjv);
+        index.insert_verse(&String::from("NET"), &v4_net);
+        index.insert_verse(&String::from("KJV"), &v4_kjv);
+        index.insert_verse(&String::from("NET"), &v5_net);
+        index.insert_verse(&String::from("KJV"), &v5_kjv);
+        index.insert_verse(&String::from("NET"), &v6_net);
+        index.insert_verse(&String::from("KJV"), &v6_kjv);
         let res = index.search(&String::from("Jes wep"));
         assert_eq!(res.len(), 1);
         let res = index.search(&String::from("Paul"));
