@@ -8,7 +8,7 @@ const makeUrl = (book: string, chapter: number) => {
 
   return `http://labs.bible.org/api/?passage=${encodeURIComponent(
     passage,
-  )}&type=json`;
+  )}&type=json&formatting=plain`;
 };
 
 type ResponseVerse = {
