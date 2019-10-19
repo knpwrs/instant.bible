@@ -1,5 +1,6 @@
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
-use bgram::{BGramIndex, JsonVerse};
+use bgram::data::JsonVerse;
+use bgram::VersearchIndex;
 use log::info;
 use serde::Deserialize;
 use std::fs;
@@ -17,8 +18,8 @@ struct SearchQuery {
     q: String,
 }
 
-fn make_index() -> Arc<BGramIndex> {
-    let mut gi = BGramIndex::new();
+fn make_index() -> Arc<VersearchIndex> {
+    let mut vi = VersearchIndex::new();
     let config = match envy::from_env::<Config>() {
         Ok(config) => config,
         Err(error) => panic!("{:?}", error),
@@ -41,7 +42,7 @@ fn make_index() -> Arc<BGramIndex> {
             );
             let now = Instant::now();
             for verse in &verses {
-                gi.insert_verse(&translation, verse);
+                vi.insert_verse(verse);
             }
             info!(
                 "Indexed {} verses in {}ms",
@@ -50,17 +51,43 @@ fn make_index() -> Arc<BGramIndex> {
             );
         }
     }
-    Arc::new(gi)
+
+    Arc::new(vi)
 }
 
-fn search(info: web::Query<SearchQuery>, index: web::Data<Arc<BGramIndex>>) -> HttpResponse {
+fn search(info: web::Query<SearchQuery>, index: web::Data<Arc<VersearchIndex>>) -> HttpResponse {
     info!(r#"Searching for """{}""""#, info.q);
     let now = Instant::now();
     let res = index.search(&info.q);
-    // format!("{} results in {}ms", res.len(), now.elapsed().as_millis())
-    HttpResponse::Ok()
-        .header("X-Response-Time", now.elapsed().as_millis() as u64)
-        .json(res)
+    let ms = now.elapsed().as_millis();
+    match res {
+        Some(res) => {
+            info!(r#"{} results for """{}""" in {}ms"#, res.len(), info.q, ms);
+            HttpResponse::Ok()
+                .header("X-Response-Time", ms as u64)
+                .json(res)
+        }
+        None => {
+            info!(r#"No results for """{}""" in {}ms"#, info.q, ms);
+            HttpResponse::NotFound()
+                .header("X-Response-Time", ms as u64)
+                .finish()
+        }
+    }
+}
+
+fn download_index_json(index: web::Data<Arc<VersearchIndex>>) -> HttpResponse {
+    match index.index_to_json() {
+        Ok(txt) => HttpResponse::Ok().body(txt),
+        _ => unimplemented!(),
+    }
+}
+
+fn download_index_bc(index: web::Data<Arc<VersearchIndex>>) -> HttpResponse {
+    match index.index_to_bincode() {
+        Ok(bc) => HttpResponse::Ok().body(bc),
+        _ => unimplemented!(),
+    }
 }
 
 fn main() -> std::io::Result<()> {
@@ -74,6 +101,8 @@ fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::default())
             .data(index.clone())
             .service(web::resource("/").to(search))
+            .service(web::resource("/index.json").to(download_index_json))
+            .service(web::resource("/index.bc").to(download_index_bc))
     })
     .bind("127.0.0.1:8080")?
     .run()
