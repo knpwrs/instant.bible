@@ -1,12 +1,12 @@
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
-use bgram::data::JsonVerse;
-use bgram::VersearchIndex;
 use log::info;
 use serde::Deserialize;
 use std::fs;
 use std::io::BufReader;
 use std::sync::Arc;
 use std::time::Instant;
+use versearch::data::JsonVerse;
+use versearch::VersearchIndex;
 
 #[derive(Deserialize, Debug)]
 struct Config {
@@ -91,7 +91,7 @@ fn download_index_bc(index: web::Data<Arc<VersearchIndex>>) -> HttpResponse {
 }
 
 fn main() -> std::io::Result<()> {
-    std::env::set_var("RUST_LOG", "bgram=info,actix_web=info");
+    std::env::set_var("RUST_LOG", "versearch=info,actix_web=info");
     env_logger::init();
 
     let index = make_index();
