@@ -10,7 +10,12 @@ use versearch::VersearchIndex;
 
 #[derive(Deserialize, Debug)]
 struct Config {
+    #[serde(default = "default_translation_dir")]
     translation_dir: String,
+}
+
+fn default_translation_dir() -> String {
+    "../text/data".to_string()
 }
 
 #[derive(Deserialize)]
