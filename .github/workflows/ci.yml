@@ -1,0 +1,18 @@
+name: instant.bible ci
+
+on: [push]
+
+jobs:
+  build-versearch:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build
+      working-directory: ./packages/versearch
+      run: cargo build --verbose
+    - name: Test
+      working-directory: ./packages/versearch
+      run: cargo test --verbose
+    - name: Clippy
+      working-directory: ./packages/versearch
+      run: cargo clippy
