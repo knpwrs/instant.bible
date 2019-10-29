@@ -19,6 +19,7 @@ pub struct BTrieRoot<T: Ord> {
 pub type PrefixIterator<'a, T> = Dedup<KMerge<BTreeSetIter<'a, T>>>;
 
 impl<T: Ord> BTrieRoot<T> {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> BTrieRoot<T> {
         BTrieRoot {
             next: HashMap::new(),
@@ -29,7 +30,7 @@ impl<T: Ord> BTrieRoot<T> {
         if let Some(first) = first_char(key) {
             self.next
                 .entry(first)
-                .or_insert(BTrieNode::new(key))
+                .or_insert_with(|| BTrieNode::new(key))
                 .insert(key, value);
         }
     }
@@ -66,7 +67,7 @@ impl<T: Ord> BTrieNode<T> {
             if let Some(first) = first_char(tail_key) {
                 self.next
                     .entry(first)
-                    .or_insert(BTrieNode::new(tail_key))
+                    .or_insert_with(|| BTrieNode::new(tail_key))
                     .insert(tail_key, value);
             }
         } else if let Some(count) = shared_prefix(&self.key, key) {
@@ -127,6 +128,7 @@ impl<T: Ord> BTrieNode<T> {
 mod tests {
     use super::BTrieRoot;
 
+    #[allow(clippy::cognitive_complexity)]
     #[test]
     fn test_btrie() {
         let mut trie: BTrieRoot<usize> = BTrieRoot::new();

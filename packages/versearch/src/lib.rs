@@ -16,6 +16,7 @@ lazy_static! {
 }
 
 impl VersearchIndex {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> VersearchIndex {
         VersearchIndex {
             btrie: BTrieRoot::new(),
@@ -29,7 +30,7 @@ impl VersearchIndex {
     }
 
     pub fn insert_verse(&mut self, verse: &JsonVerse) {
-        if let Some(key) = VerseKey::from(&verse.book, verse.chapter, verse.verse) {
+        if let Ok(key) = VerseKey::from(&verse.book, verse.chapter, verse.verse) {
             for word in RE.split(&verse.text.to_uppercase()) {
                 // We could store Rc<VerseKey> but the deserialization wouldn't work automatically
                 self.btrie.insert(word, key.clone());
@@ -37,7 +38,7 @@ impl VersearchIndex {
         }
     }
 
-    pub fn search(&self, text: &String) -> Option<Vec<VerseKey>> {
+    pub fn search(&self, text: &str) -> Option<Vec<VerseKey>> {
         // Step 1: collect all matches
         let mut matching_iters: Vec<Peekable<PrefixIterator<VerseKey>>> = Vec::new();
         for word in RE.split(&text.to_uppercase()) {
@@ -47,7 +48,7 @@ impl VersearchIndex {
         }
         // Step 2: find all common matches
         let mut results: Vec<VerseKey> = Vec::new();
-        while matching_iters.iter_mut().all(|i| !i.peek().is_none()) {
+        while matching_iters.iter_mut().all(|i| i.peek().is_some()) {
             let check = *(matching_iters.first_mut()?).peek()?;
             if matching_iters.iter_mut().all(|j| j.peek() == Some(&check)) {
                 // If all iterators are at the same current value, push result and advance every iterator!
