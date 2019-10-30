@@ -64,18 +64,18 @@ fn search(info: web::Query<SearchQuery>, index: web::Data<Arc<VersearchIndex>>) 
     info!(r#"Searching for """{}""""#, info.q);
     let now = Instant::now();
     let res = index.search(&info.q);
-    let ms = now.elapsed().as_millis();
+    let us = now.elapsed().as_micros();
     match res {
         Some(res) => {
-            info!(r#"{} results for """{}""" in {}ms"#, res.len(), info.q, ms);
+            info!(r#"{} results for """{}""" in {}us"#, res.len(), info.q, us);
             HttpResponse::Ok()
-                .header("X-Response-Time", ms as u64)
+                .header("X-Response-Time-us", us as u64)
                 .json(res)
         }
         None => {
-            info!(r#"No results for """{}""" in {}ms"#, info.q, ms);
+            info!(r#"No results for """{}""" in {}us"#, info.q, us);
             HttpResponse::NotFound()
-                .header("X-Response-Time", ms as u64)
+                .header("X-Response-Time-us", us as u64)
                 .finish()
         }
     }
