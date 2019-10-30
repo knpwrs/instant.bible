@@ -30,11 +30,11 @@ impl VersearchIndex {
     }
 
     pub fn insert_verse(&mut self, verse: &JsonVerse) {
-        if let Ok(key) = VerseKey::from(&verse.book, verse.chapter, verse.verse) {
-            for word in RE.split(&verse.text.to_uppercase()) {
-                // We could store Rc<VerseKey> but the deserialization wouldn't work automatically
-                self.btrie.insert(word, key.clone());
-            }
+        let key = VerseKey::from(&verse.book, verse.chapter, verse.verse)
+            .expect("Could not create VerseKey from input!");
+        for word in RE.split(&verse.text.to_uppercase()) {
+            // We could store Rc<VerseKey> but the deserialization wouldn't work automatically
+            self.btrie.insert(word, key.clone());
         }
     }
 
