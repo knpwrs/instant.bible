@@ -12,7 +12,7 @@ pub struct VersearchIndex {
 }
 
 lazy_static! {
-    static ref RE: Regex = Regex::new(r"\W+").unwrap();
+    static ref RE: Regex = Regex::new(r"[\s.]+").unwrap();
 }
 
 impl VersearchIndex {
