@@ -1,5 +1,6 @@
 pub mod btrie;
 pub mod data;
+pub mod error;
 
 use btrie::{BTrieRoot, PrefixIterator};
 use data::{JsonVerse, VerseKey};

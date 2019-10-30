@@ -1,6 +1,5 @@
+use super::error::DataInputError;
 use serde::{Deserialize, Serialize};
-use std::error::Error;
-use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 #[derive(Deserialize)]
@@ -19,7 +18,7 @@ pub struct VerseKey {
 }
 
 impl VerseKey {
-    pub fn from(book: &str, chapter: u8, verse: u8) -> Result<VerseKey, ParseBookError> {
+    pub fn from(book: &str, chapter: u8, verse: u8) -> Result<VerseKey, DataInputError> {
         Ok(VerseKey {
             book: Book::from_str(book)?,
             chapter,
@@ -98,29 +97,8 @@ pub enum Book {
     Revelation,
 }
 
-#[derive(Debug, Default, PartialEq, Eq)]
-pub struct ParseBookError {}
-
-impl ParseBookError {
-    pub fn new() -> Self {
-        ParseBookError {}
-    }
-}
-
-impl Display for ParseBookError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Cannot convert string to Book")
-    }
-}
-
-impl Error for ParseBookError {
-    fn description(&self) -> &str {
-        "Cannot convert string to Book"
-    }
-}
-
 impl FromStr for Book {
-    type Err = ParseBookError;
+    type Err = DataInputError;
 
     fn from_str(book: &str) -> Result<Book, Self::Err> {
         use Book::*;
@@ -191,19 +169,44 @@ impl FromStr for Book {
             "3 John" => Ok(ThirdJohn),
             "Jude" => Ok(Jude),
             "Revelation" => Ok(Revelation),
-            _ => Err(ParseBookError::new()),
+            _ => Err(DataInputError::new()),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+pub enum Translation {
+    KJV,
+    NET,
+}
+
+impl FromStr for Translation {
+    type Err = DataInputError;
+
+    fn from_str(translation: &str) -> Result<Translation, Self::Err> {
+        use Translation::*;
+        match translation {
+            "KJV" => Ok(KJV),
+            "NET" => Ok(NET),
+            _ => Err(DataInputError::new()),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Book;
-    use super::FromStr;
+    use super::{Book, FromStr, Translation};
+
     #[test]
     fn test_book_from_str() {
         assert_eq!(Book::from_str("Genesis"), Ok(Book::Genesis));
         assert_eq!(Book::from_str("Revelation"), Ok(Book::Revelation));
         assert!(Book::from_str("Banana").is_err());
+    }
+
+    #[test]
+    fn test_translation_from_str() {
+        assert_eq!(Translation::from_str("KJV"), Ok(Translation::KJV));
+        assert_eq!(Translation::from_str("NET"), Ok(Translation::NET));
     }
 }

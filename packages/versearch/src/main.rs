@@ -5,7 +5,8 @@ use std::fs;
 use std::io::BufReader;
 use std::sync::Arc;
 use std::time::Instant;
-use versearch::data::JsonVerse;
+use std::str::FromStr;
+use versearch::data::{Translation, JsonVerse};
 use versearch::VersearchIndex;
 
 #[derive(Deserialize, Debug)]
@@ -34,8 +35,13 @@ fn make_index() -> Arc<VersearchIndex> {
     for entry in fs::read_dir(config.translation_dir).unwrap() {
         let path = entry.unwrap().path();
         if path.is_file() && path.extension().map(|s| s == "json").unwrap_or(false) {
-            let translation = path.file_stem().unwrap().to_string_lossy().to_string();
-            info!("Load translation {} from {:?}", translation, path);
+            let translation = path
+                .file_stem()
+                .expect("Could not get file stem")
+                .to_string_lossy()
+                .to_string();
+            let translation = Translation::from_str(&translation);
+            info!("Load translation {:?} from {:?}", translation, path);
             let now = Instant::now();
             let file = fs::File::open(path).unwrap();
             let reader = BufReader::new(file);
