@@ -45,6 +45,7 @@ impl<T: Ord> BTrieRoot<T> {
 pub struct BTrieNode<T: Ord> {
     pub key: String,
     pub next: HashMap<char, BTrieNode<T>>,
+    pub pf: usize,
     pub values: Arc<BTreeSet<T>>,
 }
 
@@ -53,6 +54,7 @@ impl<T: Ord> BTrieNode<T> {
         BTrieNode {
             key: key.to_string(),
             next: HashMap::new(),
+            pf: 0,
             values: Arc::new(BTreeSet::new()),
         }
     }
@@ -61,6 +63,7 @@ impl<T: Ord> BTrieNode<T> {
         if self.key == key {
             // Case 1: We can insert the value here!
             Arc::get_mut(&mut self.values).unwrap().insert(value);
+            self.pf += 1;
         } else if key.starts_with(&self.key) {
             // Case 2: The incoming key belongs in a child node
             let tail_key = &key[self.key.len()..];
@@ -69,6 +72,7 @@ impl<T: Ord> BTrieNode<T> {
                     .entry(first)
                     .or_insert_with(|| BTrieNode::new(tail_key))
                     .insert(tail_key, value);
+                self.pf += 1;
             }
         } else if let Some(count) = shared_prefix(&self.key, key) {
             // Case 3: We need to split this node 😱
@@ -84,6 +88,7 @@ impl<T: Ord> BTrieNode<T> {
                 self.next.entry(first).or_insert(BTrieNode {
                     key: key_suffix.clone(),
                     next: old_next,
+                    pf: self.pf,
                     values: old_values,
                 });
                 self.insert(&key, value);
@@ -122,6 +127,7 @@ mod tests {
     fn test_btrie() {
         let mut trie: BTrieRoot<usize> = BTrieRoot::new();
         trie.insert("fast", 1);
+        trie.insert("fast", 2);
         trie.insert("faster", 2);
         trie.insert("toaster", 4);
         trie.insert("test", 3);
@@ -129,17 +135,20 @@ mod tests {
         assert_eq!(trie.next.keys().len(), 2);
         let node = trie.next.get(&'f').unwrap();
         assert_eq!(node.key, "fast");
-        assert_eq!(node.values.len(), 1);
+        assert_eq!(node.values.len(), 2);
+        assert_eq!(node.pf, 3);
         assert!(node.values.contains(&1));
         assert_eq!(node.next.keys().len(), 1);
         let node = node.next.get(&'e').unwrap();
         assert_eq!(node.key, "er");
         assert_eq!(node.values.len(), 1);
+        assert_eq!(node.pf, 1);
         assert!(node.values.contains(&2));
         assert_eq!(node.next.keys().len(), 0);
         let node = trie.next.get(&'t').unwrap();
         assert_eq!(node.key, "t");
         assert_eq!(node.values.len(), 0);
+        assert_eq!(node.pf, 3);
         assert_eq!(node.next.keys().len(), 2);
         assert!(node.next.contains_key(&'e'));
         assert!(node.next.contains_key(&'o'));
@@ -147,23 +156,27 @@ mod tests {
             let node = node.next.get(&'e').unwrap();
             assert_eq!(node.key, "est");
             assert_eq!(node.values.len(), 1);
+            assert_eq!(node.pf, 1);
             assert!(node.values.contains(&3));
             assert_eq!(node.next.keys().len(), 0);
         }
         let node = node.next.get(&'o').unwrap();
         assert_eq!(node.key, "oast");
         assert_eq!(node.values.len(), 0);
+        assert_eq!(node.pf, 2);
         assert_eq!(node.next.keys().len(), 2);
         {
             let node = node.next.get(&'e').unwrap();
             assert_eq!(node.key, "er");
             assert_eq!(node.values.len(), 1);
+            assert_eq!(node.pf, 1);
             assert!(node.values.contains(&4));
             assert_eq!(node.next.keys().len(), 0);
         }
         let node = node.next.get(&'i').unwrap();
         assert_eq!(node.key, "ing");
         assert_eq!(node.values.len(), 1);
+        assert_eq!(node.pf, 1);
         assert!(node.values.contains(&5));
         assert_eq!(node.next.keys().len(), 0);
 
