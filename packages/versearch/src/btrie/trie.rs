@@ -14,6 +14,7 @@ use std::sync::Arc;
 #[derive(Deserialize, Serialize)]
 pub struct BTrieRoot<T: Ord> {
     next: HashMap<char, BTrieNode<T>>,
+    total: usize,
 }
 
 pub type PrefixIterator<'a, T> = Dedup<KMerge<BTreeSetIter<'a, T>>>;
@@ -23,11 +24,13 @@ impl<T: Ord> BTrieRoot<T> {
     pub fn new() -> BTrieRoot<T> {
         BTrieRoot {
             next: HashMap::new(),
+            total: 0,
         }
     }
 
     pub fn insert(&mut self, key: &str, value: T) {
         if let Some(first) = first_char(key) {
+            self.total += 1;
             self.next
                 .entry(first)
                 .or_insert_with(|| BTrieNode::new(key))
@@ -126,12 +129,19 @@ mod tests {
     #[test]
     fn test_btrie() {
         let mut trie: BTrieRoot<usize> = BTrieRoot::new();
+        assert_eq!(trie.total, 0);
         trie.insert("fast", 1);
+        assert_eq!(trie.total, 1);
         trie.insert("fast", 2);
+        assert_eq!(trie.total, 2);
         trie.insert("faster", 2);
+        assert_eq!(trie.total, 3);
         trie.insert("toaster", 4);
+        assert_eq!(trie.total, 4);
         trie.insert("test", 3);
+        assert_eq!(trie.total, 5);
         trie.insert("toasting", 5);
+        assert_eq!(trie.total, 6);
         assert_eq!(trie.next.keys().len(), 2);
         let node = trie.next.get(&'f').unwrap();
         assert_eq!(node.key, "fast");
