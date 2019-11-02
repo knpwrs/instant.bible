@@ -91,17 +91,6 @@ impl<T: Ord> BTrieNode<T> {
         }
     }
 
-    pub fn get_all_values(&self) -> Vec<Vec<&T>> {
-        let mut v: Vec<Vec<&T>> = Vec::new();
-        if self.values.len() > 0 {
-            v.push(self.values.iter().collect::<Vec<&T>>());
-        }
-        for node in self.next.values() {
-            v.append(&mut node.get_all_values());
-        }
-        v
-    }
-
     // pub fn iter_prefix(&self, search_key: &str) -> Option<PrefixIterator<T>> {
     pub fn iter_prefix(&self, search_key: &str) -> Option<PrefixIterator<T>> {
         let mut node = self;
