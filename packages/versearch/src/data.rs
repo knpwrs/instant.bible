@@ -1,5 +1,6 @@
 use super::error::DataInputError;
 use serde::{Deserialize, Serialize};
+use std::hash::Hash;
 use std::str::FromStr;
 
 #[derive(Deserialize)]
@@ -10,7 +11,7 @@ pub struct JsonVerse {
     pub text: String,
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct VerseKey {
     pub book: Book,
     pub chapter: u8,
@@ -27,7 +28,7 @@ impl VerseKey {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum Book {
     Genesis,
     Exodus,

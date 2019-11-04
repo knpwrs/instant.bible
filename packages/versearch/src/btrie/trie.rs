@@ -6,20 +6,21 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ord;
 use std::collections::btree_set::Iter as BTreeSetIter;
 use std::collections::{BTreeSet, HashMap};
+use std::hash::Hash;
 use std::sync::Arc;
 
 // The "B"ible Trie is an implementation of a Radix Trie which maps strings to
 // associated ordered values
 
 #[derive(Deserialize, Serialize)]
-pub struct BTrieRoot<T: Ord> {
+pub struct BTrieRoot<T: Copy + Ord + Hash> {
     next: HashMap<char, BTrieNode<T>>,
     total: usize,
 }
 
 pub type PrefixIterator<'a, T> = Dedup<KMerge<BTreeSetIter<'a, T>>>;
 
-impl<T: Ord> BTrieRoot<T> {
+impl<T: Copy + Ord + Hash> BTrieRoot<T> {
     #[allow(clippy::new_without_default)]
     pub fn new() -> BTrieRoot<T> {
         BTrieRoot {
@@ -37,27 +38,34 @@ impl<T: Ord> BTrieRoot<T> {
                 .insert(key, value);
         }
     }
-    pub fn iter_prefix(&self, search_key: &str) -> Option<PrefixIterator<T>> {
+
+    /// Returns an (idf, iter) tuple
+    pub fn iter_prefix(&self, search_key: &str) -> Option<(f64, PrefixIterator<T>)> {
         let first = first_char(search_key)?;
         let search_node = self.next.get(&first)?;
-        search_node.iter_prefix(search_key)
+        let (v, iter) = search_node.iter_prefix(search_key)?;
+        // Calculate inverse-document-frequency as log_10(N/|V|)
+        let idf = (self.total as f64 / v as f64).log10();
+        Some((idf, iter))
     }
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct BTrieNode<T: Ord> {
+pub struct BTrieNode<T: Copy + Ord + Hash> {
     pub key: String,
     pub next: HashMap<char, BTrieNode<T>>,
     pub pf: usize,
+    pub pf_by_t: HashMap<T, usize>,
     pub values: Arc<BTreeSet<T>>,
 }
 
-impl<T: Ord> BTrieNode<T> {
+impl<T: Copy + Ord + Hash> BTrieNode<T> {
     fn new(key: &str) -> BTrieNode<T> {
         BTrieNode {
             key: key.to_string(),
             next: HashMap::new(),
             pf: 0,
+            pf_by_t: HashMap::new(),
             values: Arc::new(BTreeSet::new()),
         }
     }
@@ -67,6 +75,8 @@ impl<T: Ord> BTrieNode<T> {
             // Case 1: We can insert the value here!
             Arc::get_mut(&mut self.values).unwrap().insert(value);
             self.pf += 1;
+            let pft = self.pf_by_t.entry(value).or_insert(0);
+            *pft += 1;
         } else if key.starts_with(&self.key) {
             // Case 2: The incoming key belongs in a child node
             let tail_key = &key[self.key.len()..];
@@ -76,6 +86,8 @@ impl<T: Ord> BTrieNode<T> {
                     .or_insert_with(|| BTrieNode::new(tail_key))
                     .insert(tail_key, value);
                 self.pf += 1;
+                let pft = self.pf_by_t.entry(value).or_insert(0);
+                *pft += 1;
             }
         } else if let Some(count) = shared_prefix(&self.key, key) {
             // Case 3: We need to split this node 😱
@@ -85,6 +97,7 @@ impl<T: Ord> BTrieNode<T> {
                 // Get ready to move this node's content to the new child
                 let old_next = std::mem::replace(&mut self.next, HashMap::new());
                 let old_values = std::mem::replace(&mut self.values, Arc::new(BTreeSet::new()));
+                let old_pf_by_t = std::mem::replace(&mut self.pf_by_t, HashMap::new());
                 // Replace this node's key
                 self.key = key_prefix;
                 // Insert a new child into the freshly created next map
@@ -92,6 +105,7 @@ impl<T: Ord> BTrieNode<T> {
                     key: key_suffix.clone(),
                     next: old_next,
                     pf: self.pf,
+                    pf_by_t: old_pf_by_t,
                     values: old_values,
                 });
                 self.insert(&key, value);
@@ -100,7 +114,7 @@ impl<T: Ord> BTrieNode<T> {
     }
 
     // pub fn iter_prefix(&self, search_key: &str) -> Option<PrefixIterator<T>> {
-    pub fn iter_prefix(&self, search_key: &str) -> Option<PrefixIterator<T>> {
+    pub fn iter_prefix(&self, search_key: &str) -> Option<(usize, PrefixIterator<T>)> {
         let mut node = self;
         let mut char_count = node.key.len();
         let target_count = search_key.chars().count();
@@ -116,8 +130,9 @@ impl<T: Ord> BTrieNode<T> {
                 }
             }
         }
-        // Step 2: Return dedeup'd iterator for this subtrie
-        Some(SubTrieIterator::new(&node).kmerge().dedup())
+        // Step 2: Get a dedeup'd iterator for this subtrie
+        let iter = SubTrieIterator::new(&node).kmerge().dedup();
+        Some((self.pf, iter))
     }
 }
 
@@ -190,19 +205,19 @@ mod tests {
         assert!(node.values.contains(&5));
         assert_eq!(node.next.keys().len(), 0);
 
-        let res = trie.iter_prefix(&"fa").unwrap();
+        let (_, res) = trie.iter_prefix(&"fa").unwrap();
         {
             let results: Vec<&usize> = res.collect();
             assert_eq!(results, vec![&1, &2])
         }
 
-        let res = trie.iter_prefix(&"t").unwrap();
+        let (_, res) = trie.iter_prefix(&"t").unwrap();
         {
             let results: Vec<&usize> = res.collect();
             assert_eq!(results, vec![&3, &4, &5])
         }
 
-        let res = trie.iter_prefix(&"to").unwrap();
+        let (_, res) = trie.iter_prefix(&"to").unwrap();
         {
             let results: Vec<&usize> = res.collect();
             assert_eq!(results, vec![&4, &5])

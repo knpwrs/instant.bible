@@ -35,16 +35,18 @@ impl VersearchIndex {
             .expect("Could not create VerseKey from input!");
         for word in RE.split(&verse.text.to_uppercase()) {
             // We could store Rc<VerseKey> but the deserialization wouldn't work automatically
-            self.btrie.insert(word, key.clone());
+            self.btrie.insert(word, key);
         }
     }
 
     pub fn search(&self, text: &str) -> Option<Vec<VerseKey>> {
         // Step 1: collect all matches
         let mut matching_iters: Vec<Peekable<PrefixIterator<VerseKey>>> = Vec::new();
+        let mut matching_idfs: Vec<f64> = Vec::new();
         for word in RE.split(&text.to_uppercase()) {
-            if let Some(iter) = self.btrie.iter_prefix(word) {
+            if let Some((ivf, iter)) = self.btrie.iter_prefix(word) {
                 matching_iters.push(iter.peekable());
+                matching_idfs.push(ivf);
             }
         }
         // Step 2: find all common matches
