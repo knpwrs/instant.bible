@@ -1,12 +1,14 @@
 pub mod btrie;
 pub mod data;
 pub mod error;
+pub mod util;
 
 use btrie::{BTrieRoot, PrefixIterator};
 use data::{JsonVerse, VerseKey};
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::iter::Peekable;
+use util::InterIter;
 
 pub struct VersearchIndex {
     btrie: BTrieRoot<VerseKey>,
@@ -39,7 +41,7 @@ impl VersearchIndex {
         }
     }
 
-    pub fn search(&self, text: &str) -> Option<Vec<VerseKey>> {
+    pub fn search(&self, text: &str) -> Option<Vec<&VerseKey>> {
         // Step 1: collect all matches
         let mut matching_iters: Vec<Peekable<PrefixIterator<VerseKey>>> = Vec::new();
         for word in RE.split(&text.to_uppercase()) {
@@ -48,27 +50,7 @@ impl VersearchIndex {
             }
         }
         // Step 2: find all common matches
-        let mut results: Vec<VerseKey> = Vec::new();
-        while matching_iters.iter_mut().all(|i| i.peek().is_some()) {
-            let check = *(matching_iters.first_mut()?).peek()?;
-            if matching_iters.iter_mut().all(|j| j.peek() == Some(&check)) {
-                // If all iterators are at the same current value, push result and advance every iterator!
-                results.push(check.clone());
-                for iter in matching_iters.iter_mut() {
-                    iter.next();
-                }
-            } else {
-                // Otherwise only increment the minimum vector
-                let mut iter_iter = matching_iters.iter_mut();
-                let mut least = iter_iter.next()?;
-                for iter in iter_iter {
-                    if iter.peek()? < least.peek()? {
-                        least = iter;
-                    }
-                }
-                least.next();
-            }
-        }
+        let results: Vec<&VerseKey> = InterIter::new(matching_iters).collect();
         // Step 3: We made it!
         Some(results)
     }
