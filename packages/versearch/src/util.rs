@@ -29,34 +29,30 @@ where
     type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.iters.iter_mut().all(|i| i.peek().is_some()) {
-            while self.iters.iter_mut().all(|i| i.peek().is_some()) {
-                let mut iter_iters = self.iters.iter_mut();
-                let check = iter_iters.next()?.peek()?;
-                if iter_iters.all(|j| j.peek() == Some(&check)) {
-                    // If all iterators are at the same current value, advance
-                    // every iterator and emit result!
-                    let value = self.iters[0].next()?;
-                    for iter in self.iters[1..].iter_mut() {
-                        iter.next();
-                    }
-                    return Some(value);
-                } else {
-                    // Otherwise only increment the minimum vector
-                    let mut iter_iter = self.iters.iter_mut();
-                    let mut least = iter_iter.next()?;
-                    for iter in iter_iter {
-                        if iter.peek()? < least.peek()? {
-                            least = iter;
-                        }
-                    }
-                    least.next();
+        while self.iters.iter_mut().all(|i| i.peek().is_some()) {
+            let mut iter_iters = self.iters.iter_mut();
+            let check = iter_iters.next()?.peek()?;
+            if iter_iters.all(|j| j.peek() == Some(&check)) {
+                // If all iterators are at the same current value, advance
+                // every iterator and emit result!
+                let value = self.iters[0].next()?;
+                for iter in self.iters[1..].iter_mut() {
+                    iter.next();
                 }
+                return Some(value);
+            } else {
+                // Otherwise only increment the minimum vector
+                let mut iter_iter = self.iters.iter_mut();
+                let mut least = iter_iter.next()?;
+                for iter in iter_iter {
+                    if iter.peek()? < least.peek()? {
+                        least = iter;
+                    }
+                }
+                least.next();
             }
-            None
-        } else {
-            None
         }
+        None
     }
 }
 
