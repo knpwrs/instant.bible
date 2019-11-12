@@ -2,9 +2,11 @@
   "name": "instant.bible-text",
   "private": true,
   "scripts": {
-    "start": "DEBUG=* ts-node ./src/download",
-    "test": "jest",
-    "test:watch": "npm run test -- --watch"
+    "build:pbjs": "pbjs -t static-module -w commonjs -o src/proto/index.js ../proto/data.proto",
+    "build:pbts": "pbts -o src/proto/index.d.ts src/proto/index.js",
+    "build": "npm run build:pbjs && npm run build:pbts",
+    "prestart": "npm run build",
+    "start": "DEBUG=* ts-node ./src/download"
   },
   "jest": {
     "testEnvironment": "node",
@@ -32,9 +34,8 @@
     "@types/jest": "^24.0.18",
     "@types/lodash": "^4.14.138",
     "@types/node": "^12.7.5",
-    "jest": "^24.9.0",
     "node": "^12.10.0",
-    "ts-jest": "^24.1.0",
+    "protobufjs": "^6.8.8",
     "ts-node": "^8.4.1",
     "typescript": "^3.6.3"
   }

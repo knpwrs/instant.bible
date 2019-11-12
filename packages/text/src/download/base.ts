@@ -1,7 +1,8 @@
-import debug, { Debugger } from 'debug';
-import { Verse, exists, serialize } from '../util';
+import debug from 'debug';
+import { exists, serialize } from '../util';
+import * as proto from '../proto';
 
-export type Downloader = ({ d: Debugger }) => Promise<Array<Verse>>;
+export type Downloader = ({ d: Debugger }) => Promise<Array<proto.instantbible.data.VerseText>>;
 
 export default async (translation: string, downloader: Downloader) => {
   const d = debug(`download:${translation}`);

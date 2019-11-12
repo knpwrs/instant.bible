@@ -1,10 +1,9 @@
 pub mod btrie;
 pub mod data;
-pub mod error;
 pub mod util;
 
 use btrie::{BTrieRoot, PrefixIterator};
-use data::{JsonVerse, VerseKey};
+use data::{VerseKey, VerseText};
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::iter::Peekable;
@@ -32,12 +31,11 @@ impl VersearchIndex {
         }
     }
 
-    pub fn insert_verse(&mut self, verse: &JsonVerse) {
-        let key = VerseKey::from(&verse.book, verse.chapter, verse.verse)
-            .expect("Could not create VerseKey from input!");
+    pub fn insert_verse(&mut self, verse: &VerseText) {
         for word in RE.split(&verse.text.to_uppercase()) {
             // We could store Rc<VerseKey> but the deserialization wouldn't work automatically
-            self.btrie.insert(word, key.clone());
+            let vkey = verse.key.as_ref().unwrap();
+            self.btrie.insert(word, vkey.clone());
         }
     }
 
@@ -53,10 +51,6 @@ impl VersearchIndex {
         let results: Vec<&VerseKey> = InterIter::new(matching_iters).collect();
         // Step 3: We made it!
         Some(results)
-    }
-
-    pub fn index_to_json(&self) -> serde_json::Result<String> {
-        serde_json::to_string(&self.btrie)
     }
 
     pub fn index_to_bincode(&self) -> Result<Vec<u8>, bincode::Error> {

@@ -1,81 +1,84 @@
 import * as got from 'got';
 import shaFn = require('crypto-js/sha256');
+import { isNumber } from 'lodash';
 import base, { Downloader } from './base';
-import { Verse } from '../util';
+import * as proto from '../proto';
+
+const { Book, VerseText } = proto.instantbible.data;
 
 const URL = 'https://www.gutenberg.org/cache/epub/10/pg10.txt';
 const SHA256 =
   '54fa639b823866f7dd3c79aec791a19010a89de7e3ce06d4b24cf7530d9b1d0e';
 
 const nameMap = {
-  'The First Book of Moses:  Called Genesis': 'Genesis',
-  'The Second Book of Moses:  Called Exodus': 'Exodus',
-  'The Third Book of Moses:  Called Leviticus': 'Leviticus',
-  'The Fourth Book of Moses:  Called Numbers': 'Numbers',
-  'The Fifth Book of Moses:  Called Deuteronomy': 'Deuteronomy',
-  'The Book of Joshua': 'Joshua',
-  'The Book of Judges': 'Judges',
-  'The Book of Ruth': 'Ruth',
-  'The First Book of Samuel': '1 Samuel',
-  'The Second Book of Samuel': '2 Samuel',
-  'The Third Book of the Kings': '1 Kings',
-  'The Fourth Book of the Kings': '2 Kings',
-  'The First Book of the Chronicles': '1 Chronicles',
-  'The Second Book of the Chronicles': '2 Chronicles',
-  Ezra: 'Ezra',
-  'The Book of Nehemiah': 'Nehemiah',
-  'The Book of Esther': 'Esther',
-  'The Book of Job': 'Job',
-  'The Book of Psalms': 'Psalms',
-  'The Proverbs': 'Proverbs',
-  Ecclesiastes: 'Ecclesiastes',
-  'The Song of Solomon': 'Song of Solomon',
-  'The Book of the Prophet Isaiah': 'Isaiah',
-  'The Book of the Prophet Jeremiah': 'Jeremiah',
-  'The Lamentations of Jeremiah': 'Lamentations',
-  'The Book of the Prophet Ezekiel': 'Ezekiel',
-  'The Book of Daniel': 'Daniel',
-  Hosea: 'Hosea',
-  Joel: 'Joel',
-  Amos: 'Amos',
-  Obadiah: 'Obadiah',
-  Jonah: 'Jonah',
-  Micah: 'Micah',
-  Nahum: 'Nahum',
-  Habakkuk: 'Habakkuk',
-  Zephaniah: 'Zephaniah',
-  Haggai: 'Haggai',
-  Zechariah: 'Zechariah',
-  Malachi: 'Malachi',
-  'The Gospel According to Saint Matthew': 'Matthew',
-  'The Gospel According to Saint Mark': 'Mark',
-  'The Gospel According to Saint Luke': 'Luke',
-  'The Gospel According to Saint John': 'John',
-  'The Acts of the Apostles': 'Acts',
-  'The Epistle of Paul the Apostle to the Romans': 'Romans',
-  'The First Epistle of Paul the Apostle to the Corinthians': '1 Corinthians',
-  'The Second Epistle of Paul the Apostle to the Corinthians': '2 Corinthians',
-  'The Epistle of Paul the Apostle to the Galatians': 'Galatians',
-  'The Epistle of Paul the Apostle to the Ephesians': 'Ephesians',
-  'The Epistle of Paul the Apostle to the Philippians': 'Philippians',
-  'The Epistle of Paul the Apostle to the Colossians': 'Colossians',
+  'The First Book of Moses:  Called Genesis': Book.GENESIS,
+  'The Second Book of Moses:  Called Exodus': Book.EXODUS,
+  'The Third Book of Moses:  Called Leviticus': Book.LEVITICUS,
+  'The Fourth Book of Moses:  Called Numbers': Book.NUMBERS,
+  'The Fifth Book of Moses:  Called Deuteronomy': Book.DEUTERONOMY,
+  'The Book of Joshua': Book.JOSHUA,
+  'The Book of Judges': Book.JUDGES,
+  'The Book of Ruth': Book.RUTH,
+  'The First Book of Samuel': Book.FIRST_SAMUEL,
+  'The Second Book of Samuel': Book.SECOND_SAMUEL,
+  'The Third Book of the Kings': Book.FIRST_KINGS,
+  'The Fourth Book of the Kings': Book.SECOND_KINGS,
+  'The First Book of the Chronicles': Book.FIRST_CHRONICLES,
+  'The Second Book of the Chronicles': Book.SECOND_CHRONICLES,
+  Ezra: Book.EZRA,
+  'The Book of Nehemiah': Book.NEHEMIAH,
+  'The Book of Esther': Book.ESTHER,
+  'The Book of Job': Book.JOB,
+  'The Book of Psalms': Book.PSALMS,
+  'The Proverbs': Book.PROVERBS,
+  Ecclesiastes: Book.ECCLESIASTES,
+  'The Song of Solomon': Book.SONG_OF_SOLOMON,
+  'The Book of the Prophet Isaiah': Book.ISAIAH,
+  'The Book of the Prophet Jeremiah': Book.JEREMIAH,
+  'The Lamentations of Jeremiah': Book.LAMENTATIONS,
+  'The Book of the Prophet Ezekiel': Book.EZEKIEL,
+  'The Book of Daniel': Book.DANIEL,
+  Hosea: Book.HOSEA,
+  Joel: Book.JOEL,
+  Amos: Book.AMOS,
+  Obadiah: Book.OBADIAH,
+  Jonah: Book.JONAH,
+  Micah: Book.MICAH,
+  Nahum: Book.NAHUM,
+  Habakkuk: Book.HABAKKUK,
+  Zephaniah: Book.ZEPHANIAH,
+  Haggai: Book.HAGGAI,
+  Zechariah: Book.ZECHARIAH,
+  Malachi: Book.MALACHI,
+  'The Gospel According to Saint Matthew': Book.MATTHEW,
+  'The Gospel According to Saint Mark': Book.MARK,
+  'The Gospel According to Saint Luke': Book.LUKE,
+  'The Gospel According to Saint John': Book.JOHN,
+  'The Acts of the Apostles': Book.ACTS,
+  'The Epistle of Paul the Apostle to the Romans': Book.ROMANS,
+  'The First Epistle of Paul the Apostle to the Corinthians': Book.FIRST_CORINTHIANS,
+  'The Second Epistle of Paul the Apostle to the Corinthians': Book.SECOND_CORINTHIANS,
+  'The Epistle of Paul the Apostle to the Galatians': Book.GALATIANS,
+  'The Epistle of Paul the Apostle to the Ephesians': Book.EPHESIANS,
+  'The Epistle of Paul the Apostle to the Philippians': Book.PHILIPPIANS,
+  'The Epistle of Paul the Apostle to the Colossians': Book.COLOSSIANS,
   'The First Epistle of Paul the Apostle to the Thessalonians':
-    '1 Thessalonians',
+    Book.FIRST_THESSALONIANS,
   'The Second Epistle of Paul the Apostle to the Thessalonians':
-    '2 Thessalonians',
-  'The First Epistle of Paul the Apostle to Timothy': '1 Timothy',
-  'The Second Epistle of Paul the Apostle to Timothy': '2 Timothy',
-  'The Epistle of Paul the Apostle to Titus': 'Titus',
-  'The Epistle of Paul the Apostle to Philemon': 'Philemon',
-  'The Epistle of Paul the Apostle to the Hebrews': 'Hebrews',
-  'The General Epistle of James': 'James',
-  'The First Epistle General of Peter': '1 Peter',
-  'The Second General Epistle of Peter': '2 Peter',
-  'The First Epistle General of John': '1 John',
-  'The Second Epistle General of John': '2 John',
-  'The Third Epistle General of John': '3 John',
-  'The General Epistle of Jude': 'Jude',
-  'The Revelation of Saint John the Devine': 'Revelation',
+    Book.SECOND_THESSALONIANS,
+  'The First Epistle of Paul the Apostle to Timothy': Book.FIRST_TIMOTHY,
+  'The Second Epistle of Paul the Apostle to Timothy': Book.SECOND_TIMOTHY,
+  'The Epistle of Paul the Apostle to Titus': Book.TITUS,
+  'The Epistle of Paul the Apostle to Philemon': Book.PHILEMON,
+  'The Epistle of Paul the Apostle to the Hebrews': Book.HEBREWS,
+  'The General Epistle of James': Book.JAMES,
+  'The First Epistle General of Peter': Book.FIRST_PETER,
+  'The Second General Epistle of Peter': Book.SECOND_PETER,
+  'The First Epistle General of John': Book.FIRST_JOHN,
+  'The Second Epistle General of John': Book.SECOND_JOHN,
+  'The Third Epistle General of John': Book.THIRD_JOHN,
+  'The General Epistle of Jude': Book.JUDE,
+  'The Revelation of Saint John the Devine': Book.REVELATION,
 };
 
 const startVerse = /^(\d+):(\d+)/;
@@ -97,20 +100,20 @@ const download: Downloader = async ({ d }) => {
     .replace(/(?<=\d+:\d+)\r\n/g, ' ')
     .replace(/\s+(?=\d+:\d+)/g, '\n\n')
     .split(/\r?\n/);
-  const verses: Array<Verse> = [];
+  const verses: Array<proto.instantbible.data.VerseText> = [];
 
   {
-    let book = '';
+    let book = -1;
     let chapter = 0;
     let verse = 0;
     let text = '';
 
     for (const line of lines) {
-      if (nameMap[line] && !booksSeen[line]) {
+      if (isNumber(nameMap[line]) && !booksSeen[line]) {
         book = nameMap[line];
         booksSeen[line] = true;
       }
-      if (!book) continue;
+      if (book === -1) continue;
       if (startVerse.test(line)) {
         // New verse
         const [, sChapter, sVerse] = startVerse.exec(line);
@@ -120,12 +123,10 @@ const download: Downloader = async ({ d }) => {
       } else if (text && line) {
         text += ` ${line.trim()}`;
       } else if (text) {
-        verses.push({
-          book,
-          chapter,
-          verse,
+        verses.push(new VerseText({
+          key: { book, chapter, verse },
           text,
-        });
+        }));
         chapter = 0;
         verse = 0;
         text = '';

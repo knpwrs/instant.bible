@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package instantbible.data;
+
+enum Translation {
+  KJV = 0;
+  NET = 1;
+}
+
+enum Book {
+  GENESIS = 0;
+  EXODUS = 1;
+  LEVITICUS = 2;
+  NUMBERS = 3;
+  DEUTERONOMY = 4;
+  JOSHUA = 5;
+  JUDGES = 6;
+  RUTH = 7;
+  FIRST_SAMUEL = 8;
+  SECOND_SAMUEL = 9;
+  FIRST_KINGS = 10;
+  SECOND_KINGS = 11;
+  FIRST_CHRONICLES = 12;
+  SECOND_CHRONICLES = 13;
+  EZRA = 14;
+  NEHEMIAH = 15;
+  ESTHER = 16;
+  JOB = 17;
+  PSALMS = 18;
+  PROVERBS = 19;
+  ECCLESIASTES = 20;
+  SONG_OF_SOLOMON = 21;
+  ISAIAH = 22;
+  JEREMIAH = 23;
+  LAMENTATIONS = 24;
+  EZEKIEL = 25;
+  DANIEL = 26;
+  HOSEA = 27;
+  JOEL = 28;
+  AMOS = 29;
+  OBADIAH = 30;
+  JONAH = 31;
+  MICAH = 32;
+  NAHUM = 33;
+  HABAKKUK = 34;
+  ZEPHANIAH = 35;
+  HAGGAI = 36;
+  ZECHARIAH = 37;
+  MALACHI = 38;
+  MATTHEW = 39;
+  MARK = 40;
+  LUKE = 41;
+  JOHN = 42;
+  ACTS = 43;
+  ROMANS = 44;
+  FIRST_CORINTHIANS = 45;
+  SECOND_CORINTHIANS = 46;
+  GALATIANS = 47;
+  EPHESIANS = 48;
+  PHILIPPIANS = 49;
+  COLOSSIANS = 50;
+  FIRST_THESSALONIANS = 51;
+  SECOND_THESSALONIANS = 52;
+  FIRST_TIMOTHY = 53;
+  SECOND_TIMOTHY = 54;
+  TITUS = 55;
+  PHILEMON = 56;
+  HEBREWS = 57;
+  JAMES = 58;
+  FIRST_PETER = 59;
+  SECOND_PETER = 60;
+  FIRST_JOHN = 61;
+  SECOND_JOHN = 62;
+  THIRD_JOHN = 63;
+  JUDE = 64;
+  REVELATION = 65;
+}
+
+message VerseKey {
+  Book book = 1;
+  uint32 chapter = 2;
+  uint32 verse = 3;
+}
+
+message VerseText {
+  VerseKey key = 1;
+  string text = 2;
+}
+
+message TranslationData {
+  Translation translation = 1;
+  repeated VerseText verses = 2;
+}
