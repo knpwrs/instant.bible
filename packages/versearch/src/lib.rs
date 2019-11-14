@@ -9,6 +9,8 @@ use regex::Regex;
 use std::iter::Peekable;
 use util::InterIter;
 
+const MAX_RESULTS: usize = 20;
+
 pub struct VersearchIndex {
     btrie: BTrieRoot<VerseKey>,
 }
@@ -48,7 +50,10 @@ impl VersearchIndex {
             }
         }
         // Step 2: find all common matches
-        let results: Vec<VerseKey> = InterIter::new(matching_iters).copied().collect();
+        let results: Vec<VerseKey> = InterIter::new(matching_iters)
+            .copied()
+            .take(MAX_RESULTS)
+            .collect();
         // Step 3: We made it!
         Some(results)
     }
