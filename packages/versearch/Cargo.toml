@@ -6,6 +6,7 @@ authors = ["Kenneth Powers <ken@kenpowers.net> (https://knpw.rs)"]
 edition = "2018"
 
 [dependencies]
+actix-protobuf = "0.4.1"
 actix-web = "1.0.8"
 bincode = "1.2.0"
 bytes = "0.4.12"

@@ -1,0 +1,8 @@
+syntax = "proto3";
+package instantbible.service;
+
+import "data.proto";
+
+message Response {
+  repeated instantbible.data.VerseKey results = 1;
+}

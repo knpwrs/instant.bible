@@ -1,4 +1,7 @@
-use actix_web::{middleware, web, App, HttpResponse, HttpServer};
+use actix_protobuf::ProtoBufResponseBuilder;
+use actix_web::{
+    http, middleware, web, App, HttpRequest, HttpResponse, HttpServer, Result as ActixResult,
+};
 use log::info;
 use prost::Message;
 use serde::Deserialize;
@@ -6,7 +9,8 @@ use std::fs;
 use std::io::prelude::*;
 use std::sync::Arc;
 use std::time::Instant;
-use versearch::data::TranslationData;
+use versearch::proto::data::TranslationData;
+use versearch::proto::service::Response as ServiceResponse;
 use versearch::VersearchIndex;
 
 #[derive(Deserialize, Debug)]
@@ -69,7 +73,21 @@ fn make_index() -> Arc<VersearchIndex> {
     Arc::new(vi)
 }
 
-fn search(info: web::Query<SearchQuery>, index: web::Data<Arc<VersearchIndex>>) -> HttpResponse {
+fn accepts_protbuf(req: HttpRequest) -> bool {
+    match req.headers().get(http::header::ACCEPT) {
+        Some(header) => match header.to_str() {
+            Ok(str) => str.contains("application/protobuf"),
+            _ => false,
+        },
+        _ => false,
+    }
+}
+
+fn search(
+    req: HttpRequest,
+    info: web::Query<SearchQuery>,
+    index: web::Data<Arc<VersearchIndex>>,
+) -> ActixResult<HttpResponse> {
     info!(r#"Searching for """{}""""#, info.q);
     let now = Instant::now();
     let res = index.search(&info.q);
@@ -77,15 +95,19 @@ fn search(info: web::Query<SearchQuery>, index: web::Data<Arc<VersearchIndex>>) 
     match res {
         Some(res) => {
             info!(r#"{} results for """{}""" in {}us"#, res.len(), info.q, us);
-            HttpResponse::Ok()
-                .header("X-Response-Time-us", us as u64)
-                .json(res)
+            let mut http_res = HttpResponse::Ok();
+            let http_res = http_res.header("X-Response-Time-us", us as u64);
+            if accepts_protbuf(req) {
+                http_res.protobuf(ServiceResponse { results: res })
+            } else {
+                Ok(http_res.json(res))
+            }
         }
         None => {
             info!(r#"No results for """{}""" in {}us"#, info.q, us);
-            HttpResponse::NotFound()
+            Ok(HttpResponse::NotFound()
                 .header("X-Response-Time-us", us as u64)
-                .finish()
+                .finish())
         }
     }
 }

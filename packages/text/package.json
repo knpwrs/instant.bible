@@ -2,7 +2,7 @@
   "name": "instant.bible-text",
   "private": true,
   "scripts": {
-    "build:pbjs": "pbjs -t static-module -w commonjs -o src/proto/index.js ../proto/data.proto",
+    "build:pbjs": "pbjs -t static-module -w commonjs -o src/proto/index.js ../proto/*.proto",
     "build:pbts": "pbts -o src/proto/index.d.ts src/proto/index.js",
     "build": "npm run build:pbjs && npm run build:pbts",
     "prestart": "npm run build",
