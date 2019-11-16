@@ -16,3 +16,6 @@ jobs:
     - name: Clippy
       working-directory: ./packages/versearch
       run: cargo clippy
+    - name: Benchmark Intersection
+      working-directory: ./packages/versearch
+      run: cargo bench --bench intersection
