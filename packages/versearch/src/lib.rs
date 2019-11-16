@@ -9,6 +9,8 @@ use regex::Regex;
 use std::iter::Peekable;
 use util::InterIter;
 
+pub use util::Config;
+
 const MAX_RESULTS: usize = 20;
 
 pub struct VersearchIndex {

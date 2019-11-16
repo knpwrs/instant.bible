@@ -10,6 +10,7 @@ actix-protobuf = "0.4.1"
 actix-web = "1.0.8"
 bincode = "1.2.0"
 bytes = "0.4.12"
+criterion = "0.3.0"
 env_logger = "0.7.0"
 envy = "0.4.0"
 itertools = "0.8.0"
@@ -21,3 +22,7 @@ serde = { version = "1.0.101", features = ["rc"] }
 
 [build-dependencies]
 prost-build = "0.5.0"
+
+[[bench]]
+name = "search"
+harness = false

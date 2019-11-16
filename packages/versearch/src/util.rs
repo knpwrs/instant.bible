@@ -1,4 +1,22 @@
+use crate::proto::data::TranslationData;
+use crate::VersearchIndex;
+use log::info;
+use prost::Message;
+use serde::Deserialize;
+use std::fs;
+use std::io::prelude::*;
 use std::iter::Peekable;
+use std::time::Instant;
+
+fn default_translation_dir() -> String {
+    "../text/data".to_string()
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Config {
+    #[serde(default = "default_translation_dir")]
+    pub translation_dir: String,
+}
 
 /// An intersecting iterator
 pub struct InterIter<I: Iterator> {
@@ -54,6 +72,50 @@ where
         }
         None
     }
+}
+
+pub fn get_index() -> VersearchIndex {
+    let mut vi = VersearchIndex::new();
+    let config = match envy::from_env::<Config>() {
+        Ok(config) => config,
+        Err(error) => panic!("{:?}", error),
+    };
+
+    info!("Loading translations from {:?}", config.translation_dir);
+    for entry in fs::read_dir(config.translation_dir).unwrap() {
+        let path = entry.unwrap().path();
+        if path.is_file() && path.extension().map(|s| s == "pb").unwrap_or(false) {
+            let translation = path
+                .file_stem()
+                .expect("Could not get file stem")
+                .to_string_lossy()
+                .to_string();
+            info!("Load translation {:?} from {:?}", translation, path);
+            let now = Instant::now();
+            let mut file_bytes: Vec<u8> = Vec::new();
+            fs::File::open(path)
+                .unwrap()
+                .read_to_end(&mut file_bytes)
+                .unwrap();
+            let data = TranslationData::decode(file_bytes).unwrap();
+            info!(
+                "Read {} verses in {}ms",
+                data.verses.len(),
+                now.elapsed().as_millis()
+            );
+            let now = Instant::now();
+            for verse in &data.verses {
+                vi.insert_verse(verse);
+            }
+            info!(
+                "Indexed {} verses in {}ms",
+                data.verses.len(),
+                now.elapsed().as_millis()
+            );
+        }
+    }
+
+    vi
 }
 
 #[cfg(test)]
