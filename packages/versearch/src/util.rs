@@ -25,7 +25,7 @@ pub struct InterIter<I: Iterator> {
 
 impl<I: Iterator> InterIter<I>
 where
-    I::Item: Ord,
+    I::Item: Ord + Clone,
 {
     pub fn new<ItersType>(in_iters: ItersType) -> Self
     where
@@ -42,33 +42,38 @@ where
 
 impl<I: Iterator> Iterator for InterIter<I>
 where
-    I::Item: Ord,
+    I::Item: Ord + Clone,
 {
     type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while self.iters.iter_mut().all(|i| i.peek().is_some()) {
-            let mut iter_iters = self.iters.iter_mut();
-            let check = iter_iters.next()?.peek()?;
-            if iter_iters.all(|j| j.peek() == Some(&check)) {
-                // If all iterators are at the same current value, advance
-                // every iterator and emit result!
-                let value = self.iters[0].next()?;
-                for iter in self.iters[1..].iter_mut() {
-                    iter.next();
-                }
-                return Some(value);
-            } else {
-                // Otherwise only increment the minimum vector
-                let mut iter_iter = self.iters.iter_mut();
-                let mut least = iter_iter.next()?;
-                for iter in iter_iter {
-                    if iter.peek()? < least.peek()? {
-                        least = iter;
+        if self.iters.iter_mut().all(|i| i.peek().is_some()) {
+            let max = {
+                let mut iters_iter = self.iters.iter_mut();
+                let mut max = iters_iter.next()?.peek()?;
+                for iter in iters_iter {
+                    let val = iter.peek()?;
+                    if val > max {
+                        max = val;
                     }
                 }
-                least.next();
+                max.clone()
+            };
+            {
+                let iters_iter = self.iters.iter_mut();
+                for iter in iters_iter {
+                    while *iter.peek()? < max {
+                        iter.next();
+                    }
+                }
             }
+            {
+                let iters_iter = self.iters.iter_mut();
+                for iter in iters_iter {
+                    iter.next();
+                }
+            }
+            return Some(max);
         }
         None
     }
