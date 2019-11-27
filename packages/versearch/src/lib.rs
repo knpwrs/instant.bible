@@ -6,7 +6,6 @@ use btrie::{BTrieRoot, PrefixIterator};
 use lazy_static::lazy_static;
 use proto::data::{VerseKey, VerseText};
 use regex::Regex;
-use std::iter::Peekable;
 use util::InterIter;
 
 pub use util::Config;
@@ -45,10 +44,10 @@ impl VersearchIndex {
 
     pub fn search(&self, text: &str) -> Option<Vec<VerseKey>> {
         // Step 1: collect all matches
-        let mut matching_iters: Vec<Peekable<PrefixIterator<VerseKey>>> = Vec::new();
+        let mut matching_iters: Vec<PrefixIterator<VerseKey>> = Vec::new();
         for word in RE.split(&text.to_uppercase()) {
             if let Some(iter) = self.btrie.iter_prefix(word) {
-                matching_iters.push(iter.peekable());
+                matching_iters.push(iter);
             }
         }
         // Step 2: find all common matches
