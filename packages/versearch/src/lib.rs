@@ -2,7 +2,7 @@ pub mod btrie;
 pub mod proto;
 pub mod util;
 
-use btrie::{BTrieRoot, PrefixIterator};
+use btrie::{BTrieRoot, SubTrieIterator};
 use lazy_static::lazy_static;
 use proto::data::{VerseKey, VerseText};
 use regex::Regex;
@@ -44,7 +44,7 @@ impl VersearchIndex {
 
     pub fn search(&self, text: &str) -> Option<Vec<VerseKey>> {
         // Step 1: collect all matches
-        let mut matching_iters: Vec<PrefixIterator<VerseKey>> = Vec::new();
+        let mut matching_iters: Vec<SubTrieIterator<VerseKey>> = Vec::new();
         for word in RE.split(&text.to_uppercase()) {
             if let Some(iter) = self.btrie.iter_prefix(word) {
                 matching_iters.push(iter);

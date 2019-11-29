@@ -1,10 +1,7 @@
 use super::iter::SubTrieIterator;
 use super::util::{first_char, shared_prefix};
-use itertools::structs::{Dedup, KMerge};
-use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ord;
-use std::collections::btree_set::Iter as BTreeSetIter;
 use std::collections::{BTreeSet, HashMap};
 use std::sync::Arc;
 
@@ -15,8 +12,6 @@ use std::sync::Arc;
 pub struct BTrieRoot<T: Ord> {
     next: HashMap<char, BTrieNode<T>>,
 }
-
-pub type PrefixIterator<'a, T> = Dedup<KMerge<BTreeSetIter<'a, T>>>;
 
 impl<T: Ord> BTrieRoot<T> {
     #[allow(clippy::new_without_default)]
@@ -34,7 +29,7 @@ impl<T: Ord> BTrieRoot<T> {
                 .insert(key, value);
         }
     }
-    pub fn iter_prefix(&self, search_key: &str) -> Option<PrefixIterator<T>> {
+    pub fn iter_prefix(&self, search_key: &str) -> Option<SubTrieIterator<T>> {
         let first = first_char(search_key)?;
         let search_node = self.next.get(&first)?;
         search_node.iter_prefix(search_key)
@@ -91,8 +86,7 @@ impl<T: Ord> BTrieNode<T> {
         }
     }
 
-    // pub fn iter_prefix(&self, search_key: &str) -> Option<PrefixIterator<T>> {
-    pub fn iter_prefix(&self, search_key: &str) -> Option<PrefixIterator<T>> {
+    pub fn iter_prefix(&self, search_key: &str) -> Option<SubTrieIterator<T>> {
         let mut node = self;
         let mut char_count = node.key.len();
         let target_count = search_key.chars().count();
@@ -109,7 +103,7 @@ impl<T: Ord> BTrieNode<T> {
             }
         }
         // Step 2: Return dedeup'd iterator for this subtrie
-        Some(SubTrieIterator::new(&node).kmerge().dedup())
+        Some(SubTrieIterator::new(&node))
     }
 }
 
