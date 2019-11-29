@@ -1,4 +1,4 @@
-use super::iter::SubTrieIterator;
+use super::iter::SubTrieIteratorIterator;
 use super::util::{first_char, shared_prefix};
 use itertools::structs::{Dedup, KMerge};
 use itertools::Itertools;
@@ -109,7 +109,7 @@ impl<T: Ord> BTrieNode<T> {
             }
         }
         // Step 2: Return dedeup'd iterator for this subtrie
-        Some(SubTrieIterator::new(&node).kmerge().dedup())
+        Some(SubTrieIteratorIterator::new(&node).kmerge().dedup())
     }
 }
 
