@@ -19,6 +19,7 @@ log = "0.4.8"
 prost = "0.5.0"
 regex = "1.3.1"
 serde = { version = "1.0.101", features = ["rc"] }
+cascade = "0.1.4"
 
 [build-dependencies]
 prost-build = "0.5.0"
@@ -29,4 +30,8 @@ harness = false
 
 [[bench]]
 name = "intersection"
+harness = false
+
+[[bench]]
+name = "tokenize"
 harness = false
