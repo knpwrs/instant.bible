@@ -5,6 +5,7 @@ package instantbible.data;
 enum Translation {
   KJV = 0;
   NET = 1;
+  TOTAL = 2;
 }
 
 enum Book {

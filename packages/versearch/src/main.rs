@@ -34,30 +34,13 @@ fn search(
     let now = Instant::now();
     let res = index.search(&info.q);
     let us = now.elapsed().as_micros();
-    match res {
-        Some(res) => {
-            info!(r#"{} results for """{}""" in {}us"#, res.len(), info.q, us);
-            let mut http_res = HttpResponse::Ok();
-            let http_res = http_res.header("X-Response-Time-us", us as u64);
-            if accepts_protbuf(req) {
-                http_res.protobuf(ServiceResponse { results: res })
-            } else {
-                Ok(http_res.json(res))
-            }
-        }
-        None => {
-            info!(r#"No results for """{}""" in {}us"#, info.q, us);
-            Ok(HttpResponse::NotFound()
-                .header("X-Response-Time-us", us as u64)
-                .finish())
-        }
-    }
-}
-
-fn download_index_bin(index: web::Data<Arc<VersearchIndex>>) -> HttpResponse {
-    match index.index_to_bincode() {
-        Ok(bc) => HttpResponse::Ok().body(bc),
-        _ => unimplemented!(),
+    info!(r#"{} results for """{}""" in {}us"#, res.len(), info.q, us);
+    let mut http_res = HttpResponse::Ok();
+    let http_res = http_res.header("X-Response-Time-us", us as u64);
+    if accepts_protbuf(req) {
+        http_res.protobuf(ServiceResponse { results: res })
+    } else {
+        Ok(http_res.json(res))
     }
 }
 
@@ -72,7 +55,6 @@ fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::default())
             .data(index.clone())
             .service(web::resource("/").to(search))
-            .service(web::resource("/index.bin").to(download_index_bin))
     })
     .bind("0.0.0.0:8080")?
     .run()

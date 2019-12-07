@@ -1,65 +1,51 @@
-pub mod btrie;
 pub mod proto;
 pub mod util;
 
-use btrie::{BTrieRoot, PrefixIterator};
-use lazy_static::lazy_static;
-use proto::data::{VerseKey, VerseText};
-use regex::Regex;
-use util::InterIter;
+use fst::{automaton, IntoStreamer, Map as FstMap};
+use proto::data::{Translation, VerseKey};
+use std::collections::HashMap;
+use util::{ordered_tokenize, InterIter};
 
 pub use util::Config;
+
+pub type ReverseIndex = HashMap<u64, Vec<(VerseKey, [u8; Translation::Total as usize])>>;
 
 const MAX_RESULTS: usize = 20;
 
 pub struct VersearchIndex {
-    btrie: BTrieRoot<VerseKey>,
-}
-
-lazy_static! {
-    static ref RE: Regex = Regex::new(r"[\s.]+").unwrap();
+    fst_map: FstMap,
+    reverse_index: ReverseIndex,
 }
 
 impl VersearchIndex {
     #[allow(clippy::new_without_default)]
-    pub fn new() -> VersearchIndex {
+    pub fn new(fst_bytes: Vec<u8>, reverse_index: ReverseIndex) -> VersearchIndex {
         VersearchIndex {
-            btrie: BTrieRoot::new(),
+            fst_map: FstMap::from_bytes(fst_bytes).expect("Could not load map from FST bytes"),
+            reverse_index,
         }
     }
 
-    pub fn from_index_bincode(bytes: Vec<u8>) -> VersearchIndex {
-        VersearchIndex {
-            btrie: bincode::deserialize(&bytes).unwrap(),
-        }
-    }
+    pub fn search(&self, text: &str) -> Vec<VerseKey> {
+        let tokens = ordered_tokenize(text);
+        let mut indices: Vec<u64> = Vec::new();
 
-    pub fn insert_verse(&mut self, verse: &VerseText) {
-        for word in RE.split(&verse.text.to_uppercase()) {
-            // We could store Rc<VerseKey> but the deserialization wouldn't work automatically
-            let vkey = verse.key.as_ref().unwrap();
-            self.btrie.insert(word, vkey.clone());
-        }
-    }
-
-    pub fn search(&self, text: &str) -> Option<Vec<VerseKey>> {
-        // Step 1: collect all matches
-        let mut matching_iters: Vec<PrefixIterator<VerseKey>> = Vec::new();
-        for word in RE.split(&text.to_uppercase()) {
-            if let Some(iter) = self.btrie.iter_prefix(word) {
-                matching_iters.push(iter);
+        for token in tokens {
+            let auto = automaton::Str::new(&token);
+            if let Ok(results) = self.fst_map.search(auto).into_stream().into_str_vec() {
+                indices.extend(results.iter().map(|(_, list)| list));
             }
         }
-        // Step 2: find all common matches
-        let results: Vec<VerseKey> = InterIter::new(matching_iters)
-            .copied()
-            .take(MAX_RESULTS)
-            .collect();
-        // Step 3: We made it!
-        Some(results)
-    }
 
-    pub fn index_to_bincode(&self) -> Result<Vec<u8>, bincode::Error> {
-        bincode::serialize(&self.btrie)
+        InterIter::new(indices.iter().map(|index| {
+            self.reverse_index
+                .get(index)
+                .unwrap()
+                .iter()
+                .map(|(v, _)| v)
+        }))
+        .take(MAX_RESULTS)
+        .copied()
+        .collect()
     }
 }
