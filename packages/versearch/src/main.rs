@@ -5,8 +5,6 @@ use actix_web::{
 use log::info;
 use serde::Deserialize;
 use std::sync::Arc;
-use std::time::Instant;
-use versearch::proto::service::Response as ServiceResponse;
 use versearch::util::get_index;
 use versearch::VersearchIndex;
 
@@ -31,14 +29,10 @@ fn search(
     index: web::Data<Arc<VersearchIndex>>,
 ) -> ActixResult<HttpResponse> {
     info!(r#"Searching for """{}""""#, info.q);
-    let now = Instant::now();
     let res = index.search(&info.q);
-    let us = now.elapsed().as_micros();
-    info!(r#"{} results for """{}""" in {}us"#, res.len(), info.q, us);
     let mut http_res = HttpResponse::Ok();
-    let http_res = http_res.header("X-Response-Time-us", us as u64);
     if accepts_protbuf(req) {
-        http_res.protobuf(ServiceResponse { results: res })
+        http_res.protobuf(res)
     } else {
         Ok(http_res.json(res))
     }

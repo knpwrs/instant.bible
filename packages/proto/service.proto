@@ -4,5 +4,19 @@ package instantbible.service;
 import "data.proto";
 
 message Response {
-  repeated instantbible.data.VerseKey results = 1;
+  message VerseResult {
+    instantbible.data.VerseKey key = 1;
+    map<uint32, double> translationScores = 2;
+  }
+
+  message Timings {
+    int32 tokenize = 1;
+    int32 fst = 2;
+    int32 rank = 3;
+    int32 total = 4;
+  }
+
+  repeated VerseResult results = 1;
+  repeated string foundTokens = 2;
+  Timings timings = 3;
 }
