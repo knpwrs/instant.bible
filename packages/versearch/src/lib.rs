@@ -2,6 +2,7 @@ pub mod proto;
 pub mod util;
 
 use fst::{automaton, Automaton, IntoStreamer, Map as FstMap};
+use fst_levenshtein::Levenshtein;
 use itertools::Itertools;
 use proto::data::VerseKey;
 use proto::service::{
@@ -20,8 +21,10 @@ pub type ReverseIndex = HashMap<u64, ReverseIndexList>;
 
 const MAX_RESULTS: usize = 20;
 const MAX_PREFIX_EXPANSION: usize = 2;
+const TYPO_1_LEN: usize = 4;
+const TYPO_2_LEN: usize = 8;
 const SCORE_EXACT: f64 = 1.0;
-const SCORE_PREFIX: f64 = 0.5;
+const SCORE_INEXACT: f64 = 0.5;
 
 struct ReverseIndexListWithMultiplier<'a> {
     list: &'a ReverseIndexList,
@@ -53,32 +56,48 @@ impl VersearchIndex {
         // Expand and determine score multiplier for each token
         let start = Instant::now();
         for token in tokens {
+            // Attempt a prefix search
             let prefix_automaton = automaton::Str::new(&token).starts_with();
-            if let Ok(results) = self
+            let mut results = self
                 .fst_map
                 .search(prefix_automaton)
                 .into_stream()
                 .into_str_vec()
+                .unwrap();
+
+            // If nothing was found in the prefix search then this token was a typo
+            if results.is_empty() && token.len() >= TYPO_1_LEN {
+                let distance = if token.len() >= TYPO_2_LEN { 2 } else { 1 };
+                let lev_automaton = Levenshtein::new(&token, distance).unwrap();
+                results.extend(
+                    self.fst_map
+                        .search(&lev_automaton)
+                        .into_stream()
+                        .into_str_vec()
+                        .unwrap(),
+                );
+            }
+
+            // Process found tokens
+            for (result, idx) in results
+                .iter()
+                .filter(|(s, _)| s.len() <= token.len() + MAX_PREFIX_EXPANSION)
+                .cloned()
             {
-                for (result, idx) in results
-                    .iter()
-                    .filter(|(s, _)| s.len() <= token.len() + MAX_PREFIX_EXPANSION)
-                    .cloned()
-                {
-                    let multiplier = if result == token {
-                        SCORE_EXACT
-                    } else {
-                        SCORE_PREFIX
-                    };
-                    let mut container = found_lists.entry(result).or_insert_with(|| {
-                        ReverseIndexListWithMultiplier {
+                let multiplier = if result == token {
+                    SCORE_EXACT
+                } else {
+                    SCORE_INEXACT
+                };
+                let mut container =
+                    found_lists
+                        .entry(result)
+                        .or_insert_with(|| ReverseIndexListWithMultiplier {
                             list: self.reverse_index.get(&idx).unwrap(),
                             multiplier: 0.0,
-                        }
-                    });
-                    if multiplier > container.multiplier {
-                        container.multiplier = multiplier;
-                    }
+                        });
+                if multiplier > container.multiplier {
+                    container.multiplier = multiplier;
                 }
             }
         }
