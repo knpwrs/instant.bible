@@ -20,7 +20,7 @@ pub type ReverseIndexList = Vec<(VerseKey, Vec<f64>)>;
 pub type ReverseIndex = HashMap<u64, ReverseIndexList>;
 
 const MAX_RESULTS: usize = 20;
-const MAX_PREFIX_EXPANSION: usize = 2;
+const PREFIX_EXPANSION_FACTOR: usize = 2;
 const TYPO_1_LEN: usize = 4;
 const TYPO_2_LEN: usize = 8;
 const SCORE_EXACT: f64 = 1.0;
@@ -81,7 +81,7 @@ impl VersearchIndex {
             // Process found tokens
             for (result, idx) in results
                 .iter()
-                .filter(|(s, _)| s.len() <= token.len() + MAX_PREFIX_EXPANSION)
+                .filter(|(s, _)| s.len() <= token.len() * PREFIX_EXPANSION_FACTOR)
                 .cloned()
             {
                 let multiplier = if result == token {
