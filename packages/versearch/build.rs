@@ -2,7 +2,7 @@ fn main() {
     let mut prost = prost_build::Config::new();
     prost.type_attribute(
         ".instantbible.data.VerseKey",
-        "#[derive(serde::Serialize, Eq, PartialOrd, Ord, Copy)]",
+        "#[derive(serde::Serialize, Hash, Eq, PartialOrd, Ord, Copy)]",
     );
     prost.type_attribute(
         ".instantbible.service.Response",

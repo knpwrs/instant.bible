@@ -6,14 +6,16 @@ import "data.proto";
 message Response {
   message VerseResult {
     instantbible.data.VerseKey key = 1;
-    map<uint32, double> translationScores = 2;
+    repeated double translationScores = 2;
+    double total_score = 3;
   }
 
   message Timings {
     int32 tokenize = 1;
     int32 fst = 2;
-    int32 rank = 3;
-    int32 total = 4;
+    int32 score = 3;
+    int32 rank = 4;
+    int32 total = 5;
   }
 
   repeated VerseResult results = 1;
