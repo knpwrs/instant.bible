@@ -1,5 +1,5 @@
 use crate::proto::data::{Translation, TranslationData, VerseKey};
-use crate::{ReverseIndex, VersearchIndex};
+use crate::{ReverseIndex, TranslationVerses, VersearchIndex, TRANSLATION_COUNT};
 use fst::MapBuilder;
 use log::info;
 use prost::Message;
@@ -45,6 +45,7 @@ pub fn get_index() -> VersearchIndex {
     };
 
     let mut word_counts: BTreeMap<String, BTreeMap<VerseKey, Vec<f64>>> = BTreeMap::new();
+    let mut translation_verses: TranslationVerses = HashMap::new();
 
     info!("Loading translations from {:?}", config.translation_dir);
 
@@ -73,12 +74,17 @@ pub fn get_index() -> VersearchIndex {
             );
             let now = Instant::now();
             for verse in &data.verses {
+                translation_verses
+                    .entry(translation_key)
+                    .or_insert_with(HashMap::new)
+                    .entry(verse.key.unwrap())
+                    .or_insert_with(|| verse.text.clone());
                 for token in tokenize(&verse.text) {
                     let counts = word_counts
                         .entry(token)
                         .or_insert_with(BTreeMap::new)
                         .entry(verse.key.expect("Missing verse key"))
-                        .or_insert_with(|| vec![0.0; Translation::Total as usize]);
+                        .or_insert_with(|| vec![0.0; TRANSLATION_COUNT]);
                     counts[translation_key as usize] += 1.0;
                 }
             }
@@ -113,7 +119,7 @@ pub fn get_index() -> VersearchIndex {
     let fst_bytes = build.into_inner().expect("Could not flush bytes for FST");
     info!("FST compiled: {} bytes", fst_bytes.len());
 
-    VersearchIndex::new(fst_bytes, reverse_index)
+    VersearchIndex::new(fst_bytes, reverse_index, translation_verses)
 }
 
 #[cfg(test)]

@@ -8,6 +8,7 @@ message Response {
     instantbible.data.VerseKey key = 1;
     repeated double translationScores = 2;
     double total_score = 3;
+    repeated string text = 4;
   }
 
   message Timings {

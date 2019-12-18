@@ -3,12 +3,13 @@ pub mod util;
 
 use fst::{automaton, Automaton, IntoStreamer, Map as FstMap};
 use fst_levenshtein::Levenshtein;
+use itertools::Itertools;
 use proto::data::{Translation, VerseKey};
 use proto::service::{
     response::{Timings, VerseResult},
     Response as ServiceResponse,
 };
-use std::collections::{BTreeMap, BinaryHeap, HashMap};
+use std::collections::{BTreeMap, HashMap};
 use std::time::Instant;
 use util::ordered_tokenize;
 
@@ -16,6 +17,7 @@ pub use util::Config;
 
 pub type ReverseIndexList = Vec<(VerseKey, Vec<f64>)>;
 pub type ReverseIndex = HashMap<u64, ReverseIndexList>;
+pub type TranslationVerses = HashMap<Translation, HashMap<VerseKey, String>>;
 
 const MAX_RESULTS: usize = 20;
 const PREFIX_EXPANSION_FACTOR: usize = 2;
@@ -24,6 +26,7 @@ const TYPO_1_LEN: usize = 4;
 const TYPO_2_LEN: usize = 8;
 const SCORE_EXACT: f64 = 1.0;
 const SCORE_INEXACT: f64 = 0.5;
+pub const TRANSLATION_COUNT: usize = Translation::Total as usize;
 
 struct ReverseIndexListWithMultiplier<'a> {
     list: &'a ReverseIndexList,
@@ -33,14 +36,20 @@ struct ReverseIndexListWithMultiplier<'a> {
 pub struct VersearchIndex {
     fst_map: FstMap,
     reverse_index: ReverseIndex,
+    translation_verses: TranslationVerses,
 }
 
 impl VersearchIndex {
     #[allow(clippy::new_without_default)]
-    pub fn new(fst_bytes: Vec<u8>, reverse_index: ReverseIndex) -> VersearchIndex {
+    pub fn new(
+        fst_bytes: Vec<u8>,
+        reverse_index: ReverseIndex,
+        translation_verses: TranslationVerses,
+    ) -> VersearchIndex {
         VersearchIndex {
             fst_map: FstMap::from_bytes(fst_bytes).expect("Could not load map from FST bytes"),
             reverse_index,
+            translation_verses,
         }
     }
 
@@ -112,7 +121,7 @@ impl VersearchIndex {
             .unwrap_or_else(|| priority_lists.last().unwrap());
         let mut result_scores = HashMap::with_capacity(primary_list.list.len());
         for (key, _) in primary_list.list {
-            result_scores.insert(*key, vec![0f64; Translation::Total as usize]);
+            result_scores.insert(*key, vec![0f64; TRANSLATION_COUNT]);
         }
         for ReverseIndexListWithMultiplier { exact_match, list } in found_lists.values() {
             for (key, scores) in *list {
@@ -133,19 +142,32 @@ impl VersearchIndex {
 
         // Collect ranked results
         let start = Instant::now();
-        let mut rank_heap = BinaryHeap::with_capacity(primary_list.list.len());
-        for (key, scores) in result_scores {
-            rank_heap.push(VerseResult {
-                key: Some(key),
+        let res: Vec<_> = result_scores
+            .iter()
+            .sorted_by(|(_key1, scores1), (_key2, scores2)| {
+                scores1
+                    .iter()
+                    .sum::<f64>()
+                    .partial_cmp(&scores2.iter().sum())
+                    .unwrap()
+                    .reverse()
+            })
+            .take(MAX_RESULTS)
+            .map(|(key, scores)| VerseResult {
+                key: Some(*key),
                 translation_scores: scores.iter().copied().collect(),
                 total_score: scores.iter().sum(),
-            });
-        }
-        let count = MAX_RESULTS.min(rank_heap.len());
-        let mut res = Vec::with_capacity(count);
-        for _ in 0..count {
-            res.push(rank_heap.pop().unwrap());
-        }
+                text: (0..Translation::Total as i32)
+                    .map(|i| {
+                        self.translation_verses
+                            .get(&Translation::from_i32(i).unwrap())
+                            .unwrap()
+                            .get(&key)
+                            .map_or_else(|| "".to_string(), |s| s.clone())
+                    })
+                    .collect(),
+            })
+            .collect();
         let rank_us = start.elapsed().as_micros() as i32;
 
         // Construct and return response
