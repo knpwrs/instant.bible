@@ -44,7 +44,8 @@ pub fn get_index() -> VersearchIndex {
         Err(error) => panic!("{:?}", error),
     };
 
-    let mut word_counts: BTreeMap<String, HashMap<VerseKey, Vec<f64>>> = BTreeMap::new();
+    let mut total_docs: usize = 0;
+    let mut token_scores: BTreeMap<String, HashMap<VerseKey, Vec<f64>>> = BTreeMap::new();
     let mut translation_verses: TranslationVerses = HashMap::new();
 
     info!("Loading translations from {:?}", config.translation_dir);
@@ -72,6 +73,7 @@ pub fn get_index() -> VersearchIndex {
                 data.verses.len(),
                 now.elapsed().as_millis()
             );
+            total_docs = total_docs.max(data.verses.len());
             let now = Instant::now();
             for verse in &data.verses {
                 translation_verses
@@ -79,13 +81,27 @@ pub fn get_index() -> VersearchIndex {
                     .or_insert_with(HashMap::new)
                     .entry(verse.key.unwrap())
                     .or_insert_with(|| verse.text.clone());
-                for token in tokenize(&verse.text) {
-                    let counts = word_counts
+                let all_tokens = tokenize(&verse.text);
+                let tokens_count = all_tokens.len() as f64;
+                // Count up tokens
+                for token in all_tokens {
+                    let counts = token_scores
                         .entry(token)
                         .or_insert_with(HashMap::new)
                         .entry(verse.key.expect("Missing verse key"))
                         .or_insert_with(|| vec![0.0; TRANSLATION_COUNT]);
                     counts[translation_key as usize] += 1.0;
+                }
+                // Adjust for verse length
+                for token in ordered_tokenize(&verse.text) {
+                    let scores = token_scores
+                        .get_mut(&token)
+                        .expect("Token not initialized properly")
+                        .get_mut(&verse.key.expect("Missing verse key"))
+                        .expect("Scores not initialized properly");
+                    for i in scores {
+                        *i /= tokens_count;
+                    }
                 }
             }
             info!(
@@ -96,11 +112,23 @@ pub fn get_index() -> VersearchIndex {
         }
     }
 
+    info!("Adjusting scores for inverse document frequency");
+    let now = Instant::now();
+    for verses in token_scores.values_mut() {
+        let count = verses.len();
+        for scores in verses.values_mut() {
+            for s in scores.iter_mut() {
+                *s *= (total_docs as f64 / count as f64).log10();
+            }
+        }
+    }
+    info!("Scores adjusted in {}ms", now.elapsed().as_millis());
+
     let mut build = MapBuilder::memory();
     let mut reverse_index: ReverseIndex = HashMap::new();
 
     let now = Instant::now();
-    for (i, (word, verses)) in word_counts.iter().enumerate() {
+    for (i, (word, verses)) in token_scores.iter().enumerate() {
         build.insert(word, i as u64).unwrap();
         reverse_index.insert(i as u64, verses.clone());
     }
