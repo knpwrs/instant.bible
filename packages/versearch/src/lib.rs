@@ -61,8 +61,15 @@ impl VersearchIndex {
         let tokens = ordered_tokenize(text);
         let tokenize_us = start.elapsed().as_micros() as i32;
 
-        // Expand and determine score multiplier for each token
+        if tokens.is_empty() {
+            return ServiceResponse {
+                results: Vec::new(),
+                found_tokens: Vec::new(),
+                timings: None,
+            };
+        }
 
+        // Expand and determine score multiplier for each token
         let start = Instant::now();
         for token in tokens {
             // Attempt a prefix search
