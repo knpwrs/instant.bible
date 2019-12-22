@@ -15,8 +15,8 @@ use util::ordered_tokenize;
 
 pub use util::Config;
 
-pub type ReverseIndexList = Vec<(VerseKey, Vec<f64>)>;
-pub type ReverseIndex = HashMap<u64, ReverseIndexList>;
+pub type ReverseIndexScores = HashMap<VerseKey, Vec<f64>>;
+pub type ReverseIndex = HashMap<u64, ReverseIndexScores>;
 pub type TranslationVerses = HashMap<Translation, HashMap<VerseKey, String>>;
 
 const MAX_RESULTS: usize = 20;
@@ -28,8 +28,8 @@ const SCORE_EXACT: f64 = 1.0;
 const SCORE_INEXACT: f64 = 0.5;
 pub const TRANSLATION_COUNT: usize = Translation::Total as usize;
 
-struct ReverseIndexListWithMultiplier<'a> {
-    list: &'a ReverseIndexList,
+struct ReverseIndexScoresWithMultiplier<'a> {
+    index: &'a ReverseIndexScores,
     exact_match: bool,
 }
 
@@ -54,7 +54,7 @@ impl VersearchIndex {
     }
 
     pub fn search(&self, text: &str) -> ServiceResponse {
-        let mut found_lists: BTreeMap<String, ReverseIndexListWithMultiplier> = BTreeMap::new();
+        let mut found_indices: BTreeMap<String, ReverseIndexScoresWithMultiplier> = BTreeMap::new();
 
         // Tokenize input text
         let start = Instant::now();
@@ -92,13 +92,13 @@ impl VersearchIndex {
                 // Tokens should be less than an expansion limit with a reasonable expansion for small tokens
                 res.len() < (token.len() * PREFIX_EXPANSION_FACTOR).max(PREFIX_EXPANSION_MINIMUM)
             }) {
-                let mut container = found_lists.entry(result.clone()).or_insert_with(|| {
-                    ReverseIndexListWithMultiplier {
-                        list: self.reverse_index.get(&idx).unwrap(),
+                let mut container = found_indices.entry(result.clone()).or_insert_with(|| {
+                    ReverseIndexScoresWithMultiplier {
+                        index: self.reverse_index.get(&idx).unwrap(),
                         exact_match: false,
                     }
                 });
-                if *result == token {
+                if *result == token && token.len() > 1 {
                     container.exact_match = true;
                 }
             }
@@ -107,35 +107,40 @@ impl VersearchIndex {
 
         // Score all results
         let start = Instant::now();
-        let mut priority_lists: Vec<_> = found_lists.values().collect();
+        let mut priority_lists: Vec<_> = found_indices.values().collect();
         priority_lists.sort_by(|a, b| {
             if a.exact_match != b.exact_match {
                 a.exact_match.cmp(&b.exact_match)
             } else {
-                a.list.len().cmp(&b.list.len())
+                a.index.len().cmp(&b.index.len())
             }
         });
         let primary_list = priority_lists
             .iter()
-            .find(|l| l.exact_match && l.list.len() >= MAX_RESULTS)
-            .unwrap_or_else(|| priority_lists.last().unwrap());
-        let mut result_scores = HashMap::with_capacity(primary_list.list.len());
-        for (key, _) in primary_list.list {
+            .find(|l| l.exact_match && l.index.len() >= MAX_RESULTS)
+            .unwrap_or_else(|| {
+                priority_lists
+                    .iter()
+                    .find(|l| l.index.len() >= MAX_RESULTS)
+                    .unwrap_or_else(|| priority_lists.last().unwrap())
+            });
+        let mut result_scores = HashMap::with_capacity(primary_list.index.len());
+        for key in primary_list.index.keys() {
             result_scores.insert(*key, vec![0f64; TRANSLATION_COUNT]);
         }
-        for ReverseIndexListWithMultiplier { exact_match, list } in found_lists.values() {
-            for (key, scores) in *list {
-                result_scores.entry(*key).and_modify(|previous_scores| {
-                    for (previous_score, new_score) in previous_scores.iter_mut().zip(scores.iter())
-                    {
-                        let multiplier = if *exact_match {
-                            SCORE_EXACT
-                        } else {
-                            SCORE_INEXACT
-                        };
-                        *previous_score += new_score * multiplier;
+        for (result_key, result_scores) in result_scores.iter_mut() {
+            for ReverseIndexScoresWithMultiplier { exact_match, index } in found_indices.values() {
+                if index.contains_key(&result_key) {
+                    let found_scores = index.get(&result_key).unwrap();
+                    let multiplier = if *exact_match {
+                        SCORE_EXACT
+                    } else {
+                        SCORE_INEXACT
+                    };
+                    for i in 0..result_scores.len() {
+                        result_scores[i] += found_scores[i] * multiplier;
                     }
-                });
+                }
             }
         }
         let score_us = start.elapsed().as_micros() as i32;
@@ -173,7 +178,7 @@ impl VersearchIndex {
         // Construct and return response
         ServiceResponse {
             results: res,
-            found_tokens: found_lists.keys().cloned().collect(),
+            found_tokens: found_indices.keys().cloned().collect(),
             timings: Some(Timings {
                 tokenize: tokenize_us,
                 fst: fst_us,

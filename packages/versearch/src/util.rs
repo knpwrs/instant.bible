@@ -44,7 +44,7 @@ pub fn get_index() -> VersearchIndex {
         Err(error) => panic!("{:?}", error),
     };
 
-    let mut word_counts: BTreeMap<String, BTreeMap<VerseKey, Vec<f64>>> = BTreeMap::new();
+    let mut word_counts: BTreeMap<String, HashMap<VerseKey, Vec<f64>>> = BTreeMap::new();
     let mut translation_verses: TranslationVerses = HashMap::new();
 
     info!("Loading translations from {:?}", config.translation_dir);
@@ -82,7 +82,7 @@ pub fn get_index() -> VersearchIndex {
                 for token in tokenize(&verse.text) {
                     let counts = word_counts
                         .entry(token)
-                        .or_insert_with(BTreeMap::new)
+                        .or_insert_with(HashMap::new)
                         .entry(verse.key.expect("Missing verse key"))
                         .or_insert_with(|| vec![0.0; TRANSLATION_COUNT]);
                     counts[translation_key as usize] += 1.0;
@@ -102,13 +102,7 @@ pub fn get_index() -> VersearchIndex {
     let now = Instant::now();
     for (i, (word, verses)) in word_counts.iter().enumerate() {
         build.insert(word, i as u64).unwrap();
-        reverse_index.insert(
-            i as u64,
-            verses
-                .iter()
-                .map(|(key, val)| (*key, val.clone()))
-                .collect(),
-        );
+        reverse_index.insert(i as u64, verses.clone());
     }
     info!(
         "Indexed {} words in {}ms",
