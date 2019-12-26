@@ -1,14 +1,12 @@
 import * as React from 'react';
 import { hot } from 'react-hot-loader/root';
-import Header from './elements/header';
-import Logo from './elements/logo';
 import { ThemeProvider } from './util/theme';
+import App from './app';
 
-const App: React.FunctionComponent = () => (
+const Root: React.FunctionComponent = () => (
   <ThemeProvider>
-    <Logo />
-    <Header>Hello, World!</Header>
+    <App />
   </ThemeProvider>
 );
 
-export default hot(App);
+export default hot(Root);

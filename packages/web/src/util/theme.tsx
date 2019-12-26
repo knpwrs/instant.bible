@@ -21,6 +21,12 @@ const colors = {
   white: '#FFFFFF',
 };
 
+export type Font = {
+  family: string;
+  weight: number;
+  size: string;
+};
+
 const base = {
   colors,
   text: {
@@ -32,6 +38,11 @@ const base = {
     subhead3Medium: {
       family: 'Roboto',
       weight: 500,
+      size: '14px',
+    },
+    subhead4Regular: {
+      family: 'Roboto',
+      weight: 400,
       size: '14px',
     },
   },
@@ -151,3 +162,9 @@ export const ThemeProvider: React.FunctionComponent<{
     </ThemeProviderComp>
   );
 };
+
+export const fontToCss = (font: Font): ReturnType<typeof css> => css`
+  font-family: ${font.family};
+  font-weight: ${font.weight};
+  font-size: ${font.size};
+`;
