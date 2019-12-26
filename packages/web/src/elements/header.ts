@@ -1,6 +1,6 @@
-import styled from '@emotion/styled';
+import styled from '../util/styled';
 
 export default styled('h1')`
-  color: red;
+  color: ${({ theme }): string => theme.text};
   font-family: Roboto;
 `;
