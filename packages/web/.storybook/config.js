@@ -1,18 +1,32 @@
 import * as React from 'react';
 import { withKnobs } from '@storybook/addon-knobs';
 import { configure, addDecorator } from '@storybook/react';
-import styled from '@emotion/styled';
 import { ThemeProvider } from 'emotion-theming';
-
-const theme = {};
+import styled from '../src/util/styled';
+import { light, dark } from '../src/util/theme';
 
 const Wrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+`;
+
+const ThemeWrapper = styled.div`
+  display: flex;
+  width: 50vw;
+  height: 100vh;
   padding: 30px;
+  background: ${({ theme }) => theme.background};
+  justify-content: center;
+  align-items: center;
 `;
 
 const ThemeDecorator = (storyFn, context) => (
   <Wrapper>
-    <ThemeProvider theme={theme}>{storyFn()}</ThemeProvider>
+    {[light, dark].map(theme => (
+      <ThemeProvider key={theme.key} theme={theme}>
+        <ThemeWrapper>{storyFn()}</ThemeWrapper>
+      </ThemeProvider>
+    ))}
   </Wrapper>
 );
 

@@ -23,6 +23,10 @@ const conf: webpack.Configuration = {
         exclude: /node_modules/,
       },
       {
+        test: /\.svg$/,
+        loader: '@svgr/webpack',
+      },
+      {
         test: /\.css$/,
         loaders: ['style-loader', 'css-loader'],
       },
