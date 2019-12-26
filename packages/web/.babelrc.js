@@ -6,6 +6,7 @@ module.exports = {
     ],
     '@babel/preset-typescript',
     '@babel/preset-react',
+    '@emotion/babel-preset-css-prop',
   ],
   plugins: ['react-hot-loader/babel', 'emotion'],
 };

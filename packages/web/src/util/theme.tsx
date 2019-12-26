@@ -9,18 +9,51 @@ import { noop, isString } from 'lodash';
 export type ThemeKey = 'light' | 'dark';
 const storageKey = 'themeKey';
 
+const colors = {
+  // Named colors
+  whipLashCream: '#44444F', // https://www.colourlovers.com/color/44444F
+  theLeague: '#FAFAFB', // https://www.colourlovers.com/color/FAFAFB
+  pantone4332x: '#13131A', // https://www.wolframalpha.com/input/?i=%2313131A
+  // Other colors
+  blue: '#0062FF',
+  darkBlue: '#1C1C24',
+  paleYellow: '#FFFCF3',
+  white: '#FFFFFF',
+  yellow: '#FFC542',
+};
+
+const base = {
+  colors,
+};
+
 export const light = {
   key: 'light' as ThemeKey,
-  background: '#FAFAFB',
-  text: '#44444F',
+  ...base,
+  background: colors.theLeague,
+  text: colors.whipLashCream,
+  component: {
+    background: colors.white,
+    focus: {
+      background: colors.paleYellow,
+      border: colors.yellow,
+    },
+  },
 };
 
 export type Theme = typeof light;
 
 export const dark: Theme = {
   key: 'dark',
-  background: '#13131A',
-  text: '#FAFAFB',
+  ...base,
+  background: colors.pantone4332x,
+  text: colors.theLeague,
+  component: {
+    background: colors.darkBlue,
+    focus: {
+      background: colors.darkBlue,
+      border: colors.blue,
+    },
+  },
 };
 
 export const useTheme = useThemeFn as () => Theme;
