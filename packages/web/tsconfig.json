@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "es2015",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "lib": ["es2015", "es2016", "es2017.object", "dom"],
+    "sourceMap": true,
+    "allowJs": false,
+    "jsx": "react",
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": true,
+    "rootDir": "./src",
+    "skipLibCheck": true
+  }
+}

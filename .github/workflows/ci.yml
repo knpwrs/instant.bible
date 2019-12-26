@@ -6,13 +6,26 @@ jobs:
   build-versearch:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: Build
-      working-directory: ./packages/versearch
-      run: cargo build --verbose
-    - name: Test
-      working-directory: ./packages/versearch
-      run: cargo test --verbose
-    - name: Clippy
-      working-directory: ./packages/versearch
-      run: cargo clippy
+      - uses: actions/checkout@v1
+      - name: Build
+        working-directory: ./packages/versearch
+        run: cargo build --verbose
+      - name: Test
+        working-directory: ./packages/versearch
+        run: cargo test --verbose
+      - name: Clippy
+        working-directory: ./packages/versearch
+        run: cargo clippy
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install
+        working-directory: ./packages/web
+        run: npm ci
+      - name: Check
+        working-directory: ./packages/web
+        run: npm run check
+      - name: Build
+        working-directory: ./packages/web
+        run: npm run build
