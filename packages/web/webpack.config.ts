@@ -25,6 +25,9 @@ const conf: webpack.Configuration = {
       {
         test: /\.svg$/,
         loader: '@svgr/webpack',
+        options: {
+          memo: true,
+        },
       },
       {
         test: /\.css$/,

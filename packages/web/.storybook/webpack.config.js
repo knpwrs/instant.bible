@@ -18,6 +18,9 @@ module.exports = ({ config }) => {
     {
       test: /\.svg$/,
       loader: require.resolve('@svgr/webpack'),
+      options: {
+        memo: true,
+      },
     },
   );
   config.resolve.extensions.unshift('.ts', '.tsx');
