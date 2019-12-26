@@ -10,32 +10,49 @@ export type ThemeKey = 'light' | 'dark';
 const storageKey = 'themeKey';
 
 const colors = {
-  // Named colors
-  whipLashCream: '#44444F', // https://www.colourlovers.com/color/44444F
-  theLeague: '#FAFAFB', // https://www.colourlovers.com/color/FAFAFB
+  floralWhite: '#FFFCF3', // https://www.wolframalpha.com/input/?i=%23FFFCF3
+  pantone135c: '#FFC542', // https://www.wolframalpha.com/input/?i=%23FFC542
+  pantone2728c: '#0062FF', // https://www.wolframalpha.com/input/?i=%230062FF
   pantone4332x: '#13131A', // https://www.wolframalpha.com/input/?i=%2313131A
-  // Other colors
-  blue: '#0062FF',
-  darkBlue: '#1C1C24',
-  paleYellow: '#FFFCF3',
+  pantone532: '#1C1C24', // https://www.wolframalpha.com/input/?i=%231c1c24
+  pewter: '#92929D', // https://www.wolframalpha.com/input/?i=%2392929D
+  theLeague: '#FAFAFB', // https://www.colourlovers.com/color/FAFAFB
+  whipLashCream: '#44444F', // https://www.colourlovers.com/color/44444F
   white: '#FFFFFF',
-  yellow: '#FFC542',
 };
 
 const base = {
   colors,
+  text: {
+    subhead3Regular: {
+      family: 'Roboto',
+      weight: 400,
+      size: '14px',
+    },
+    subhead3Medium: {
+      family: 'Roboto',
+      weight: 500,
+      size: '14px',
+    },
+  },
 };
 
 export const light = {
   key: 'light' as ThemeKey,
   ...base,
   background: colors.theLeague,
-  text: colors.whipLashCream,
+  text: {
+    ...base.text,
+    color: colors.whipLashCream,
+  },
   component: {
     background: colors.white,
     focus: {
-      background: colors.paleYellow,
-      border: colors.yellow,
+      background: colors.floralWhite,
+      border: colors.pantone135c,
+    },
+    input: {
+      placeholder: colors.pewter,
     },
   },
 };
@@ -46,12 +63,18 @@ export const dark: Theme = {
   key: 'dark',
   ...base,
   background: colors.pantone4332x,
-  text: colors.theLeague,
+  text: {
+    ...base.text,
+    color: colors.theLeague,
+  },
   component: {
-    background: colors.darkBlue,
+    background: colors.pantone532,
     focus: {
-      background: colors.darkBlue,
-      border: colors.blue,
+      background: colors.pantone532,
+      border: colors.pantone2728c,
+    },
+    input: {
+      placeholder: colors.pewter,
     },
   },
 };
