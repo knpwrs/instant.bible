@@ -25,6 +25,7 @@ export default React.memo(() => {
               display: flex;
               flex-direction: column;
               align-items: center;
+              padding-bottom: 35vh;
             `}
           >
             <div
