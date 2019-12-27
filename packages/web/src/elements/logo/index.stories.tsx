@@ -5,6 +5,8 @@ import Logo from './';
 
 storiesOf('elements/logo', module).add('basic', () => {
   const alt = boolean('alt', false);
+  const icon = boolean('icon', false);
+
   const width = number('width %', 75, {
     range: true,
     min: 20,
@@ -14,7 +16,7 @@ storiesOf('elements/logo', module).add('basic', () => {
 
   return (
     <div style={{ width: `${width}%` }}>
-      <Logo alt={alt} />
+      <Logo alt={alt} icon={icon} />
     </div>
   );
 });
