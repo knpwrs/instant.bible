@@ -1,0 +1,11 @@
+{
+  "copyright": {
+    "defaults": "Copyright © {0} instant.bible",
+    "origin": [
+      [
+        "src/app/copyright.tsx",
+        16
+      ]
+    ]
+  }
+}

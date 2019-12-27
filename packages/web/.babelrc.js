@@ -8,5 +8,5 @@ module.exports = {
     '@babel/preset-react',
     '@emotion/babel-preset-css-prop',
   ],
-  plugins: ['react-hot-loader/babel', 'emotion'],
+  plugins: ['react-hot-loader/babel', 'emotion', 'macros'],
 };

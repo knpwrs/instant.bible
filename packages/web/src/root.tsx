@@ -1,11 +1,14 @@
 import * as React from 'react';
 import { hot } from 'react-hot-loader/root';
+import { I18nProvider } from '@lingui/react';
 import { ThemeProvider } from './util/theme';
 import App from './app';
 
 const Root: React.FunctionComponent = () => (
   <ThemeProvider>
-    <App />
+    <I18nProvider language="en">
+      <App />
+    </I18nProvider>
   </ThemeProvider>
 );
 

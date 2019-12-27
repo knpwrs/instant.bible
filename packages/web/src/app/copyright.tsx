@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Trans } from '@lingui/macro';
 import styled, { ThemedFn } from '../util/styled';
 import { fontToCss } from '../util/theme';
 
@@ -18,6 +19,8 @@ const Root = styled('p')`
 
 export default React.memo((props: React.HTMLProps<HTMLParagraphElement>) => (
   <Root {...props}>
-    Copyright &copy; {new Date().getFullYear()} instant.bible
+    <Trans id="copyright">
+      Copyright &copy; {new Date().getFullYear()} instant.bible
+    </Trans>
   </Root>
 ));

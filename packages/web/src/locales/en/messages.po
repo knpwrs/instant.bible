@@ -1,0 +1,22 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2019-12-26 18:23-0500\n"
+"Mime-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: src/app/index.tsx:31
+msgid "Search..."
+msgstr ""
+
+#: src/app/copyright.tsx:16
+msgid "copyright"
+msgstr ""
