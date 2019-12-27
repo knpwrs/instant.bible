@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { axe } from 'jest-axe';
-import { render } from '@testing-library/react';
 import Header from './header';
+import render from '../opt/test-render';
 
 test('a11y', async () => {
   const { container } = render(<Header>Testing</Header>);
