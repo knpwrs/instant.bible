@@ -4,6 +4,8 @@ import { fontToCss } from '../util/theme';
 
 const getTextColor: ThemedFn = ({ theme }) => theme.text.color;
 const getBackgroundColor: ThemedFn = ({ theme }) => theme.component.background;
+const getFocusBackgroundColor: ThemedFn = ({ theme }) =>
+  theme.component.focus.background;
 const getFocusBorderColor: ThemedFn = ({ theme }) =>
   theme.component.focus.border;
 
@@ -26,6 +28,7 @@ export default styled('input')`
 
   &:focus {
     outline: none;
+    background: ${getFocusBackgroundColor};
     border: 1px solid ${getFocusBorderColor};
   }
 

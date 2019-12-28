@@ -4,6 +4,7 @@ import {
   ThemeProvider as ThemeProviderComp,
 } from 'emotion-theming';
 import { Global, css } from '@emotion/core';
+import { lighten, mix } from 'polished';
 import { noop, isString } from 'lodash';
 
 export type ThemeKey = 'light' | 'dark';
@@ -60,6 +61,7 @@ export const light = {
     background: colors.white01,
     focus: {
       border: colors.blue,
+      background: lighten(0.48, colors.blue),
     },
     input: {
       placeholder: colors.gray01,
@@ -82,6 +84,7 @@ export const dark: Theme = {
     background: colors.gray03,
     focus: {
       border: colors.gold,
+      background: mix(0.98, colors.gray03, colors.gold),
     },
     input: {
       placeholder: colors.gray01,
