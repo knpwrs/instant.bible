@@ -1,34 +1,50 @@
 import * as React from 'react';
-import { withKnobs } from '@storybook/addon-knobs';
+import { withKnobs, optionsKnob } from '@storybook/addon-knobs';
 import { configure, addDecorator } from '@storybook/react';
 import { ThemeProvider } from 'emotion-theming';
 import styled from '../src/util/styled';
-import { light, dark } from '../src/util/theme';
+import * as themeUtil from '../src/util/theme';
 
 const Wrapper = styled.div`
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  height: 100vh;
 `;
 
 const ThemeWrapper = styled.div`
   display: flex;
-  width: 50vw;
-  height: 100vh;
-  padding: 30px;
+  flex: 1;
   background: ${({ theme }) => theme.background};
   justify-content: center;
   align-items: center;
 `;
 
-const ThemeDecorator = (storyFn, context) => (
-  <Wrapper>
-    {[light, dark].map(theme => (
-      <ThemeProvider key={theme.key} theme={theme}>
-        <ThemeWrapper>{storyFn()}</ThemeWrapper>
-      </ThemeProvider>
-    ))}
-  </Wrapper>
-);
+const ThemeDecorator = (storyFn, context) => {
+  const themes = optionsKnob(
+    'Themes',
+    { Light: 'light', Dark: 'dark' },
+    ['light', 'dark'],
+    { display: 'inline-check' },
+  )
+    .sort()
+    .reverse();
+
+  console.log(themes);
+
+  return (
+    <Wrapper>
+      {themes.map(v => {
+        const theme = themeUtil[v];
+
+        return (
+          <ThemeProvider key={theme.key} theme={theme}>
+            <ThemeWrapper>{storyFn()}</ThemeWrapper>
+          </ThemeProvider>
+        );
+      })}
+    </Wrapper>
+  );
+};
 
 addDecorator(ThemeDecorator);
 addDecorator(withKnobs);
