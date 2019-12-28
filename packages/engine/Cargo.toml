@@ -1,13 +1,11 @@
 [package]
-name = "versearch"
+name = "engine"
 version = "0.0.0"
 publish = false
 authors = ["Kenneth Powers <ken@kenpowers.net> (https://knpw.rs)"]
 edition = "2018"
 
 [dependencies]
-actix-protobuf = "0.4.1"
-actix-web = "1.0.8"
 bytes = "0.4.12" # for prost
 criterion = "0.3.0"
 env_logger = "0.7.0"
@@ -17,7 +15,7 @@ fst-levenshtein = "0.2.1"
 itertools = "0.8.2"
 log = "0.4.8"
 prost = "0.5.0"
-serde = { version = "1.0.101", features = ["rc"] }
+serde = "1.0.101"
 
 [build-dependencies]
 prost-build = "0.5.0"

@@ -2,11 +2,11 @@ use actix_protobuf::ProtoBufResponseBuilder;
 use actix_web::{
     http, middleware, web, App, HttpRequest, HttpResponse, HttpServer, Result as ActixResult,
 };
+use engine::util::get_index;
+use engine::VersearchIndex;
 use log::info;
 use serde::Deserialize;
 use std::sync::Arc;
-use versearch::util::get_index;
-use versearch::VersearchIndex;
 
 #[derive(Deserialize)]
 struct SearchQuery {

@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use versearch::util::get_index;
+use engine::util::get_index;
 
 pub fn search_benches(c: &mut Criterion) {
     let idx = get_index();

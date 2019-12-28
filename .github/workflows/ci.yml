@@ -3,7 +3,7 @@ name: instant.bible ci
 on: [push]
 
 jobs:
-  build-versearch:
+  build-rust:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -11,17 +11,17 @@ jobs:
         id: build-versearch-cache-cargo-build
         uses: actions/cache@v1
         with:
-          path: ./packages/versearch/target
+          path: ./packages/target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       - name: Build
         if: steps.build-versearch-cache-cargo-build.outputs.cache-hit != 'true'
-        working-directory: ./packages/versearch
+        working-directory: ./packages
         run: cargo build --verbose
       - name: Test
-        working-directory: ./packages/versearch
+        working-directory: ./packages
         run: cargo test --verbose
       - name: Clippy
-        working-directory: ./packages/versearch
+        working-directory: ./packages
         run: cargo clippy
   build-web:
     runs-on: ubuntu-latest

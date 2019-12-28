@@ -10,13 +10,8 @@ use std::io::prelude::*;
 use std::iter::{FromIterator, Iterator};
 use std::time::Instant;
 
-fn default_translation_dir() -> String {
-    "../text/data".to_string()
-}
-
 #[derive(Deserialize, Debug)]
 pub struct Config {
-    #[serde(default = "default_translation_dir")]
     pub translation_dir: String,
 }
 
