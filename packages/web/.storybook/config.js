@@ -29,8 +29,6 @@ const ThemeDecorator = (storyFn, context) => {
     .sort()
     .reverse();
 
-  console.log(themes);
-
   return (
     <Wrapper>
       {themes.map(v => {
