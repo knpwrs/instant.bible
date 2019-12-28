@@ -10,15 +10,14 @@ export type ThemeKey = 'light' | 'dark';
 const storageKey = 'themeKey';
 
 const colors = {
-  floralWhite: '#FFFCF3', // https://www.wolframalpha.com/input/?i=%23FFFCF3
-  pantone135c: '#FFC542', // https://www.wolframalpha.com/input/?i=%23FFC542
-  pantone2728c: '#0062FF', // https://www.wolframalpha.com/input/?i=%230062FF
-  pantone4332x: '#13131A', // https://www.wolframalpha.com/input/?i=%2313131A
-  pantone532: '#1C1C24', // https://www.wolframalpha.com/input/?i=%231c1c24
-  pewter: '#92929D', // https://www.wolframalpha.com/input/?i=%2392929D
-  theLeague: '#FAFAFB', // https://www.colourlovers.com/color/FAFAFB
-  whipLashCream: '#44444F', // https://www.colourlovers.com/color/44444F
-  white: '#FFFFFF',
+  blue: '#0062FF',
+  gold: '#FFC542',
+  gray01: '#92929D',
+  gray02: '#44444F',
+  gray03: '#1C1C24',
+  gray04: '#13131A',
+  white01: '#FFFFFF',
+  white02: '#FAFAFB',
 };
 
 export type Font = {
@@ -51,19 +50,19 @@ const base = {
 export const light = {
   key: 'light' as ThemeKey,
   ...base,
-  background: colors.theLeague,
+  background: colors.white02,
   text: {
     ...base.text,
-    color: colors.whipLashCream,
-    highlightColor: colors.pantone2728c,
+    color: colors.gray02,
+    highlightColor: colors.blue,
   },
   component: {
-    background: colors.white,
+    background: colors.white01,
     focus: {
-      border: colors.pantone2728c,
+      border: colors.blue,
     },
     input: {
-      placeholder: colors.pewter,
+      placeholder: colors.gray01,
     },
   },
 };
@@ -73,19 +72,19 @@ export type Theme = typeof light;
 export const dark: Theme = {
   key: 'dark',
   ...base,
-  background: colors.pantone4332x,
+  background: colors.gray04,
   text: {
     ...base.text,
-    color: colors.theLeague,
-    highlightColor: colors.pantone135c,
+    color: colors.white02,
+    highlightColor: colors.gold,
   },
   component: {
-    background: colors.pantone532,
+    background: colors.gray03,
     focus: {
-      border: colors.pantone135c,
+      border: colors.gold,
     },
     input: {
-      placeholder: colors.pewter,
+      placeholder: colors.gray01,
     },
   },
 };
