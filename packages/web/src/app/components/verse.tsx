@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { css } from '@emotion/core';
-import Highlighter from 'react-highlight-words';
+import { findAll } from 'highlight-words-core';
 import { clamp } from 'lodash';
 import styled from '../../util/styled';
 import {
@@ -73,6 +73,30 @@ const Verse: React.FunctionComponent<Props> = ({
     [translationKeys, selectedKey, onSelectKey],
   );
 
+  const text = data[selectedKey];
+
+  const chunks = React.useMemo(
+    () =>
+      findAll({
+        textToHighlight: text,
+        searchWords: highlight,
+      }),
+    [text, highlight],
+  );
+
+  const highlightedText = React.useMemo(
+    () =>
+      chunks.map(({ highlight, start, end }) => {
+        const key = `${start}-${end}-${highlight}`;
+        const chunk = text.substr(start, end - start);
+        if (highlight) {
+          return <Body3Highlight key={key}>{chunk}</Body3Highlight>;
+        }
+        return <React.Fragment key={key}>{chunk}</React.Fragment>;
+      }),
+    [chunks, text],
+  );
+
   return (
     <Card
       css={css`
@@ -88,13 +112,7 @@ const Verse: React.FunctionComponent<Props> = ({
       >
         {title}
       </H5>
-      <Body3>
-        <Highlighter
-          textToHighlight={data[selectedKey]}
-          searchWords={highlight}
-          highlightTag={Body3Highlight}
-        />
-      </Body3>
+      <Body3>{highlightedText}</Body3>
       <div>
         {translationKeys.map(key => (
           <Translation
