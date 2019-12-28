@@ -11,9 +11,12 @@ export const Body3 = styled(Text.withComponent('p'))`
   font-size: 14px;
 `;
 
+const getHighlightColor: ThemedFn = ({ theme }) => theme.text.highlightColor;
+
 export const Body3Highlight = styled(Body3.withComponent('mark'))`
   font-weight: 700;
   background: none;
+  color: ${getHighlightColor};
 `;
 
 export const H5 = styled('h5')`

@@ -55,12 +55,12 @@ export const light = {
   text: {
     ...base.text,
     color: colors.whipLashCream,
+    highlightColor: colors.pantone2728c,
   },
   component: {
     background: colors.white,
     focus: {
-      background: colors.floralWhite,
-      border: colors.pantone135c,
+      border: colors.pantone2728c,
     },
     input: {
       placeholder: colors.pewter,
@@ -77,12 +77,12 @@ export const dark: Theme = {
   text: {
     ...base.text,
     color: colors.theLeague,
+    highlightColor: colors.pantone135c,
   },
   component: {
     background: colors.pantone532,
     focus: {
-      background: colors.pantone532,
-      border: colors.pantone2728c,
+      border: colors.pantone135c,
     },
     input: {
       placeholder: colors.pewter,
