@@ -18,7 +18,7 @@ const colors = {
   gray03: '#1C1C24',
   gray04: '#13131A',
   white01: '#FFFFFF',
-  white02: '#FAFAFB',
+  white02: '#F8F8F9',
 };
 
 export type Font = {
