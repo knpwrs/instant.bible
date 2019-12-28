@@ -1,6 +1,7 @@
 const path = require('path');
 
 module.exports = ({ config }) => {
+  config.entry.unshift('typeface-poppins');
   config.entry.unshift('typeface-roboto');
   config.entry.unshift('sanitize.css');
 

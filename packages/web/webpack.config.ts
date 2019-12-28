@@ -4,7 +4,13 @@ import * as HtmlWebpackPlugin from 'html-webpack-plugin';
 
 const conf: webpack.Configuration = {
   context: __dirname,
-  entry: ['react-hot-loader/patch', 'sanitize.css', 'typeface-roboto', './src'],
+  entry: [
+    'react-hot-loader/patch',
+    'sanitize.css',
+    'typeface-roboto',
+    'typeface-poppins',
+    './src',
+  ],
   output: {
     path: resolve(__dirname, './dist'),
     filename: 'app.bundle.js',

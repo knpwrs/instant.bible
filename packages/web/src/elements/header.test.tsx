@@ -5,7 +5,7 @@ import render from '../opt/test-render';
 
 test('a11y', async () => {
   const { container } = render(<Header>Testing</Header>);
-  expect(await axe(container.innerHTML)).toHaveNoViolations();
+  expect(await axe(container)).toHaveNoViolations();
 });
 
 test('renders text', () => {
