@@ -54,6 +54,7 @@ const conf: webpack.Configuration = {
   ],
   devServer: {
     hot: true,
+    port: 8080,
   },
 };
 

@@ -50,6 +50,6 @@ fn main() -> std::io::Result<()> {
             .data(index.clone())
             .service(web::resource("/").to(search))
     })
-    .bind("0.0.0.0:8080")?
+    .bind("0.0.0.0:8081")?
     .run()
 }
