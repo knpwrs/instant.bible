@@ -7,7 +7,7 @@ storiesOf('elements/logo', module).add('basic', () => {
   const alt = boolean('alt', false);
   const icon = boolean('icon', false);
 
-  const height = number('height %', 50, {
+  const width = number('width %', 50, {
     range: true,
     min: 20,
     max: 100,
@@ -15,7 +15,7 @@ storiesOf('elements/logo', module).add('basic', () => {
   });
 
   return (
-    <div style={{ height: `${height}%` }}>
+    <div style={{ width: `${width}%` }}>
       <Logo alt={alt} icon={icon} />
     </div>
   );
