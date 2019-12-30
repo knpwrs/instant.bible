@@ -20,6 +20,5 @@ message Response {
   }
 
   repeated VerseResult results = 1;
-  repeated string foundTokens = 2;
-  Timings timings = 3;
+  Timings timings = 2;
 }

@@ -53,24 +53,12 @@ impl VersearchIndex {
         }
     }
 
-    pub fn search(&self, text: &str) -> ServiceResponse {
+    fn traverse_fst(
+        &self,
+        tokens: Vec<String>,
+    ) -> BTreeMap<String, ReverseIndexScoresWithMultiplier> {
         let mut found_indices: BTreeMap<String, ReverseIndexScoresWithMultiplier> = BTreeMap::new();
 
-        // Tokenize input text
-        let start = Instant::now();
-        let tokens = ordered_tokenize(text);
-        let tokenize_us = start.elapsed().as_micros() as i32;
-
-        if tokens.is_empty() {
-            return ServiceResponse {
-                results: Vec::new(),
-                found_tokens: Vec::new(),
-                timings: None,
-            };
-        }
-
-        // Expand and determine score multiplier for each token
-        let start = Instant::now();
         for token in tokens {
             // Attempt a prefix search
             let prefix_automaton = automaton::Str::new(&token).starts_with();
@@ -110,10 +98,14 @@ impl VersearchIndex {
                 }
             }
         }
-        let fst_us = start.elapsed().as_micros() as i32;
 
-        // Score all results
-        let start = Instant::now();
+        found_indices
+    }
+
+    fn score_results(
+        &self,
+        found_indices: BTreeMap<String, ReverseIndexScoresWithMultiplier>,
+    ) -> HashMap<VerseKey, Vec<f64>> {
         let mut priority_lists: Vec<_> = found_indices.values().collect();
         priority_lists.sort_by(|a, b| {
             if a.exact_match != b.exact_match {
@@ -150,11 +142,12 @@ impl VersearchIndex {
                 }
             }
         }
-        let score_us = start.elapsed().as_micros() as i32;
 
-        // Collect ranked results
-        let start = Instant::now();
-        let res: Vec<_> = result_scores
+        result_scores
+    }
+
+    fn collect_results(&self, result_scores: HashMap<VerseKey, Vec<f64>>) -> Vec<VerseResult> {
+        result_scores
             .iter()
             .sorted_by(|(_key1, scores1), (_key2, scores2)| {
                 scores1
@@ -179,13 +172,40 @@ impl VersearchIndex {
                     })
                     .collect(),
             })
-            .collect();
+            .collect()
+    }
+
+    pub fn search(&self, text: &str) -> ServiceResponse {
+        // Tokenize input text
+        let start = Instant::now();
+        let tokens = ordered_tokenize(text);
+        let tokenize_us = start.elapsed().as_micros() as i32;
+
+        if tokens.is_empty() {
+            return ServiceResponse {
+                results: Vec::new(),
+                timings: None,
+            };
+        }
+
+        // Expand and determine score multiplier for each token
+        let start = Instant::now();
+        let found_indices = self.traverse_fst(tokens);
+        let fst_us = start.elapsed().as_micros() as i32;
+
+        // Score all results
+        let start = Instant::now();
+        let result_scores = self.score_results(found_indices);
+        let score_us = start.elapsed().as_micros() as i32;
+
+        // Collect ranked results
+        let start = Instant::now();
+        let results = self.collect_results(result_scores);
         let rank_us = start.elapsed().as_micros() as i32;
 
         // Construct and return response
         ServiceResponse {
-            results: res,
-            found_tokens: found_indices.keys().cloned().collect(),
+            results,
             timings: Some(Timings {
                 tokenize: tokenize_us,
                 fst: fst_us,
