@@ -15,7 +15,6 @@ export type SliceState = {
   };
   readonly queries: {
     readonly [key: string]: {
-      key: string;
       inFlight: boolean;
       res: Array<{ key: string; topTranslation: string }>;
     };
@@ -38,7 +37,7 @@ const { actions, reducer } = createSlice({
       const { q } = payload;
 
       if (!state.queries[q]) {
-        state.queries[q] = { key: q, inFlight: true, res: [] };
+        state.queries[q] = { inFlight: true, res: [] };
       }
     },
     endQuery: (
