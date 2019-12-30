@@ -24,6 +24,8 @@ const Root = styled('header')<{ dirty: boolean }>`
 `;
 
 export default React.memo(() => {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
   const handleChange = React.useCallback(
     (e: React.FormEvent<HTMLInputElement>) => {
       replace('/', { q: e.currentTarget.value });
@@ -40,6 +42,25 @@ export default React.memo(() => {
     }
   }, [q, dispatch]);
 
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!inputRef.current) {
+        return;
+      }
+
+      if (e.target !== inputRef.current && e.key === '/') {
+        e.preventDefault();
+        inputRef.current.focus();
+      }
+    };
+
+    document.addEventListener('keyup', handler);
+
+    return () => {
+      document.removeEventListener('keyup', handler);
+    };
+  }, [inputRef]);
+
   const dirty = useDirty();
 
   return (
@@ -54,6 +75,7 @@ export default React.memo(() => {
             <Logo />
           </div>
           <Input
+            ref={inputRef}
             css={css`
               width: 100%;
               margin-top: ${dirty ? 'none' : '30px'};
