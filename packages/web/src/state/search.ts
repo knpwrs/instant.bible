@@ -4,23 +4,27 @@ import { AppThunk, RootState } from './';
 import * as api from '../util/api';
 import { ResolveType } from '../util/ts';
 
-export type ResType = ResolveType<ReturnType<typeof api.search>>;
-
-export type QueryContainer = {
-  key: string;
-  inFlight: boolean;
-  res?: ResType;
-};
+type ResType = ResolveType<ReturnType<typeof api.search>>;
 
 export type SliceState = {
-  dirty: boolean;
-  queries: {
-    [key: string]: QueryContainer;
+  readonly dirty: boolean;
+  readonly verses: {
+    readonly [key: string]: {
+      readonly [translation: string]: string;
+    };
+  };
+  readonly queries: {
+    readonly [key: string]: {
+      key: string;
+      inFlight: boolean;
+      res: Array<{ key: string; topTranslation: string }>;
+    };
   };
 };
 
 const initialState: SliceState = {
   dirty: false,
+  verses: {},
   queries: {},
 };
 
@@ -34,7 +38,7 @@ const { actions, reducer } = createSlice({
       const { q } = payload;
 
       if (!state.queries[q]) {
-        state.queries[q] = { key: q, inFlight: true };
+        state.queries[q] = { key: q, inFlight: true, res: [] };
       }
     },
     endQuery: (
@@ -43,9 +47,17 @@ const { actions, reducer } = createSlice({
     ): void => {
       const { q, res } = payload;
       const sq = state.queries[q];
-      if (sq) {
+      if (sq && res) {
         sq.inFlight = false;
-        sq.res = res;
+        res.forEach(r => {
+          if (!state.verses[r.key]) {
+            state.verses[r.key] = r.text;
+          }
+          sq.res = res.map(r => ({
+            key: r.key,
+            topTranslation: r.topTranslation,
+          }));
+        });
       }
     },
   },
@@ -95,7 +107,9 @@ const selectResults = createSelector(
   },
 );
 
-export const useRestedQuery = (q = ''): QueryContainer | null => {
+export const useRestedQuery = (
+  q = '',
+): SliceState['queries'][string] | null => {
   const query = useSelector((state: RootState) => selectResults(state, q));
 
   if (query) {
@@ -103,4 +117,8 @@ export const useRestedQuery = (q = ''): QueryContainer | null => {
   }
 
   return null;
+};
+
+export const useVerse = (key: string): SliceState['verses'][string] => {
+  return useSelector((state: RootState) => state.search.verses[key]);
 };
