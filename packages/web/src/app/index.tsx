@@ -1,56 +1,34 @@
 import * as React from 'react';
 import { css } from '@emotion/core';
-import { t } from '@lingui/macro';
-import { I18n } from '@lingui/react';
-import { Logo, Input } from '../elements';
+import Header from './header';
+import Results from './results';
 import Copyright from './copyright';
+import { useDirty } from '../state/search';
 
 export default React.memo(() => {
+  const dirty = useDirty();
+
   return (
-    <I18n>
-      {({ i18n }): React.ReactElement => (
-        <div
-          css={css`
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-          `}
-        >
-          <div
-            css={css`
-              width: 40%;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              padding-bottom: 35vh;
-            `}
-          >
-            <div
-              css={css`
-                width: 50%;
-              `}
-            >
-              <Logo />
-            </div>
-            <Input
-              css={css`
-                width: 100%;
-                margin-top: 30px;
-              `}
-              placeholder={i18n._(t`Search...`)}
-            />
-          </div>
-          <Copyright
-            css={css`
-              position: absolute;
-              bottom: 0;
-            `}
-          />
-        </div>
-      )}
-    </I18n>
+    <div
+      css={css`
+        position: relative;
+        width: 100vw;
+        min-height: 100vh;
+        padding: 0 15px 35px 15px;
+        display: flex;
+        justify-content: ${dirty ? 'flex-start' : 'center'};
+        align-items: center;
+        flex-direction: column;
+      `}
+    >
+      <Header />
+      {dirty ? <Results /> : null}
+      <Copyright
+        css={css`
+          position: absolute;
+          bottom: 0;
+        `}
+      />
+    </div>
   );
 });

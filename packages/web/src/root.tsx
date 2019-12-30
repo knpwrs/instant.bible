@@ -1,15 +1,19 @@
 import * as React from 'react';
 import { hot } from 'react-hot-loader/root';
 import { I18nProvider } from '@lingui/react';
+import { Provider as ReduxProvider } from 'react-redux';
 import { ThemeProvider } from './util/theme';
 import App from './app';
+import store from './state';
 
 const Root: React.FunctionComponent = () => (
-  <ThemeProvider>
+  <ReduxProvider store={store}>
     <I18nProvider language="en">
-      <App />
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
     </I18nProvider>
-  </ThemeProvider>
+  </ReduxProvider>
 );
 
 export default hot(Root);

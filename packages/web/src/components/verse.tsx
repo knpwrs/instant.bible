@@ -2,23 +2,18 @@ import * as React from 'react';
 import { css } from '@emotion/core';
 import { findAll } from 'highlight-words-core';
 import { clamp } from 'lodash';
-import styled from '../../util/styled';
-import {
-  Card,
-  H5,
-  Body3,
-  Subhead3Medium,
-  Body3Highlight,
-} from '../../elements';
+import styled from '../util/styled';
+import { Card, H5, Body3, Subhead3Medium, Body3Highlight } from '../elements';
 
-export type Props = {
+export type OwnProps = {
   title: string;
   data: { [key: string]: string };
   selectedKey: string;
   highlight: string[];
   onSelectKey: (key: string) => unknown;
-  tabIndex?: number;
 };
+
+export type Props = Omit<React.HTMLProps<HTMLDivElement>, 'data'> & OwnProps;
 
 const Translation = styled(Subhead3Medium.withComponent('button'))<{
   selected?: boolean;
@@ -57,6 +52,7 @@ const Verse: React.FunctionComponent<Props> = ({
   highlight,
   onSelectKey,
   tabIndex = 0,
+  className,
 }) => {
   const translationKeys = Object.keys(data).sort();
 
@@ -99,6 +95,7 @@ const Verse: React.FunctionComponent<Props> = ({
 
   return (
     <Card
+      className={className}
       css={css`
         width: 960px;
       `}

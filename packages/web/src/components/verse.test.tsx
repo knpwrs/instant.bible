@@ -4,7 +4,7 @@ import { noop } from 'lodash';
 import { fireEvent } from '@testing-library/react';
 import Verse, { Props as VerseProps } from './verse';
 import data from './__mocks__/verse-data';
-import render from '../../opt/test-render';
+import render from '../opt/test-render';
 
 const renderVerse = ({
   onSelectKey = noop,

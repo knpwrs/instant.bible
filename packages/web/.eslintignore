@@ -1,2 +1,1 @@
-src/locale/_build/
-src/locale/**/*.js
+src/proto/*

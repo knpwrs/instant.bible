@@ -46,7 +46,10 @@ const conf: webpack.Configuration = {
     ],
   },
   plugins: [
-    new webpack.EnvironmentPlugin(['NODE_ENV']),
+    new webpack.EnvironmentPlugin({
+      NODE_ENV: 'development',
+      IB_ENDPOINT: '/api/',
+    }),
     new HtmlWebpackPlugin({
       template: './src/index.html',
       inject: 'body',
@@ -55,6 +58,9 @@ const conf: webpack.Configuration = {
   devServer: {
     hot: true,
     port: 8080,
+    proxy: {
+      '/api': 'http://localhost:8081',
+    },
   },
 };
 
