@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux';
 import { AppThunk, RootState } from './';
 import * as api from '../util/api';
 import { ResolveType } from '../util/ts';
-import { replace } from '../util/history';
 
 type ResType = ResolveType<ReturnType<typeof api.search>>;
 
