@@ -48,7 +48,7 @@ fn main() -> std::io::Result<()> {
         App::new()
             .wrap(middleware::Logger::default())
             .data(index.clone())
-            .service(web::resource("/").to(search))
+            .service(web::scope("/api").service(web::resource("/").to(search)))
     })
     .bind("0.0.0.0:8081")?
     .run()
