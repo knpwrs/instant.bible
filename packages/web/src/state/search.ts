@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { AppThunk, RootState } from './';
 import * as api from '../util/api';
 import { ResolveType } from '../util/ts';
+import { replace } from '../util/history';
 
 type ResType = ResolveType<ReturnType<typeof api.search>>;
 
@@ -59,24 +60,24 @@ const { actions, reducer } = createSlice({
         });
       }
     },
+    reset: state => {
+      state.dirty = false;
+    },
   },
 });
 
 export default reducer;
 
-export const { startQuery, endQuery } = actions;
+export const { startQuery, endQuery, reset } = actions;
 
-export const doSearch = (q: string): AppThunk => async (
-  dispatch,
-  getState,
-): Promise<void> => {
+export const doSearch = (q: string): AppThunk => async (dispatch, getState) => {
   const { search: searchState } = getState();
+
+  dispatch(startQuery({ q }));
 
   if (searchState.queries[q]) {
     return;
   }
-
-  dispatch(startQuery({ q }));
 
   const res = await api.search(q);
 

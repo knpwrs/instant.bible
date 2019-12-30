@@ -11,7 +11,7 @@ export type AppQuery = {
 
 export default history;
 
-export const replace = (path: string, query?: object): void =>
+export const replace = (path = '/', query?: object): void =>
   history.replace(
     [path, query ? qs.stringify(query) : ''].filter(Boolean).join('?'),
   );

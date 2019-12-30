@@ -5,7 +5,7 @@ import { css } from '@emotion/core';
 import { I18n } from '@lingui/react';
 import { Logo, Input } from '../elements';
 import { replace, useQuery } from '../util/history';
-import { doSearch, useDirty } from '../state/search';
+import { doSearch, reset, useDirty } from '../state/search';
 import styled, { ThemedFn } from '../util/styled';
 
 const getBackgroundColor: ThemedFn = ({ theme }) => theme.background;
@@ -33,7 +33,7 @@ export default React.memo(() => {
     [],
   );
 
-  const { q } = useQuery();
+  const { q = '' } = useQuery();
   const dispatch = useDispatch();
 
   React.useEffect(() => {
@@ -60,6 +60,21 @@ export default React.memo(() => {
       document.removeEventListener('keyup', handler);
     };
   }, [inputRef]);
+
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        replace();
+        dispatch(reset());
+      }
+    };
+
+    document.addEventListener('keyup', handler);
+
+    return () => {
+      document.removeEventListener('keyup', handler);
+    };
+  }, [dispatch]);
 
   const dirty = useDirty();
 
