@@ -9,14 +9,21 @@ use proto::service::{
     response::{Timings, VerseResult},
     Response as ServiceResponse,
 };
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::time::Instant;
-use util::ordered_tokenize;
+use util::{tokenize, Tokenized};
 
 pub use util::Config;
 
-pub type ReverseIndexScores = HashMap<VerseKey, Vec<f64>>;
-pub type ReverseIndex = HashMap<u64, ReverseIndexScores>;
+/// Different strings can end up creating the same token (e.g., it's and its both
+/// produce ITS); therefore, it is important to account for this in the index
+/// structure, particularly for when it comes to highlighting.
+pub struct ReverseIndexEntry {
+    verse_highlights: HashMap<VerseKey, Vec<String>>,
+    verse_scores: HashMap<VerseKey, Vec<f64>>,
+}
+
+pub type ReverseIndex = HashMap<u64, ReverseIndexEntry>;
 pub type TranslationVerses = HashMap<Translation, HashMap<VerseKey, String>>;
 
 static MAX_RESULTS: usize = 20;
@@ -28,8 +35,8 @@ static SCORE_EXACT: f64 = 1.0;
 static SCORE_INEXACT: f64 = 0.5;
 pub static TRANSLATION_COUNT: usize = Translation::Total as usize;
 
-struct ReverseIndexScoresWithMultiplier<'a> {
-    index: &'a ReverseIndexScores,
+struct ReverseIndexEntryWithMatch<'a> {
+    entry: &'a ReverseIndexEntry,
     exact_match: bool,
 }
 
@@ -54,13 +61,10 @@ impl VersearchIndex {
     }
 
     #[inline]
-    fn traverse_fst(
-        &self,
-        tokens: Vec<String>,
-    ) -> BTreeMap<String, ReverseIndexScoresWithMultiplier> {
-        let mut found_indices: BTreeMap<String, ReverseIndexScoresWithMultiplier> = BTreeMap::new();
+    fn traverse_fst(&self, tokens: Vec<Tokenized>) -> BTreeMap<String, ReverseIndexEntryWithMatch> {
+        let mut found_indices: BTreeMap<String, ReverseIndexEntryWithMatch> = BTreeMap::new();
 
-        for token in tokens {
+        for Tokenized { token, .. } in tokens {
             // Attempt a prefix search
             let prefix_automaton = automaton::Str::new(&token).starts_with();
             let mut results = self
@@ -89,8 +93,8 @@ impl VersearchIndex {
                 res.len() < (token.len() * PREFIX_EXPANSION_FACTOR).max(PREFIX_EXPANSION_MINIMUM)
             }) {
                 let mut container = found_indices.entry(result.clone()).or_insert_with(|| {
-                    ReverseIndexScoresWithMultiplier {
-                        index: self.reverse_index.get(&idx).unwrap(),
+                    ReverseIndexEntryWithMatch {
+                        entry: self.reverse_index.get(&idx).unwrap(),
                         exact_match: false,
                     }
                 });
@@ -106,41 +110,48 @@ impl VersearchIndex {
     #[inline]
     fn score_results(
         &self,
-        found_indices: BTreeMap<String, ReverseIndexScoresWithMultiplier>,
-    ) -> HashMap<VerseKey, Vec<f64>> {
+        found_indices: BTreeMap<String, ReverseIndexEntryWithMatch>,
+    ) -> HashMap<VerseKey, (Vec<f64>, BTreeSet<String>)> {
         let mut priority_lists: Vec<_> = found_indices.values().collect();
         priority_lists.sort_by(|a, b| {
             if a.exact_match != b.exact_match {
                 a.exact_match.cmp(&b.exact_match)
             } else {
-                a.index.len().cmp(&b.index.len())
+                a.entry.verse_scores.len().cmp(&b.entry.verse_scores.len())
             }
         });
-        let primary_list = priority_lists
+        let candidates_list = priority_lists
             .iter()
-            .find(|l| l.exact_match && l.index.len() >= MAX_RESULTS)
+            .find(|l| l.exact_match && l.entry.verse_scores.len() >= MAX_RESULTS)
             .unwrap_or_else(|| {
                 priority_lists
                     .iter()
-                    .find(|l| l.index.len() >= MAX_RESULTS)
+                    .find(|l| l.entry.verse_scores.len() >= MAX_RESULTS)
                     .unwrap_or_else(|| priority_lists.last().unwrap())
             });
-        let mut result_scores = HashMap::with_capacity(primary_list.index.len());
-        for key in primary_list.index.keys() {
-            result_scores.insert(*key, vec![0f64; TRANSLATION_COUNT]);
+        let mut result_scores = HashMap::with_capacity(candidates_list.entry.verse_scores.len());
+        for key in candidates_list.entry.verse_scores.keys() {
+            result_scores.insert(*key, (vec![0f64; TRANSLATION_COUNT], BTreeSet::new()));
         }
-        for (result_key, result_scores) in result_scores.iter_mut() {
-            for ReverseIndexScoresWithMultiplier { exact_match, index } in found_indices.values() {
-                if index.contains_key(&result_key) {
-                    let found_scores = index.get(&result_key).unwrap();
+        for (result_key, result_sh) in result_scores.iter_mut() {
+            for ReverseIndexEntryWithMatch { exact_match, entry } in found_indices.values() {
+                if entry.verse_scores.contains_key(&result_key) {
+                    let found_scores = entry.verse_scores.get(&result_key).unwrap();
                     let multiplier = if *exact_match {
                         SCORE_EXACT
                     } else {
                         SCORE_INEXACT
                     };
-                    for i in 0..result_scores.len() {
-                        result_scores[i] += found_scores[i] * multiplier;
+                    // Not entirely needless... interestingly this warning only
+                    // started showing up after I made result_sh a tuple
+                    #[allow(clippy::needless_range_loop)]
+                    for i in 0..result_sh.0.len() {
+                        result_sh.0[i] += found_scores[i] * multiplier;
                     }
+                }
+                if entry.verse_highlights.contains_key(&result_key) {
+                    let found_highlights = entry.verse_highlights.get(&result_key).unwrap();
+                    result_sh.1.extend(found_highlights.iter().cloned());
                 }
             }
         }
@@ -149,21 +160,24 @@ impl VersearchIndex {
     }
 
     #[inline]
-    fn collect_results(&self, result_scores: HashMap<VerseKey, Vec<f64>>) -> Vec<VerseResult> {
+    fn collect_results(
+        &self,
+        result_scores: HashMap<VerseKey, (Vec<f64>, BTreeSet<String>)>,
+    ) -> Vec<VerseResult> {
         result_scores
             .iter()
-            .sorted_by(|(_key1, scores1), (_key2, scores2)| {
-                scores1
+            .sorted_by(|(_key1, sh1), (_key2, sh2)| {
+                sh1.0
                     .iter()
                     .max_by(|i, j| i.partial_cmp(&j).unwrap())
-                    .partial_cmp(&scores2.iter().max_by(|i, j| i.partial_cmp(&j).unwrap()))
+                    .partial_cmp(&sh2.0.iter().max_by(|i, j| i.partial_cmp(&j).unwrap()))
                     .unwrap()
                     .reverse()
             })
             .take(MAX_RESULTS)
-            .map(|(key, scores)| VerseResult {
+            .map(|(key, sh)| VerseResult {
                 key: Some(*key),
-                translation_scores: scores.iter().copied().collect(),
+                translation_scores: sh.0.iter().copied().collect(),
                 text: (0..Translation::Total as i32)
                     .map(|i| {
                         self.translation_verses
@@ -173,6 +187,7 @@ impl VersearchIndex {
                             .map_or_else(|| "".to_string(), |s| s.clone())
                     })
                     .collect(),
+                highlights: sh.1.iter().cloned().collect(),
             })
             .collect()
     }
@@ -181,7 +196,7 @@ impl VersearchIndex {
     pub fn search(&self, text: &str) -> ServiceResponse {
         // Tokenize input text
         let start = Instant::now();
-        let tokens = ordered_tokenize(text);
+        let tokens = tokenize(text);
         let tokenize_us = start.elapsed().as_micros() as i32;
 
         if tokens.is_empty() {

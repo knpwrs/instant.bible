@@ -16,7 +16,7 @@ export default React.memo(({ data, ...rest }: Props) => {
       title={data.key}
       data={verse}
       selectedKey={selectedKey}
-      highlight={[]}
+      highlight={data.highlights}
       onSelectKey={setSelectedKey}
       {...rest}
     />

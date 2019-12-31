@@ -16,7 +16,11 @@ export type SliceState = {
   readonly queries: {
     readonly [key: string]: {
       inFlight: boolean;
-      res: Array<{ key: string; topTranslation: string }>;
+      res: Array<{
+        key: string;
+        topTranslation: string;
+        highlights: Array<string>;
+      }>;
     };
   };
 };
@@ -55,6 +59,7 @@ const { actions, reducer } = createSlice({
           sq.res = res.map(r => ({
             key: r.key,
             topTranslation: r.topTranslation,
+            highlights: r.highlights,
           }));
         });
       }

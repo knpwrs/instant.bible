@@ -22,6 +22,7 @@ export const search = async (q: string) => {
       key: verseKeyToString(res.key),
       text: textToTranslationsObject(res.text),
       topTranslation: topTranslation(res.translationScores),
+      highlights: res.highlights || [],
     }));
   } catch (e) {
     console.error(e);
