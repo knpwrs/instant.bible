@@ -155,8 +155,8 @@ impl VersearchIndex {
             .sorted_by(|(_key1, scores1), (_key2, scores2)| {
                 scores1
                     .iter()
-                    .sum::<f64>()
-                    .partial_cmp(&scores2.iter().sum())
+                    .max_by(|i, j| i.partial_cmp(&j).unwrap())
+                    .partial_cmp(&scores2.iter().max_by(|i, j| i.partial_cmp(&j).unwrap()))
                     .unwrap()
                     .reverse()
             })
@@ -164,7 +164,6 @@ impl VersearchIndex {
             .map(|(key, scores)| VerseResult {
                 key: Some(*key),
                 translation_scores: scores.iter().copied().collect(),
-                total_score: scores.iter().sum(),
                 text: (0..Translation::Total as i32)
                     .map(|i| {
                         self.translation_verses
