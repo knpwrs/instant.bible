@@ -192,7 +192,7 @@ pub fn get_index() -> VersearchIndex {
     }
 
     info!(
-        "Indexed {} words in {}ms",
+        "Indexed {} tokens in {}ms",
         reverse_index.len(),
         now.elapsed().as_millis()
     );
