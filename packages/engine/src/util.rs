@@ -206,7 +206,7 @@ pub fn get_index() -> VersearchIndex {
         fst_bytes,
         reverse_index,
         translation_verses,
-        highlight_words.iter().cloned().enumerate().collect(),
+        highlight_words,
     )
 }
 

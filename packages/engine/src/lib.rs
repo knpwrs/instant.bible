@@ -44,7 +44,7 @@ pub struct VersearchIndex {
     fst_map: FstMap,
     reverse_index: ReverseIndex,
     translation_verses: TranslationVerses,
-    highlight_words: HashMap<usize, String>,
+    highlight_words: Vec<String>,
 }
 
 impl VersearchIndex {
@@ -53,7 +53,7 @@ impl VersearchIndex {
         fst_bytes: Vec<u8>,
         reverse_index: ReverseIndex,
         translation_verses: TranslationVerses,
-        highlight_words: HashMap<usize, String>,
+        highlight_words: Vec<String>,
     ) -> VersearchIndex {
         VersearchIndex {
             fst_map: FstMap::from_bytes(fst_bytes).expect("Could not load map from FST bytes"),
@@ -195,7 +195,7 @@ impl VersearchIndex {
                     .iter()
                     .map(|i| {
                         self.highlight_words
-                            .get(i)
+                            .get(*i)
                             .expect("Invalid highlight word index")
                     })
                     .cloned()
