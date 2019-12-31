@@ -53,6 +53,7 @@ impl VersearchIndex {
         }
     }
 
+    #[inline]
     fn traverse_fst(
         &self,
         tokens: Vec<String>,
@@ -102,6 +103,7 @@ impl VersearchIndex {
         found_indices
     }
 
+    #[inline]
     fn score_results(
         &self,
         found_indices: BTreeMap<String, ReverseIndexScoresWithMultiplier>,
@@ -146,6 +148,7 @@ impl VersearchIndex {
         result_scores
     }
 
+    #[inline]
     fn collect_results(&self, result_scores: HashMap<VerseKey, Vec<f64>>) -> Vec<VerseResult> {
         result_scores
             .iter()
@@ -175,6 +178,7 @@ impl VersearchIndex {
             .collect()
     }
 
+    /// Perform a search against the index
     pub fn search(&self, text: &str) -> ServiceResponse {
         // Tokenize input text
         let start = Instant::now();
