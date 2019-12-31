@@ -19,7 +19,7 @@ pub use util::Config;
 /// produce ITS); therefore, it is important to account for this in the index
 /// structure, particularly for when it comes to highlighting.
 pub struct ReverseIndexEntry {
-    verse_highlights: HashMap<VerseKey, Vec<String>>,
+    verse_highlights: HashMap<VerseKey, Vec<usize>>,
     verse_scores: HashMap<VerseKey, Vec<f64>>,
 }
 
@@ -44,6 +44,7 @@ pub struct VersearchIndex {
     fst_map: FstMap,
     reverse_index: ReverseIndex,
     translation_verses: TranslationVerses,
+    highlight_words: HashMap<usize, String>,
 }
 
 impl VersearchIndex {
@@ -52,11 +53,13 @@ impl VersearchIndex {
         fst_bytes: Vec<u8>,
         reverse_index: ReverseIndex,
         translation_verses: TranslationVerses,
+        highlight_words: HashMap<usize, String>,
     ) -> VersearchIndex {
         VersearchIndex {
             fst_map: FstMap::from_bytes(fst_bytes).expect("Could not load map from FST bytes"),
             reverse_index,
             translation_verses,
+            highlight_words,
         }
     }
 
@@ -111,7 +114,7 @@ impl VersearchIndex {
     fn score_results(
         &self,
         found_indices: BTreeMap<String, ReverseIndexEntryWithMatch>,
-    ) -> HashMap<VerseKey, (Vec<f64>, BTreeSet<String>)> {
+    ) -> HashMap<VerseKey, (Vec<f64>, BTreeSet<usize>)> {
         let mut priority_lists: Vec<_> = found_indices.values().collect();
         priority_lists.sort_by(|a, b| {
             if a.exact_match != b.exact_match {
@@ -151,7 +154,7 @@ impl VersearchIndex {
                 }
                 if entry.verse_highlights.contains_key(&result_key) {
                     let found_highlights = entry.verse_highlights.get(&result_key).unwrap();
-                    result_sh.1.extend(found_highlights.iter().cloned());
+                    result_sh.1.extend(found_highlights.iter());
                 }
             }
         }
@@ -162,7 +165,7 @@ impl VersearchIndex {
     #[inline]
     fn collect_results(
         &self,
-        result_scores: HashMap<VerseKey, (Vec<f64>, BTreeSet<String>)>,
+        result_scores: HashMap<VerseKey, (Vec<f64>, BTreeSet<usize>)>,
     ) -> Vec<VerseResult> {
         result_scores
             .iter()
@@ -187,7 +190,16 @@ impl VersearchIndex {
                             .map_or_else(|| "".to_string(), |s| s.clone())
                     })
                     .collect(),
-                highlights: sh.1.iter().cloned().collect(),
+                highlights: sh
+                    .1
+                    .iter()
+                    .map(|i| {
+                        self.highlight_words
+                            .get(i)
+                            .expect("Invalid highlight word index")
+                    })
+                    .cloned()
+                    .collect(),
             })
             .collect()
     }

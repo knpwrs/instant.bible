@@ -72,6 +72,7 @@ pub fn get_index() -> VersearchIndex {
     let mut token_scores: BTreeMap<String, HashMap<VerseKey, ScoresAndHighlights>> =
         BTreeMap::new();
     let mut translation_verses: TranslationVerses = HashMap::new();
+    let mut highlight_words = BTreeSet::new();
 
     info!("Loading translations from {:?}", config.translation_dir);
 
@@ -120,10 +121,11 @@ pub fn get_index() -> VersearchIndex {
                             highlights: BTreeSet::new(),
                         });
                     entry.scores[translation_key as usize] += 1.0;
-                    entry.highlights.insert(tokenized.source);
+                    entry.highlights.insert(tokenized.source.to_uppercase());
                 }
                 // Adjust for verse length
                 for tokenized in tokenize(&verse.text) {
+                    highlight_words.insert(tokenized.source.to_uppercase());
                     let entry = token_scores
                         .get_mut(&tokenized.token)
                         .expect("Token not initialized properly")
@@ -156,34 +158,56 @@ pub fn get_index() -> VersearchIndex {
 
     let mut build = MapBuilder::memory();
     let mut reverse_index: ReverseIndex = HashMap::new();
+    let highlight_words: Vec<_> = highlight_words.iter().cloned().collect();
 
     let now = Instant::now();
+
     for (i, (token, entries)) in token_scores.iter().enumerate() {
         build.insert(token.clone(), i as u64).unwrap();
         reverse_index.insert(
             i as u64,
             ReverseIndexEntry {
-                verse_highlights: entries
-                    .iter()
-                    .map(|(key, sh)| (*key, sh.highlights.iter().cloned().collect()))
-                    .collect(),
                 verse_scores: entries
                     .iter()
                     .map(|(key, sh)| (*key, sh.scores.clone()))
                     .collect(),
+                verse_highlights: entries
+                    .iter()
+                    .map(|(key, sh)| {
+                        (
+                            *key,
+                            sh.highlights
+                                .iter()
+                                .map(|s| {
+                                    highlight_words
+                                        .binary_search(s)
+                                        .expect("Could not find index for highlight entry")
+                                })
+                                .collect(),
+                        )
+                    })
+                    .collect(),
             },
         );
     }
+
     info!(
         "Indexed {} words in {}ms",
         reverse_index.len(),
         now.elapsed().as_millis()
     );
 
+    info!("Stored {} words for highlighting", highlight_words.len());
+
     let fst_bytes = build.into_inner().expect("Could not flush bytes for FST");
     info!("FST compiled: {} bytes", fst_bytes.len());
 
-    VersearchIndex::new(fst_bytes, reverse_index, translation_verses)
+    VersearchIndex::new(
+        fst_bytes,
+        reverse_index,
+        translation_verses,
+        highlight_words.iter().cloned().enumerate().collect(),
+    )
 }
 
 #[cfg(test)]
