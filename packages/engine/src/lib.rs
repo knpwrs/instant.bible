@@ -19,14 +19,14 @@ pub type ReverseIndexScores = HashMap<VerseKey, Vec<f64>>;
 pub type ReverseIndex = HashMap<u64, ReverseIndexScores>;
 pub type TranslationVerses = HashMap<Translation, HashMap<VerseKey, String>>;
 
-const MAX_RESULTS: usize = 20;
-const PREFIX_EXPANSION_FACTOR: usize = 2;
-const PREFIX_EXPANSION_MINIMUM: usize = 4;
-const TYPO_1_LEN: usize = 4;
-const TYPO_2_LEN: usize = 8;
-const SCORE_EXACT: f64 = 1.0;
-const SCORE_INEXACT: f64 = 0.5;
-pub const TRANSLATION_COUNT: usize = Translation::Total as usize;
+static MAX_RESULTS: usize = 20;
+static PREFIX_EXPANSION_FACTOR: usize = 2;
+static PREFIX_EXPANSION_MINIMUM: usize = 4;
+static TYPO_1_LEN: usize = 4;
+static TYPO_2_LEN: usize = 8;
+static SCORE_EXACT: f64 = 1.0;
+static SCORE_INEXACT: f64 = 0.5;
+pub static TRANSLATION_COUNT: usize = Translation::Total as usize;
 
 struct ReverseIndexScoresWithMultiplier<'a> {
     index: &'a ReverseIndexScores,
