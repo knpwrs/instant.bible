@@ -7,14 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Cache cargo build
-        id: build-versearch-cache-cargo-build
-        uses: actions/cache@v1
-        with:
-          path: ./packages/target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
       - name: Build
-        if: steps.build-versearch-cache-cargo-build.outputs.cache-hit != 'true'
         working-directory: ./packages
         run: cargo build --verbose
       - name: Test
