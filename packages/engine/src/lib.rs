@@ -199,6 +199,7 @@ impl VersearchIndex {
                             .expect("Invalid highlight word index")
                     })
                     .cloned()
+                    .sorted_by(|a, b| b.len().cmp(&a.len()))
                     .collect(),
             })
             .collect()
