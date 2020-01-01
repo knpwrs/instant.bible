@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { css } from '@emotion/core';
-import { findAll } from 'highlight-words-core';
 import { clamp } from 'lodash';
 import styled from '../util/styled';
+import highlightUtil from '../util/highlight';
 import { Card, H5, Body3, Subhead3Medium, Body3Highlight } from '../elements';
 
 export type OwnProps = {
@@ -71,26 +71,21 @@ const Verse: React.FunctionComponent<Props> = ({
 
   const text = data[selectedKey];
 
-  const chunks = React.useMemo(
-    () =>
-      findAll({
-        textToHighlight: text,
-        searchWords: highlight,
-      }),
-    [text, highlight],
-  );
+  const chunks = React.useMemo(() => highlightUtil(text, highlight), [
+    text,
+    highlight,
+  ]);
 
   const highlightedText = React.useMemo(
     () =>
-      chunks.map(({ highlight, start, end }) => {
-        const key = `${start}-${end}-${highlight}`;
-        const chunk = text.substr(start, end - start);
+      chunks.map(({ text, highlight }, i) => {
+        const key = `${text}-${highlight}-${i}`;
         if (highlight) {
-          return <Body3Highlight key={key}>{chunk}</Body3Highlight>;
+          return <Body3Highlight key={key}>{text}</Body3Highlight>;
         }
-        return <React.Fragment key={key}>{chunk}</React.Fragment>;
+        return <React.Fragment key={key}>{text}</React.Fragment>;
       }),
-    [chunks, text],
+    [chunks],
   );
 
   return (
