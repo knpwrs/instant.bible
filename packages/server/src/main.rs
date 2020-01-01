@@ -42,6 +42,7 @@ fn main() -> std::io::Result<()> {
     env_logger::init();
 
     let index = Arc::new(get_index());
+    info!("Index created");
 
     HttpServer::new(move || {
         App::new()
