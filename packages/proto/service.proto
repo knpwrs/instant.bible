@@ -6,7 +6,7 @@ import "data.proto";
 message Response {
   message VerseResult {
     instantbible.data.VerseKey key = 1;
-    repeated double translationScores = 2;
+    instantbible.data.Translation topTranslation = 2;
     repeated string text = 3;
     repeated string highlights = 4;
   }

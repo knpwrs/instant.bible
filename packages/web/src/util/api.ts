@@ -21,7 +21,7 @@ export const search = async (q: string) => {
     return decoded.results.map(res => ({
       key: verseKeyToString(res.key),
       text: textToTranslationsObject(res.text),
-      topTranslation: topTranslation(res.translationScores),
+      topTranslation: topTranslation(res.topTranslation),
       highlights: res.highlights || [],
     }));
   } catch (e) {

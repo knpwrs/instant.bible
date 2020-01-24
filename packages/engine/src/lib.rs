@@ -1,26 +1,32 @@
+mod internal;
 pub mod proto;
 pub mod util;
 
 use fst::{automaton, Automaton, IntoStreamer, Map as FstMap};
 use fst_levenshtein::Levenshtein;
+use internal::VerseMatch;
 use itertools::Itertools;
 use proto::data::{Translation, VerseKey};
 use proto::service::{
     response::{Timings, VerseResult},
     Response as ServiceResponse,
 };
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::HashMap;
 use std::time::Instant;
 use util::{tokenize, Tokenized};
 
-pub use util::Config;
+pub use util::{Config, MAX_PROXIMITY};
 
 /// Different strings can end up creating the same token (e.g., it's and its both
 /// produce ITS); therefore, it is important to account for this in the index
 /// structure, particularly for when it comes to highlighting.
 pub struct ReverseIndexEntry {
-    verse_highlights: HashMap<VerseKey, Vec<usize>>,
-    verse_scores: HashMap<VerseKey, Vec<f64>>,
+    /// VerseKey => Translation Id => Token Count
+    counts: HashMap<VerseKey, Vec<usize>>,
+    /// VerseKey => Vec<Highlight Word Ids>
+    highlights: HashMap<VerseKey, Vec<usize>>,
+    /// VerseKey => Token Index => Token Index => Proximity
+    proximities: HashMap<VerseKey, HashMap<usize, HashMap<usize, u8>>>,
 }
 
 pub type ReverseIndex = HashMap<u64, ReverseIndexEntry>;
@@ -31,13 +37,13 @@ static PREFIX_EXPANSION_FACTOR: usize = 2;
 static PREFIX_EXPANSION_MINIMUM: usize = 4;
 static TYPO_1_LEN: usize = 4;
 static TYPO_2_LEN: usize = 8;
-static SCORE_EXACT: f64 = 1.0;
-static SCORE_INEXACT: f64 = 0.5;
 pub static TRANSLATION_COUNT: usize = Translation::Total as usize;
 
 struct ReverseIndexEntryWithMatch<'a> {
     entry: &'a ReverseIndexEntry,
     exact_match: bool,
+    this_index: u64,
+    last_indices: Vec<u64>,
 }
 
 pub struct VersearchIndex {
@@ -64,8 +70,10 @@ impl VersearchIndex {
     }
 
     #[inline]
-    fn traverse_fst(&self, tokens: Vec<Tokenized>) -> BTreeMap<String, ReverseIndexEntryWithMatch> {
-        let mut found_indices: BTreeMap<String, ReverseIndexEntryWithMatch> = BTreeMap::new();
+    fn traverse_fst(&self, tokens: Vec<Tokenized>) -> HashMap<u64, ReverseIndexEntryWithMatch> {
+        let mut found_indices: HashMap<u64, ReverseIndexEntryWithMatch> = HashMap::new();
+
+        let mut last_indices: Vec<u64> = Vec::new();
 
         for Tokenized { token, .. } in tokens {
             // Attempt a prefix search
@@ -95,15 +103,27 @@ impl VersearchIndex {
                 // Tokens should be less than an expansion limit with a reasonable expansion for small tokens
                 res.len() < (token.len() * PREFIX_EXPANSION_FACTOR).max(PREFIX_EXPANSION_MINIMUM)
             }) {
-                let mut container = found_indices.entry(result.clone()).or_insert_with(|| {
-                    ReverseIndexEntryWithMatch {
-                        entry: self.reverse_index.get(&idx).unwrap(),
-                        exact_match: false,
-                    }
-                });
+                let mut container =
+                    found_indices
+                        .entry(*idx)
+                        .or_insert_with(|| ReverseIndexEntryWithMatch {
+                            entry: self.reverse_index.get(&idx).unwrap(),
+                            exact_match: false,
+                            this_index: *idx,
+                            last_indices: last_indices.clone(),
+                        });
                 if *result == token && token.len() > 1 {
                     container.exact_match = true;
                 }
+            }
+
+            // Store last indices
+            last_indices = Vec::new();
+            for (_, idx) in results.iter().filter(|(res, _)| {
+                // Tokens should be less than an expansion limit with a reasonable expansion for small tokens
+                res.len() < (token.len() * PREFIX_EXPANSION_FACTOR).max(PREFIX_EXPANSION_MINIMUM)
+            }) {
+                last_indices.push(*idx);
             }
         }
 
@@ -113,48 +133,67 @@ impl VersearchIndex {
     #[inline]
     fn score_results(
         &self,
-        found_indices: BTreeMap<String, ReverseIndexEntryWithMatch>,
-    ) -> HashMap<VerseKey, (Vec<f64>, BTreeSet<usize>)> {
+        found_indices: HashMap<u64, ReverseIndexEntryWithMatch>,
+    ) -> HashMap<VerseKey, VerseMatch> {
         let mut priority_lists: Vec<_> = found_indices.values().collect();
         priority_lists.sort_by(|a, b| {
             if a.exact_match != b.exact_match {
                 a.exact_match.cmp(&b.exact_match)
             } else {
-                a.entry.verse_scores.len().cmp(&b.entry.verse_scores.len())
+                a.entry.counts.len().cmp(&b.entry.counts.len())
             }
         });
         let candidates_list = priority_lists
             .iter()
-            .find(|l| l.exact_match && l.entry.verse_scores.len() >= MAX_RESULTS)
+            .find(|l| l.exact_match && l.entry.counts.len() >= MAX_RESULTS)
             .unwrap_or_else(|| {
                 priority_lists
                     .iter()
-                    .find(|l| l.entry.verse_scores.len() >= MAX_RESULTS)
+                    .find(|l| l.entry.counts.len() >= MAX_RESULTS)
                     .unwrap_or_else(|| priority_lists.last().unwrap())
             });
-        let mut result_scores = HashMap::with_capacity(candidates_list.entry.verse_scores.len());
-        for key in candidates_list.entry.verse_scores.keys() {
-            result_scores.insert(*key, (vec![0f64; TRANSLATION_COUNT], BTreeSet::new()));
+        let mut result_scores = HashMap::with_capacity(candidates_list.entry.counts.len());
+        for key in candidates_list.entry.counts.keys() {
+            result_scores.insert(*key, VerseMatch::new(*key));
         }
-        for (result_key, result_sh) in result_scores.iter_mut() {
-            for ReverseIndexEntryWithMatch { exact_match, entry } in found_indices.values() {
-                if entry.verse_scores.contains_key(&result_key) {
-                    let found_scores = entry.verse_scores.get(&result_key).unwrap();
-                    let multiplier = if *exact_match {
-                        SCORE_EXACT
-                    } else {
-                        SCORE_INEXACT
-                    };
-                    // Not entirely needless... interestingly this warning only
-                    // started showing up after I made result_sh a tuple
-                    #[allow(clippy::needless_range_loop)]
-                    for i in 0..result_sh.0.len() {
-                        result_sh.0[i] += found_scores[i] * multiplier;
+        for (result_key, result_match) in result_scores.iter_mut() {
+            for ReverseIndexEntryWithMatch {
+                exact_match,
+                entry,
+                this_index,
+                last_indices,
+            } in found_indices.values()
+            {
+                if let Some(found_counts) = entry.counts.get(&result_key) {
+                    for (i, count) in found_counts.iter().enumerate() {
+                        result_match.inc_words(i);
+                        if *count > 0 {
+                            if *exact_match {
+                                result_match.inc_exact(i);
+                            } else {
+                                result_match.inc_typos(i);
+                            }
+                            let proximity: u8 = last_indices
+                                .iter()
+                                .map(|li| {
+                                    if let Some(m1) = entry.proximities.get(&result_key) {
+                                        if let Some(m2) = m1.get(&(*this_index as usize)) {
+                                            if let Some(p) = m2.get(&(*li as usize)) {
+                                                return *p;
+                                            }
+                                        }
+                                    }
+                                    MAX_PROXIMITY
+                                })
+                                .min()
+                                .unwrap_or_else(|| MAX_PROXIMITY);
+                            result_match.add_proximity(i, proximity);
+                        }
                     }
                 }
-                if entry.verse_highlights.contains_key(&result_key) {
-                    let found_highlights = entry.verse_highlights.get(&result_key).unwrap();
-                    result_sh.1.extend(found_highlights.iter());
+
+                if let Some(found_highlights) = entry.highlights.get(&result_key) {
+                    result_match.extend_highlights(found_highlights);
                 }
             }
         }
@@ -165,33 +204,32 @@ impl VersearchIndex {
     #[inline]
     fn collect_results(
         &self,
-        result_scores: HashMap<VerseKey, (Vec<f64>, BTreeSet<usize>)>,
+        results_map: HashMap<proto::data::VerseKey, VerseMatch>,
     ) -> Vec<VerseResult> {
-        result_scores
-            .iter()
-            .sorted_by(|(_key1, sh1), (_key2, sh2)| {
-                sh1.0
-                    .iter()
-                    .max_by(|i, j| i.partial_cmp(&j).unwrap())
-                    .partial_cmp(&sh2.0.iter().max_by(|i, j| i.partial_cmp(&j).unwrap()))
-                    .unwrap()
-                    .reverse()
-            })
+        results_map
+            .values()
+            .sorted_by(|r1, r2| r1.cmp(r2))
             .take(MAX_RESULTS)
-            .map(|(key, sh)| VerseResult {
-                key: Some(*key),
-                translation_scores: sh.0.iter().copied().collect(),
-                text: (0..Translation::Total as i32)
+            .map(|r| VerseResult {
+                key: Some(r.key),
+                top_translation: r
+                    .matches
+                    .iter()
+                    .enumerate()
+                    .max_by(|(_, m1), (_, m2)| m1.cmp(m2))
+                    .unwrap()
+                    .0 as i32,
+                text: (0..TRANSLATION_COUNT)
                     .map(|i| {
                         self.translation_verses
-                            .get(&Translation::from_i32(i).unwrap())
+                            .get(&Translation::from_i32(i as i32).unwrap())
                             .unwrap()
-                            .get(&key)
+                            .get(&r.key)
                             .map_or_else(|| "".to_string(), |s| s.clone())
                     })
                     .collect(),
-                highlights: sh
-                    .1
+                highlights: r
+                    .highlights
                     .iter()
                     .map(|i| {
                         self.highlight_words
@@ -199,7 +237,6 @@ impl VersearchIndex {
                             .expect("Invalid highlight word index")
                     })
                     .cloned()
-                    .sorted_by(|a, b| b.len().cmp(&a.len()))
                     .collect(),
             })
             .collect()

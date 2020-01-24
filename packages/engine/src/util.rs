@@ -13,6 +13,8 @@ use std::io::prelude::*;
 use std::iter::Iterator;
 use std::time::Instant;
 
+pub static MAX_PROXIMITY: u8 = 8;
+
 #[cfg_attr(test, derive(Debug))]
 #[derive(Deserialize)]
 pub struct Config {
@@ -38,9 +40,10 @@ impl PartialOrd for Tokenized {
     }
 }
 
-struct ScoresAndHighlights {
-    scores: Vec<f64>,
+struct VerseStats {
+    counts: Vec<usize>,
     highlights: BTreeSet<String>,
+    proximities: HashMap<String, HashMap<String, u8>>,
 }
 
 pub fn tokenize(input: &str) -> Vec<Tokenized> {
@@ -69,8 +72,7 @@ pub fn get_index() -> VersearchIndex {
     };
 
     let mut total_docs: usize = 0;
-    let mut token_scores: BTreeMap<String, HashMap<VerseKey, ScoresAndHighlights>> =
-        BTreeMap::new();
+    let mut token_counts: BTreeMap<String, HashMap<VerseKey, VerseStats>> = BTreeMap::new();
     let mut translation_verses: TranslationVerses = HashMap::new();
     let mut highlight_words = BTreeSet::new();
 
@@ -108,31 +110,36 @@ pub fn get_index() -> VersearchIndex {
                     .entry(verse.key.unwrap())
                     .or_insert_with(|| verse.text.clone());
                 let all_tokens = tokenize(&verse.text);
-                let tokens_count = all_tokens.len() as f64;
                 // Count up tokens
-                for tokenized in all_tokens {
-                    let entry = token_scores
-                        .entry(tokenized.token)
+                for (i, tokenized) in all_tokens.iter().enumerate() {
+                    // Save word to get a highlight id later
+                    highlight_words.insert(tokenized.source.to_uppercase());
+                    // Create new stats entry if needed
+                    let entry = token_counts
+                        .entry(tokenized.token.clone())
                         .or_insert_with(HashMap::new)
                         .entry(verse.key.expect("Missing verse key"))
-                        // .or_insert_with(|| vec![0.0; TRANSLATION_COUNT]);
-                        .or_insert_with(|| ScoresAndHighlights {
-                            scores: vec![0.0; TRANSLATION_COUNT],
+                        .or_insert_with(|| VerseStats {
+                            counts: vec![0; TRANSLATION_COUNT],
                             highlights: BTreeSet::new(),
+                            proximities: HashMap::new(),
                         });
-                    entry.scores[translation_key as usize] += 1.0;
+                    // Increment counts
+                    entry.counts[translation_key as usize] += 1;
+                    // Track highlights
                     entry.highlights.insert(tokenized.source.to_uppercase());
-                }
-                // Adjust for verse length
-                for tokenized in tokenize(&verse.text) {
-                    highlight_words.insert(tokenized.source.to_uppercase());
-                    let entry = token_scores
-                        .get_mut(&tokenized.token)
-                        .expect("Token not initialized properly")
-                        .get_mut(&verse.key.expect("Missing verse key"))
-                        .expect("Scores not initialized properly");
-                    for i in &mut entry.scores {
-                        *i /= tokens_count;
+                    // Track proximities
+                    for (j, other_tokenized) in all_tokens.iter().enumerate() {
+                        let prox = ((j - i) as i8).abs() as u8;
+                        entry
+                            .proximities
+                            .entry(tokenized.token.clone())
+                            .or_insert_with(HashMap::new)
+                            .entry(other_tokenized.token.clone())
+                            .and_modify(|p| {
+                                *p = *p.min(&mut prox.clone()).max(&mut MAX_PROXIMITY.clone());
+                            })
+                            .or_insert(prox);
                     }
                 }
             }
@@ -144,44 +151,62 @@ pub fn get_index() -> VersearchIndex {
         }
     }
 
-    info!("Adjusting scores for inverse document frequency");
-    let now = Instant::now();
-    for verses in token_scores.values_mut() {
-        let count = verses.len();
-        for entry in verses.values_mut() {
-            for s in entry.scores.iter_mut() {
-                *s *= (total_docs as f64 / count as f64).log10();
-            }
-        }
-    }
-    info!("Scores adjusted in {}ms", now.elapsed().as_millis());
-
     let mut build = MapBuilder::memory();
     let mut reverse_index: ReverseIndex = HashMap::new();
     let highlight_words: Vec<_> = highlight_words.iter().cloned().collect();
+    let ordered_tokens: Vec<_> = token_counts.keys().cloned().collect();
 
     let now = Instant::now();
 
-    for (i, (token, entries)) in token_scores.iter().enumerate() {
+    for (i, (token, entries)) in token_counts.iter().enumerate() {
         build.insert(token.clone(), i as u64).unwrap();
         reverse_index.insert(
             i as u64,
             ReverseIndexEntry {
-                verse_scores: entries
+                counts: entries
                     .iter()
-                    .map(|(key, sh)| (*key, sh.scores.clone()))
+                    .map(|(key, vs)| (*key, vs.counts.clone()))
                     .collect(),
-                verse_highlights: entries
+                highlights: entries
                     .iter()
-                    .map(|(key, sh)| {
+                    .map(|(key, vs)| {
                         (
                             *key,
-                            sh.highlights
+                            vs.highlights
                                 .iter()
                                 .map(|s| {
                                     highlight_words
                                         .binary_search(s)
                                         .expect("Could not find index for highlight entry")
+                                })
+                                .collect(),
+                        )
+                    })
+                    .collect(),
+                // Oof
+                // Transforms a HashMap<String, HashMap<String, u8>> into HashMap<usize, HashMap<usize, u8>>
+                proximities: entries
+                    .iter()
+                    .map(|(key, vs)| {
+                        (
+                            *key,
+                            vs.proximities
+                                .iter()
+                                .map(|(w1, m1)| {
+                                    let i1 = ordered_tokens
+                                        .binary_search(w1)
+                                        .expect("Could not find index for token");
+                                    (
+                                        i1,
+                                        m1.iter()
+                                            .map(|(w2, p)| {
+                                                let i2 = ordered_tokens
+                                                    .binary_search(w2)
+                                                    .expect("Could not find index for token");
+                                                (i2, *p)
+                                            })
+                                            .collect(),
+                                    )
                                 })
                                 .collect(),
                         )
