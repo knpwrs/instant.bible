@@ -26,7 +26,7 @@ pub struct ReverseIndexEntry {
     /// VerseKey => Vec<Highlight Word Ids>
     highlights: HashMap<VerseKey, Vec<usize>>,
     /// VerseKey => Token Index => Token Index => Proximity
-    proximities: HashMap<VerseKey, HashMap<usize, HashMap<usize, u8>>>,
+    proximities: HashMap<VerseKey, HashMap<usize, HashMap<usize, i32>>>,
 }
 
 pub type ReverseIndex = HashMap<u64, ReverseIndexEntry>;
@@ -173,7 +173,7 @@ impl VersearchIndex {
                             } else {
                                 result_match.inc_typos(i);
                             }
-                            let proximity: u8 = last_indices
+                            let proximity: i32 = last_indices
                                 .iter()
                                 .map(|li| {
                                     if let Some(m1) = entry.proximities.get(&result_key) {
@@ -213,7 +213,7 @@ impl VersearchIndex {
             .map(|r| VerseResult {
                 key: Some(r.key),
                 top_translation: r
-                    .matches
+                    .rankings
                     .iter()
                     .enumerate()
                     .max_by(|(_, m1), (_, m2)| m1.cmp(m2))
@@ -238,6 +238,7 @@ impl VersearchIndex {
                     })
                     .cloned()
                     .collect(),
+                rankings: r.rankings.clone(),
             })
             .collect()
     }

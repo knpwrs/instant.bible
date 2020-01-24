@@ -1,20 +1,9 @@
 use crate::proto::data::VerseKey;
+use crate::proto::service::response::verse_result::Ranking as ServiceRanking;
 use crate::TRANSLATION_COUNT;
 use std::cmp::Ordering;
 
-#[derive(Clone, PartialEq, Eq)]
-pub struct TranslationMatch {
-    /// The number of typos matched
-    pub typos: usize,
-    /// The number of words matched from the query
-    pub words: usize,
-    /// The total proximity of adjacent word pairs in the query
-    pub proximity: u8,
-    /// The number of exact words matched (no prefix or typo)
-    pub exact: usize,
-}
-
-impl TranslationMatch {
+impl ServiceRanking {
     pub fn new() -> Self {
         Self {
             typos: 0,
@@ -32,7 +21,7 @@ impl TranslationMatch {
         self.words += 1;
     }
 
-    pub fn add_proximity(&mut self, prox: u8) {
+    pub fn add_proximity(&mut self, prox: i32) {
         self.proximity += prox;
     }
 
@@ -41,7 +30,7 @@ impl TranslationMatch {
     }
 }
 
-impl Ord for TranslationMatch {
+impl Ord for ServiceRanking {
     fn cmp(&self, other: &Self) -> Ordering {
         // Sort by typos ascending (fewer typos == higher rank)
         if self.typos != other.typos {
@@ -60,7 +49,7 @@ impl Ord for TranslationMatch {
     }
 }
 
-impl PartialOrd for TranslationMatch {
+impl PartialOrd for ServiceRanking {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
@@ -69,7 +58,7 @@ impl PartialOrd for TranslationMatch {
 #[derive(PartialEq, Eq)]
 pub struct VerseMatch {
     pub key: VerseKey,
-    pub matches: Vec<TranslationMatch>,
+    pub rankings: Vec<ServiceRanking>,
     pub highlights: Vec<usize>,
 }
 
@@ -77,25 +66,25 @@ impl VerseMatch {
     pub fn new(key: VerseKey) -> Self {
         Self {
             key,
-            matches: vec![TranslationMatch::new(); TRANSLATION_COUNT],
+            rankings: vec![ServiceRanking::new(); TRANSLATION_COUNT],
             highlights: Vec::new(),
         }
     }
 
     pub fn inc_typos(&mut self, idx: usize) {
-        self.matches[idx].inc_typos();
+        self.rankings[idx].inc_typos();
     }
 
     pub fn inc_words(&mut self, idx: usize) {
-        self.matches[idx].inc_words();
+        self.rankings[idx].inc_words();
     }
 
-    pub fn add_proximity(&mut self, idx: usize, prox: u8) {
-        self.matches[idx].add_proximity(prox);
+    pub fn add_proximity(&mut self, idx: usize, prox: i32) {
+        self.rankings[idx].add_proximity(prox);
     }
 
     pub fn inc_exact(&mut self, idx: usize) {
-        self.matches[idx].inc_exact();
+        self.rankings[idx].inc_exact();
     }
 
     pub fn extend_highlights(&mut self, hi: &[usize]) {
@@ -105,8 +94,8 @@ impl VerseMatch {
 
 impl PartialOrd for VerseMatch {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        let self_min = self.matches.iter().min()?;
-        let other_min = other.matches.iter().min()?;
+        let self_min = self.rankings.iter().min()?;
+        let other_min = other.rankings.iter().min()?;
         self_min.partial_cmp(other_min)
     }
 }

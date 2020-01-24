@@ -12,6 +12,10 @@ fn main() {
         ".instantbible.service.Response",
         "#[derive(serde::Serialize)]",
     );
+    prost.type_attribute(
+        ".instantbible.service.Response.VerseResult.Ranking",
+        "#[derive(Eq)]",
+    );
 
     prost
         .compile_protos(

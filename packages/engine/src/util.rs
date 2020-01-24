@@ -13,7 +13,7 @@ use std::io::prelude::*;
 use std::iter::Iterator;
 use std::time::Instant;
 
-pub static MAX_PROXIMITY: u8 = 8;
+pub static MAX_PROXIMITY: i32 = 8;
 
 #[cfg_attr(test, derive(Debug))]
 #[derive(Deserialize)]
@@ -43,7 +43,7 @@ impl PartialOrd for Tokenized {
 struct VerseStats {
     counts: Vec<usize>,
     highlights: BTreeSet<String>,
-    proximities: HashMap<String, HashMap<String, u8>>,
+    proximities: HashMap<String, HashMap<String, i32>>,
 }
 
 pub fn tokenize(input: &str) -> Vec<Tokenized> {
@@ -130,7 +130,7 @@ pub fn get_index() -> VersearchIndex {
                     entry.highlights.insert(tokenized.source.to_uppercase());
                     // Track proximities
                     for (j, other_tokenized) in all_tokens.iter().enumerate() {
-                        let prox = ((j - i) as i8).abs() as u8;
+                        let prox = ((j - i) as i32).abs();
                         entry
                             .proximities
                             .entry(tokenized.token.clone())
