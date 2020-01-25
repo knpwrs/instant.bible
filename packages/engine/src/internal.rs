@@ -58,7 +58,7 @@ impl Ord for InternalServiceRanking {
             return self.ranking.proximity.cmp(&other.ranking.proximity);
         }
         // Sort by number of exactly matching query words descending (more exact matches == higher rank)
-        other.ranking.proximity.cmp(&self.ranking.proximity)
+        other.ranking.exact.cmp(&self.ranking.exact)
     }
 }
 
