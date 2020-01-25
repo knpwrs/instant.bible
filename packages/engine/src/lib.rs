@@ -39,9 +39,17 @@ static TYPO_1_LEN: usize = 4;
 static TYPO_2_LEN: usize = 8;
 pub static TRANSLATION_COUNT: usize = Translation::Total as usize;
 
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[repr(u8)]
+enum MatchType {
+    Exact = 0,
+    Prefix = 1,
+    Typo = 2,
+}
+
 struct ReverseIndexEntryWithMatch<'a> {
     entry: &'a ReverseIndexEntry,
-    exact_match: bool,
+    match_type: MatchType,
     this_index: u64,
     last_indices: Vec<u64>,
 }
@@ -86,7 +94,8 @@ impl VersearchIndex {
                 .unwrap();
 
             // If nothing was found in the prefix search then this token was a typo
-            if results.is_empty() && token.len() >= TYPO_1_LEN {
+            let is_typo = results.is_empty() && token.len() >= TYPO_1_LEN;
+            if is_typo {
                 let distance = if token.len() >= TYPO_2_LEN { 2 } else { 1 };
                 let lev_automaton = Levenshtein::new(&token, distance).unwrap();
                 results.extend(
@@ -108,12 +117,16 @@ impl VersearchIndex {
                         .entry(*idx)
                         .or_insert_with(|| ReverseIndexEntryWithMatch {
                             entry: self.reverse_index.get(&idx).unwrap(),
-                            exact_match: false,
+                            match_type: if is_typo {
+                                MatchType::Typo
+                            } else {
+                                MatchType::Prefix
+                            },
                             this_index: *idx,
                             last_indices: last_indices.clone(),
                         });
                 if *result == token && token.len() > 1 {
-                    container.exact_match = true;
+                    container.match_type = MatchType::Exact;
                 }
             }
 
@@ -137,15 +150,15 @@ impl VersearchIndex {
     ) -> HashMap<VerseKey, VerseMatch> {
         let mut priority_lists: Vec<_> = found_indices.values().collect();
         priority_lists.sort_by(|a, b| {
-            if a.exact_match != b.exact_match {
-                a.exact_match.cmp(&b.exact_match)
+            if a.match_type != b.match_type {
+                a.match_type.cmp(&b.match_type)
             } else {
                 a.entry.counts.len().cmp(&b.entry.counts.len())
             }
         });
         let candidates_list = priority_lists
             .iter()
-            .find(|l| l.exact_match && l.entry.counts.len() >= MAX_RESULTS)
+            .find(|l| l.match_type == MatchType::Exact && l.entry.counts.len() >= MAX_RESULTS)
             .unwrap_or_else(|| {
                 priority_lists
                     .iter()
@@ -158,7 +171,7 @@ impl VersearchIndex {
         }
         for (result_key, result_match) in result_scores.iter_mut() {
             for ReverseIndexEntryWithMatch {
-                exact_match,
+                match_type,
                 entry,
                 this_index,
                 last_indices,
@@ -166,12 +179,12 @@ impl VersearchIndex {
             {
                 if let Some(found_counts) = entry.counts.get(&result_key) {
                     for (i, count) in found_counts.iter().enumerate() {
-                        result_match.inc_words(i);
                         if *count > 0 {
-                            if *exact_match {
-                                result_match.inc_exact(i);
-                            } else {
-                                result_match.inc_typos(i);
+                            result_match.inc_words(i);
+                            match *match_type {
+                                MatchType::Exact => result_match.inc_exact(i),
+                                MatchType::Typo => result_match.inc_typos(i),
+                                _ => {}
                             }
                             let proximity: i32 = last_indices
                                 .iter()
