@@ -177,11 +177,14 @@ impl VersearchIndex {
                             .unwrap_or_else(|| priority_lists.last().unwrap())
                     })
             });
+        // Construct empty scores map with each candidate verse
         let mut result_scores = HashMap::with_capacity(candidates_list.entry.counts.len());
         for key in candidates_list.entry.counts.keys() {
             result_scores.insert(*key, VerseMatch::new(*key));
         }
+        // Loop over each candidate verse for scoring
         for (result_key, result_match) in result_scores.iter_mut() {
+            // Loop over each found index entry (query word) from the previous step
             for ReverseIndexEntryWithMatch {
                 match_type,
                 entry,
@@ -189,15 +192,20 @@ impl VersearchIndex {
                 last_indices,
             } in found_indices.values()
             {
+                // Does this found entry match the current verse?
                 if let Some(found_counts) = entry.counts.get(&result_key) {
                     for (i, count) in found_counts.iter().enumerate() {
+                        // Does the found entry match the current translation?
                         if *count > 0 {
+                            // Increment words matched
                             result_match.inc_words(i);
+                            // Increment exact/typo matches if necessary
                             match *match_type {
                                 MatchType::Exact => result_match.inc_exact(i),
                                 MatchType::Typo => result_match.inc_typos(i),
                                 _ => {}
                             }
+                            // Calculate the proximity between current and last word
                             let proximity: i32 = if !last_indices.is_empty() {
                                 last_indices
                                     .iter()
@@ -216,17 +224,20 @@ impl VersearchIndex {
                             } else {
                                 0
                             };
+                            // Increment proximity
                             result_match.add_proximity(i, proximity);
                         }
                     }
                 }
 
+                // Track words to highlight for this result
                 if let Some(found_highlights) = entry.highlights.get(&result_key) {
                     result_match.extend_highlights(found_highlights);
                 }
             }
         }
 
+        // Done scoring!
         result_scores
     }
 
