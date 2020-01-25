@@ -186,20 +186,24 @@ impl VersearchIndex {
                                 MatchType::Typo => result_match.inc_typos(i),
                                 _ => {}
                             }
-                            let proximity: i32 = last_indices
-                                .iter()
-                                .map(|li| {
-                                    if let Some(m1) = entry.proximities.get(&result_key) {
-                                        if let Some(m2) = m1.get(&(*this_index as usize)) {
-                                            if let Some(p) = m2.get(&(*li as usize)) {
-                                                return *p;
+                            let proximity: i32 = if !last_indices.is_empty() {
+                                last_indices
+                                    .iter()
+                                    .map(|li| {
+                                        if let Some(m1) = entry.proximities.get(&result_key) {
+                                            if let Some(m2) = m1.get(&(*this_index as usize)) {
+                                                if let Some(p) = m2.get(&(*li as usize)) {
+                                                    return *p;
+                                                }
                                             }
                                         }
-                                    }
-                                    MAX_PROXIMITY
-                                })
-                                .min()
-                                .unwrap_or_else(|| MAX_PROXIMITY);
+                                        0
+                                    })
+                                    .min()
+                                    .unwrap_or_else(|| 0)
+                            } else {
+                                0
+                            };
                             result_match.add_proximity(i, proximity);
                         }
                     }

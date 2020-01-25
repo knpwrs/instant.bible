@@ -55,7 +55,20 @@ impl Ord for InternalServiceRanking {
         }
         // Sort by total proximity ascending (lower proximity == higher rank)
         if self.ranking.proximity != other.ranking.proximity {
-            return self.ranking.proximity.cmp(&other.ranking.proximity);
+            // Zero proximity is actually maximum proximity
+            let self_prox = if self.ranking.proximity == 0 {
+                std::i32::MAX
+            } else {
+                self.ranking.proximity
+            };
+
+            let other_prox = if other.ranking.proximity == 0 {
+                std::i32::MAX
+            } else {
+                other.ranking.proximity
+            };
+
+            return self_prox.cmp(&other_prox);
         }
         // Sort by number of exactly matching query words descending (more exact matches == higher rank)
         other.ranking.exact.cmp(&self.ranking.exact)
