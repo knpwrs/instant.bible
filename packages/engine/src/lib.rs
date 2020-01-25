@@ -212,13 +212,7 @@ impl VersearchIndex {
             .take(MAX_RESULTS)
             .map(|r| VerseResult {
                 key: Some(r.key),
-                top_translation: r
-                    .rankings
-                    .iter()
-                    .enumerate()
-                    .max_by(|(_, m1), (_, m2)| m1.cmp(m2))
-                    .unwrap()
-                    .0 as i32,
+                top_translation: r.top_translation(),
                 text: (0..TRANSLATION_COUNT)
                     .map(|i| {
                         self.translation_verses
@@ -238,7 +232,7 @@ impl VersearchIndex {
                     })
                     .cloned()
                     .collect(),
-                rankings: r.rankings.clone(),
+                rankings: r.to_service_rankings(),
             })
             .collect()
     }

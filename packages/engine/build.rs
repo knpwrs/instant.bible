@@ -6,7 +6,7 @@ fn main() {
 
     prost.type_attribute(
         ".instantbible.data.VerseKey",
-        "#[derive(serde::Serialize, Hash, Eq, Copy)]",
+        "#[derive(serde::Serialize, Hash, Eq, Ord, PartialOrd, Copy)]",
     );
     prost.type_attribute(
         ".instantbible.service.Response",
