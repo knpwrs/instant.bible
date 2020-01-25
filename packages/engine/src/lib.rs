@@ -151,19 +151,31 @@ impl VersearchIndex {
         let mut priority_lists: Vec<_> = found_indices.values().collect();
         priority_lists.sort_by(|a, b| {
             if a.match_type != b.match_type {
+                // Prefer exact matches
                 a.match_type.cmp(&b.match_type)
             } else {
+                // Order by matches ascending
                 a.entry.counts.len().cmp(&b.entry.counts.len())
             }
         });
+        // Pick a token list to use as result candidates
         let candidates_list = priority_lists
             .iter()
-            .find(|l| l.match_type == MatchType::Exact && l.entry.counts.len() >= MAX_RESULTS)
+            // First, try to find a list with >= 3x max results
+            .find(|l| l.entry.counts.len() >= MAX_RESULTS * 3)
             .unwrap_or_else(|| {
                 priority_lists
                     .iter()
-                    .find(|l| l.entry.counts.len() >= MAX_RESULTS)
-                    .unwrap_or_else(|| priority_lists.last().unwrap())
+                    // Second, try to find a list with >= 2x max results
+                    .find(|l| l.entry.counts.len() >= MAX_RESULTS * 2)
+                    .unwrap_or_else(|| {
+                        priority_lists
+                            .iter()
+                            // Third, try to find a list with >= max results
+                            .find(|l| l.entry.counts.len() >= MAX_RESULTS)
+                            // Fall back to just taking the list with the most results
+                            .unwrap_or_else(|| priority_lists.last().unwrap())
+                    })
             });
         let mut result_scores = HashMap::with_capacity(candidates_list.entry.counts.len());
         for key in candidates_list.entry.counts.keys() {
