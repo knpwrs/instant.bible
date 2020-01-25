@@ -71,7 +71,11 @@ impl Ord for InternalServiceRanking {
             return self_prox.cmp(&other_prox);
         }
         // Sort by number of exactly matching query words descending (more exact matches == higher rank)
-        other.ranking.exact.cmp(&self.ranking.exact)
+        if self.ranking.exact != other.ranking.exact {
+            return other.ranking.exact.cmp(&self.ranking.exact);
+        }
+        // Fall back to translation index
+        self.idx.cmp(&other.idx)
     }
 }
 
