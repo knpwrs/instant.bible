@@ -1,6 +1,7 @@
 use crate::proto::data::{Translation, TranslationData, VerseKey};
 use crate::{
-    ReverseIndex, ReverseIndexEntry, TranslationVerses, VersearchIndex, TRANSLATION_COUNT,
+    ProximitiesByVerseByTranslation, ReverseIndex, ReverseIndexEntry, TranslationVerses,
+    VersearchIndex, TRANSLATION_COUNT,
 };
 use fst::MapBuilder;
 use log::info;
@@ -43,7 +44,6 @@ impl PartialOrd for Tokenized {
 struct VerseStats {
     counts: Vec<usize>,
     highlights: BTreeSet<String>,
-    proximities: HashMap<String, HashMap<String, i32>>,
 }
 
 pub fn tokenize(input: &str) -> Vec<Tokenized> {
@@ -73,6 +73,7 @@ pub fn get_index() -> VersearchIndex {
 
     let mut total_docs: usize = 0;
     let mut token_counts: BTreeMap<String, HashMap<VerseKey, VerseStats>> = BTreeMap::new();
+    let mut wip_proximities = HashMap::new();
     let mut translation_verses: TranslationVerses = HashMap::new();
     let mut highlight_words = BTreeSet::new();
 
@@ -109,35 +110,42 @@ pub fn get_index() -> VersearchIndex {
                     .or_insert_with(HashMap::new)
                     .entry(verse.key.unwrap())
                     .or_insert_with(|| verse.text.clone());
-                let all_tokens = tokenize(&verse.text);
+                let vkey = verse.key.expect("Missing verse key");
+                let verse_tokens = tokenize(&verse.text);
                 // Count up tokens
-                for (i, tokenized) in all_tokens.iter().enumerate() {
+                for (i, tokenized) in verse_tokens.iter().enumerate() {
                     // Save word to get a highlight id later
                     highlight_words.insert(tokenized.source.to_uppercase());
                     // Create new stats entry if needed
                     let entry = token_counts
                         .entry(tokenized.token.clone())
                         .or_insert_with(HashMap::new)
-                        .entry(verse.key.expect("Missing verse key"))
+                        .entry(vkey.clone())
                         .or_insert_with(|| VerseStats {
                             counts: vec![0; TRANSLATION_COUNT],
                             highlights: BTreeSet::new(),
-                            proximities: HashMap::new(),
                         });
                     // Increment counts
                     entry.counts[translation_key as usize] += 1;
                     // Track highlights
                     entry.highlights.insert(tokenized.source.to_uppercase());
                     // Track proximities
-                    for (j, other_tokenized) in all_tokens.iter().enumerate() {
+                    for (j, other_tokenized) in verse_tokens.iter().enumerate() {
                         let prox = ((j - i) as i32).abs();
-                        entry
-                            .proximities
+                        wip_proximities
+                            .entry(translation_key as usize)
+                            .or_insert_with(HashMap::new)
+                            .entry(vkey.clone())
+                            .or_insert_with(HashMap::new)
                             .entry(tokenized.token.clone())
                             .or_insert_with(HashMap::new)
                             .entry(other_tokenized.token.clone())
-                            .and_modify(|p| {
-                                *p = *p.min(&mut prox.clone()).max(&mut MAX_PROXIMITY.clone());
+                            .and_modify(|p: &mut i32| {
+                                if prox < *p {
+                                    *p = prox;
+                                } else if prox > MAX_PROXIMITY {
+                                    *p = MAX_PROXIMITY
+                                }
                             })
                             .or_insert(prox);
                     }
@@ -154,7 +162,6 @@ pub fn get_index() -> VersearchIndex {
     let mut build = MapBuilder::memory();
     let mut reverse_index: ReverseIndex = HashMap::new();
     let highlight_words: Vec<_> = highlight_words.iter().cloned().collect();
-    let ordered_tokens: Vec<_> = token_counts.keys().cloned().collect();
 
     let now = Instant::now();
 
@@ -183,38 +190,12 @@ pub fn get_index() -> VersearchIndex {
                         )
                     })
                     .collect(),
-                // Oof
-                // Transforms a HashMap<String, HashMap<String, u8>> into HashMap<usize, HashMap<usize, u8>>
-                proximities: entries
-                    .iter()
-                    .map(|(key, vs)| {
-                        (
-                            *key,
-                            vs.proximities
-                                .iter()
-                                .map(|(w1, m1)| {
-                                    let i1 = ordered_tokens
-                                        .binary_search(w1)
-                                        .expect("Could not find index for token");
-                                    (
-                                        i1,
-                                        m1.iter()
-                                            .map(|(w2, p)| {
-                                                let i2 = ordered_tokens
-                                                    .binary_search(w2)
-                                                    .expect("Could not find index for token");
-                                                (i2, *p)
-                                            })
-                                            .collect(),
-                                    )
-                                })
-                                .collect(),
-                        )
-                    })
-                    .collect(),
             },
         );
     }
+
+    let fst_bytes = build.into_inner().expect("Could not flush bytes for FST");
+    info!("FST compiled: {} bytes", fst_bytes.len());
 
     info!(
         "Indexed {} tokens in {}ms",
@@ -224,12 +205,40 @@ pub fn get_index() -> VersearchIndex {
 
     info!("Stored {} words for highlighting", highlight_words.len());
 
-    let fst_bytes = build.into_inner().expect("Could not flush bytes for FST");
-    info!("FST compiled: {} bytes", fst_bytes.len());
+    let now = Instant::now();
+    let ordered_tokens: Vec<_> = token_counts.keys().cloned().collect();
+    let mut proximities: ProximitiesByVerseByTranslation = HashMap::new();
+
+    // Construct proximity map
+    for (tidx, m1) in &wip_proximities {
+        let tentry = proximities.entry(*tidx).or_insert_with(HashMap::new);
+        for (vkey, m2) in m1 {
+            let ventry = tentry.entry(*vkey).or_insert_with(HashMap::new);
+            for (w1, m3) in m2 {
+                let w1i = ordered_tokens
+                    .binary_search(w1)
+                    .expect("Could not find index for token");
+                let w1entry = ventry.entry(w1i).or_insert_with(HashMap::new);
+                for (w2, p) in m3 {
+                    let w2i = ordered_tokens
+                        .binary_search(w2)
+                        .expect("Could not find index for token");
+                    w1entry.insert(w2i, *p);
+                }
+            }
+        }
+    }
+
+    info!(
+        "Constructed proximities map for {} tokens in {}ms",
+        ordered_tokens.len(),
+        now.elapsed().as_millis()
+    );
 
     VersearchIndex::new(
         fst_bytes,
         reverse_index,
+        proximities,
         translation_verses,
         highlight_words,
     )

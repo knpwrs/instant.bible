@@ -25,12 +25,12 @@ pub struct ReverseIndexEntry {
     counts: HashMap<VerseKey, Vec<usize>>,
     /// VerseKey => Vec<Highlight Word Ids>
     highlights: HashMap<VerseKey, Vec<usize>>,
-    /// VerseKey => Token Index => Token Index => Proximity
-    proximities: HashMap<VerseKey, HashMap<usize, HashMap<usize, i32>>>,
 }
 
 pub type ReverseIndex = HashMap<u64, ReverseIndexEntry>;
 pub type TranslationVerses = HashMap<Translation, HashMap<VerseKey, String>>;
+pub type ProximitiesByVerseByTranslation =
+    HashMap<usize, HashMap<VerseKey, HashMap<usize, HashMap<usize, i32>>>>;
 
 static MAX_RESULTS: usize = 20;
 static PREFIX_EXPANSION_FACTOR: usize = 2;
@@ -57,6 +57,7 @@ struct ReverseIndexEntryWithMatch<'a> {
 pub struct VersearchIndex {
     fst_map: FstMap,
     reverse_index: ReverseIndex,
+    proximities: ProximitiesByVerseByTranslation,
     translation_verses: TranslationVerses,
     highlight_words: Vec<String>,
 }
@@ -66,12 +67,14 @@ impl VersearchIndex {
     pub fn new(
         fst_bytes: Vec<u8>,
         reverse_index: ReverseIndex,
+        proximities: ProximitiesByVerseByTranslation,
         translation_verses: TranslationVerses,
         highlight_words: Vec<String>,
     ) -> VersearchIndex {
         VersearchIndex {
             fst_map: FstMap::from_bytes(fst_bytes).expect("Could not load map from FST bytes"),
             reverse_index,
+            proximities,
             translation_verses,
             highlight_words,
         }
@@ -210,15 +213,19 @@ impl VersearchIndex {
                                 last_indices
                                     .iter()
                                     .map(|li| {
-                                        if let Some(m1) = entry.proximities.get(&result_key) {
-                                            if let Some(m2) = m1.get(&(*this_index as usize)) {
-                                                if let Some(p) = m2.get(&(*li as usize)) {
-                                                    return *p;
+                                        if let Some(m1) = self.proximities.get(&i) {
+                                            if let Some(m2) = m1.get(&result_key) {
+                                                if let Some(m3) = m2.get(&(*li as usize)) {
+                                                    if let Some(p) = m3.get(&(*this_index as usize))
+                                                    {
+                                                        return *p;
+                                                    }
                                                 }
                                             }
                                         }
                                         0
                                     })
+                                    .filter(|p| *p != 0)
                                     .min()
                                     .unwrap_or_else(|| 0)
                             } else {
