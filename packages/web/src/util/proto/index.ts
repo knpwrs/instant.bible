@@ -1,4 +1,4 @@
-import { isNumber, max } from 'lodash';
+import { isNumber } from 'lodash';
 import { instantbible as proto } from '../../proto';
 import en from './en';
 
@@ -32,10 +32,8 @@ export const textToTranslationsObject = (text?: string[] | null) => {
   );
 };
 
-export const topTranslation = (translationScores?: number[] | null) => {
-  if (!translationScores) throw new Error('Invalid translation scores!');
+export const topTranslation = (i?: number | null) => {
+  if (!isNumber(i)) throw new Error('Invalid translation id!');
 
-  const m = max(translationScores) || -1;
-  const i = translationScores.indexOf(m) || 0;
   return translationToString(i);
 };

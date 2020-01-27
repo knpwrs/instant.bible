@@ -5,10 +5,22 @@ import "data.proto";
 
 message Response {
   message VerseResult {
+    message Ranking {
+      // The number of typos matched
+      int32 typos = 1;
+      // The number of words matched from the query
+      int32 words = 2;
+      // The total proximity of adjacent word pairs in the query
+      int32 proximity = 3;
+      // The number of exact words matched (no prefix or typo)
+      int32 exact = 4;
+    }
+
     instantbible.data.VerseKey key = 1;
-    repeated double translationScores = 2;
+    instantbible.data.Translation topTranslation = 2;
     repeated string text = 3;
     repeated string highlights = 4;
+    repeated Ranking rankings = 5;
   }
 
   message Timings {

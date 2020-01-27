@@ -1,6 +1,7 @@
 use crate::proto::data::{Translation, TranslationData, VerseKey};
 use crate::{
-    ReverseIndex, ReverseIndexEntry, TranslationVerses, VersearchIndex, TRANSLATION_COUNT,
+    ProximitiesByVerseByTranslation, ReverseIndex, ReverseIndexEntry, TranslationVerses,
+    VersearchIndex, TRANSLATION_COUNT,
 };
 use fst::MapBuilder;
 use log::info;
@@ -12,6 +13,8 @@ use std::fs;
 use std::io::prelude::*;
 use std::iter::Iterator;
 use std::time::Instant;
+
+pub static MAX_PROXIMITY: i32 = 8;
 
 #[cfg_attr(test, derive(Debug))]
 #[derive(Deserialize)]
@@ -38,8 +41,8 @@ impl PartialOrd for Tokenized {
     }
 }
 
-struct ScoresAndHighlights {
-    scores: Vec<f64>,
+struct VerseStats {
+    counts: Vec<usize>,
     highlights: BTreeSet<String>,
 }
 
@@ -69,8 +72,8 @@ pub fn get_index() -> VersearchIndex {
     };
 
     let mut total_docs: usize = 0;
-    let mut token_scores: BTreeMap<String, HashMap<VerseKey, ScoresAndHighlights>> =
-        BTreeMap::new();
+    let mut token_counts: BTreeMap<String, HashMap<VerseKey, VerseStats>> = BTreeMap::new();
+    let mut wip_proximities = HashMap::new();
     let mut translation_verses: TranslationVerses = HashMap::new();
     let mut highlight_words = BTreeSet::new();
 
@@ -107,32 +110,44 @@ pub fn get_index() -> VersearchIndex {
                     .or_insert_with(HashMap::new)
                     .entry(verse.key.unwrap())
                     .or_insert_with(|| verse.text.clone());
-                let all_tokens = tokenize(&verse.text);
-                let tokens_count = all_tokens.len() as f64;
+                let vkey = verse.key.expect("Missing verse key");
+                let verse_tokens = tokenize(&verse.text);
                 // Count up tokens
-                for tokenized in all_tokens {
-                    let entry = token_scores
-                        .entry(tokenized.token)
+                for (i, tokenized) in verse_tokens.iter().enumerate() {
+                    // Save word to get a highlight id later
+                    highlight_words.insert(tokenized.source.to_uppercase());
+                    // Create new stats entry if needed
+                    let entry = token_counts
+                        .entry(tokenized.token.clone())
                         .or_insert_with(HashMap::new)
-                        .entry(verse.key.expect("Missing verse key"))
-                        // .or_insert_with(|| vec![0.0; TRANSLATION_COUNT]);
-                        .or_insert_with(|| ScoresAndHighlights {
-                            scores: vec![0.0; TRANSLATION_COUNT],
+                        .entry(vkey.clone())
+                        .or_insert_with(|| VerseStats {
+                            counts: vec![0; TRANSLATION_COUNT],
                             highlights: BTreeSet::new(),
                         });
-                    entry.scores[translation_key as usize] += 1.0;
+                    // Increment counts
+                    entry.counts[translation_key as usize] += 1;
+                    // Track highlights
                     entry.highlights.insert(tokenized.source.to_uppercase());
-                }
-                // Adjust for verse length
-                for tokenized in tokenize(&verse.text) {
-                    highlight_words.insert(tokenized.source.to_uppercase());
-                    let entry = token_scores
-                        .get_mut(&tokenized.token)
-                        .expect("Token not initialized properly")
-                        .get_mut(&verse.key.expect("Missing verse key"))
-                        .expect("Scores not initialized properly");
-                    for i in &mut entry.scores {
-                        *i /= tokens_count;
+                    // Track proximities
+                    for (j, other_tokenized) in verse_tokens.iter().enumerate() {
+                        let prox = ((j - i) as i32).abs();
+                        wip_proximities
+                            .entry(translation_key as usize)
+                            .or_insert_with(HashMap::new)
+                            .entry(vkey.clone())
+                            .or_insert_with(HashMap::new)
+                            .entry(tokenized.token.clone())
+                            .or_insert_with(HashMap::new)
+                            .entry(other_tokenized.token.clone())
+                            .and_modify(|p: &mut i32| {
+                                if prox < *p {
+                                    *p = prox;
+                                } else if prox > MAX_PROXIMITY {
+                                    *p = MAX_PROXIMITY
+                                }
+                            })
+                            .or_insert(prox);
                     }
                 }
             }
@@ -144,39 +159,27 @@ pub fn get_index() -> VersearchIndex {
         }
     }
 
-    info!("Adjusting scores for inverse document frequency");
-    let now = Instant::now();
-    for verses in token_scores.values_mut() {
-        let count = verses.len();
-        for entry in verses.values_mut() {
-            for s in entry.scores.iter_mut() {
-                *s *= (total_docs as f64 / count as f64).log10();
-            }
-        }
-    }
-    info!("Scores adjusted in {}ms", now.elapsed().as_millis());
-
     let mut build = MapBuilder::memory();
     let mut reverse_index: ReverseIndex = HashMap::new();
     let highlight_words: Vec<_> = highlight_words.iter().cloned().collect();
 
     let now = Instant::now();
 
-    for (i, (token, entries)) in token_scores.iter().enumerate() {
+    for (i, (token, entries)) in token_counts.iter().enumerate() {
         build.insert(token.clone(), i as u64).unwrap();
         reverse_index.insert(
             i as u64,
             ReverseIndexEntry {
-                verse_scores: entries
+                counts: entries
                     .iter()
-                    .map(|(key, sh)| (*key, sh.scores.clone()))
+                    .map(|(key, vs)| (*key, vs.counts.clone()))
                     .collect(),
-                verse_highlights: entries
+                highlights: entries
                     .iter()
-                    .map(|(key, sh)| {
+                    .map(|(key, vs)| {
                         (
                             *key,
-                            sh.highlights
+                            vs.highlights
                                 .iter()
                                 .map(|s| {
                                     highlight_words
@@ -191,6 +194,9 @@ pub fn get_index() -> VersearchIndex {
         );
     }
 
+    let fst_bytes = build.into_inner().expect("Could not flush bytes for FST");
+    info!("FST compiled: {} bytes", fst_bytes.len());
+
     info!(
         "Indexed {} tokens in {}ms",
         reverse_index.len(),
@@ -199,12 +205,40 @@ pub fn get_index() -> VersearchIndex {
 
     info!("Stored {} words for highlighting", highlight_words.len());
 
-    let fst_bytes = build.into_inner().expect("Could not flush bytes for FST");
-    info!("FST compiled: {} bytes", fst_bytes.len());
+    let now = Instant::now();
+    let ordered_tokens: Vec<_> = token_counts.keys().cloned().collect();
+    let mut proximities: ProximitiesByVerseByTranslation = HashMap::new();
+
+    // Construct proximity map
+    for (tidx, m1) in &wip_proximities {
+        let tentry = proximities.entry(*tidx).or_insert_with(HashMap::new);
+        for (vkey, m2) in m1 {
+            let ventry = tentry.entry(*vkey).or_insert_with(HashMap::new);
+            for (w1, m3) in m2 {
+                let w1i = ordered_tokens
+                    .binary_search(w1)
+                    .expect("Could not find index for token");
+                let w1entry = ventry.entry(w1i).or_insert_with(HashMap::new);
+                for (w2, p) in m3 {
+                    let w2i = ordered_tokens
+                        .binary_search(w2)
+                        .expect("Could not find index for token");
+                    w1entry.insert(w2i, *p);
+                }
+            }
+        }
+    }
+
+    info!(
+        "Constructed proximities map for {} tokens in {}ms",
+        ordered_tokens.len(),
+        now.elapsed().as_millis()
+    );
 
     VersearchIndex::new(
         fst_bytes,
         reverse_index,
+        proximities,
         translation_verses,
         highlight_words,
     )
