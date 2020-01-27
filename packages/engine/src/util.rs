@@ -66,6 +66,7 @@ pub fn tokenize(input: &str) -> Vec<Tokenized> {
 }
 
 pub fn get_index() -> VersearchIndex {
+    let start = Instant::now();
     let config = match envy::from_env::<Config>() {
         Ok(config) => config,
         Err(error) => panic!("{:?}", error),
@@ -234,6 +235,8 @@ pub fn get_index() -> VersearchIndex {
         ordered_tokens.len(),
         now.elapsed().as_millis()
     );
+
+    info!("get_index done in {}ms", start.elapsed().as_millis());
 
     VersearchIndex::new(
         fst_bytes,
