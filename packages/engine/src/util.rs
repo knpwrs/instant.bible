@@ -50,17 +50,22 @@ pub fn tokenize(input: &str) -> Vec<Tokenized> {
     input
         .split_whitespace()
         .map(|s| Tokenized {
-            source: s
-                .chars()
-                .filter(|c| !c.is_ascii_punctuation() || *c == '\'')
-                .collect::<String>(),
             token: s
                 .chars()
-                // Keeping only alphabetic characters lets users search without
+                // Keeping only alphanumeric characters lets users search without
                 // concern for apostrophes and the like
-                .filter(|c| c.is_alphabetic())
+                .filter(|c| c.is_ascii_alphanumeric())
                 .collect::<String>()
                 .to_uppercase(),
+            source: s
+                .chars()
+                .enumerate()
+                // Like tokens but with apostophes and commas (except trailing commas)
+                .filter(|(i, c)| {
+                    c.is_ascii_alphanumeric() || *c == '\'' || (*c == ',' && *i != s.len() - 1)
+                })
+                .map(|(_i, c)| c)
+                .collect::<String>(),
         })
         .collect()
 }
