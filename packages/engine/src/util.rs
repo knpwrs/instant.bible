@@ -168,6 +168,22 @@ pub fn get_index() -> VersearchIndex {
 
     for (i, (token, entries)) in token_counts.iter().enumerate() {
         build.insert(token.clone(), i as u64).unwrap();
+
+        let mut highlights = HashMap::new();
+
+        for (key, vs) in entries {
+            let indices = vs
+                .highlights
+                .iter()
+                .map(|s| {
+                    highlight_words
+                        .binary_search(s)
+                        .expect("Could not find index for highlight entry")
+                })
+                .collect();
+            highlights.insert(*key, indices);
+        }
+
         reverse_index.insert(
             i as u64,
             ReverseIndexEntry {
@@ -175,22 +191,7 @@ pub fn get_index() -> VersearchIndex {
                     .iter()
                     .map(|(key, vs)| (*key, vs.counts.clone()))
                     .collect(),
-                highlights: entries
-                    .iter()
-                    .map(|(key, vs)| {
-                        (
-                            *key,
-                            vs.highlights
-                                .iter()
-                                .map(|s| {
-                                    highlight_words
-                                        .binary_search(s)
-                                        .expect("Could not find index for highlight entry")
-                                })
-                                .collect(),
-                        )
-                    })
-                    .collect(),
+                highlights,
             },
         );
     }
