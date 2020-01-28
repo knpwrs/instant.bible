@@ -97,9 +97,9 @@ pub fn get_index() -> VersearchIndex {
             let now = Instant::now();
             let mut file_bytes: Vec<u8> = Vec::new();
             fs::File::open(path)
-                .unwrap()
+                .expect("Could not open protobuf file")
                 .read_to_end(&mut file_bytes)
-                .unwrap();
+                .expect("Could not read protobuf file");
             let data = TranslationData::decode(file_bytes).expect("Could not parse protobuf");
             let translation_key =
                 Translation::from_i32(data.translation).expect("Invalid translation field value");
