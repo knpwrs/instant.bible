@@ -136,8 +136,8 @@ pub fn get_index() -> VersearchIndex {
                     // Track highlights
                     entry.highlights.insert(tokenized.source.to_uppercase());
                     // Track proximities
-                    for (j, other_tokenized) in verse_tokens.iter().enumerate() {
-                        let prox = ((j - i) as i32).abs();
+                    for (j, other_tokenized) in verse_tokens.iter().enumerate().skip(i + 1) {
+                        let prox = (j - i) as i32;
                         wip_proximities
                             .entry(translation_key as usize)
                             .or_insert_with(HashMap::new)
