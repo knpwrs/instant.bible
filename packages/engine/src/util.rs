@@ -13,7 +13,7 @@ use std::io::prelude::*;
 use std::iter::Iterator;
 use std::time::Instant;
 
-pub static MAX_PROXIMITY: i32 = 8;
+pub static MAX_PROXIMITY: u64 = 8;
 
 #[cfg_attr(test, derive(Debug))]
 #[derive(Deserialize)]
@@ -149,7 +149,7 @@ pub fn get_index() -> VersearchIndex {
                     entry.highlights.insert(tokenized.source.to_uppercase());
                     // Track proximities
                     for (j, other_tokenized) in verse_tokens.iter().enumerate().skip(i + 1) {
-                        let prox = (j - i) as i32;
+                        let prox = (j - i) as u64;
                         wip_proximities
                             .entry(translation_key as usize)
                             .or_insert_with(BTreeMap::new)
@@ -158,7 +158,7 @@ pub fn get_index() -> VersearchIndex {
                             .entry(tokenized.token.clone())
                             .or_insert_with(BTreeMap::new)
                             .entry(other_tokenized.token.clone())
-                            .and_modify(|p: &mut i32| {
+                            .and_modify(|p: &mut u64| {
                                 if prox < *p {
                                     *p = prox;
                                 } else if prox > MAX_PROXIMITY {
@@ -241,7 +241,7 @@ pub fn get_index() -> VersearchIndex {
                         .expect("Could not find index for token")
                         as u16;
                     proximities_build
-                        .insert(proximity_bytes_key(*tidx as u8, vkey, w1i, w2i), *p as u64)
+                        .insert(proximity_bytes_key(*tidx as u8, vkey, w1i, w2i), *p)
                         .unwrap();
                 }
             }
