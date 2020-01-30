@@ -1,7 +1,6 @@
 use crate::proto::data::{Translation, TranslationData, VerseKey};
 use crate::{
-    ProximitiesByVerseByTranslation, ReverseIndex, ReverseIndexEntry, TranslationVerses,
-    VersearchIndex, TRANSLATION_COUNT,
+    ReverseIndex, ReverseIndexEntry, TranslationVerses, VersearchIndex, TRANSLATION_COUNT,
 };
 use fst::MapBuilder;
 use log::info;
@@ -70,6 +69,19 @@ pub fn tokenize(input: &str) -> Vec<Tokenized> {
         .collect()
 }
 
+/// Given a translation id, a verse key, and two word ids, generates a sequence
+/// of bytes which can be used as a key into an FST map
+pub fn proximity_bytes_key(tidx: u8, vkey: &VerseKey, w1i: u16, w2i: u16) -> Vec<u8> {
+    let capacity =
+        std::mem::size_of::<u8>() + std::mem::size_of::<u16>() * 2 + VerseKey::get_byte_size();
+    let mut v = Vec::with_capacity(capacity);
+    v.extend(&tidx.to_be_bytes());
+    v.extend(&vkey.to_be_bytes());
+    v.extend(&w1i.to_be_bytes());
+    v.extend(&w2i.to_be_bytes());
+    v
+}
+
 pub fn get_index() -> VersearchIndex {
     let start = Instant::now();
     let config = match envy::from_env::<Config>() {
@@ -79,7 +91,7 @@ pub fn get_index() -> VersearchIndex {
 
     let mut total_docs: usize = 0;
     let mut token_counts: BTreeMap<String, HashMap<VerseKey, VerseStats>> = BTreeMap::new();
-    let mut wip_proximities = HashMap::new();
+    let mut wip_proximities = BTreeMap::new();
     let mut translation_verses: TranslationVerses = HashMap::new();
     let mut highlight_words = BTreeSet::new();
 
@@ -140,11 +152,11 @@ pub fn get_index() -> VersearchIndex {
                         let prox = (j - i) as i32;
                         wip_proximities
                             .entry(translation_key as usize)
-                            .or_insert_with(HashMap::new)
+                            .or_insert_with(BTreeMap::new)
                             .entry(vkey.clone())
-                            .or_insert_with(HashMap::new)
+                            .or_insert_with(BTreeMap::new)
                             .entry(tokenized.token.clone())
-                            .or_insert_with(HashMap::new)
+                            .or_insert_with(BTreeMap::new)
                             .entry(other_tokenized.token.clone())
                             .and_modify(|p: &mut i32| {
                                 if prox < *p {
@@ -214,31 +226,36 @@ pub fn get_index() -> VersearchIndex {
 
     let now = Instant::now();
     let ordered_tokens: Vec<_> = token_counts.keys().cloned().collect();
-    let mut proximities: ProximitiesByVerseByTranslation = HashMap::new();
+    let mut proximities_build = MapBuilder::memory();
 
     // Construct proximity map
     for (tidx, m1) in &wip_proximities {
-        let tentry = proximities.entry(*tidx).or_insert_with(HashMap::new);
         for (vkey, m2) in m1 {
-            let ventry = tentry.entry(*vkey).or_insert_with(HashMap::new);
             for (w1, m3) in m2 {
                 let w1i = ordered_tokens
                     .binary_search(w1)
-                    .expect("Could not find index for token");
-                let w1entry = ventry.entry(w1i).or_insert_with(HashMap::new);
+                    .expect("Could not find index for token") as u16;
                 for (w2, p) in m3 {
                     let w2i = ordered_tokens
                         .binary_search(w2)
-                        .expect("Could not find index for token");
-                    w1entry.insert(w2i, *p);
+                        .expect("Could not find index for token")
+                        as u16;
+                    proximities_build
+                        .insert(proximity_bytes_key(*tidx as u8, vkey, w1i, w2i), *p as u64)
+                        .unwrap();
                 }
             }
         }
     }
 
+    let proximities = proximities_build
+        .into_inner()
+        .expect("Could not flush proximities map bytes");
+
     info!(
-        "Constructed proximities map for {} tokens in {}ms",
+        "Proximities FST compiled: {} tokens, {} bytes in {}ms",
         ordered_tokens.len(),
+        proximities.len(),
         now.elapsed().as_millis()
     );
 

@@ -13,7 +13,7 @@ use proto::service::{
 };
 use std::collections::HashMap;
 use std::time::Instant;
-use util::{tokenize, Tokenized};
+use util::{proximity_bytes_key, tokenize, Tokenized};
 
 pub use util::{Config, MAX_PROXIMITY};
 
@@ -29,8 +29,6 @@ pub struct ReverseIndexEntry {
 
 pub type ReverseIndex = HashMap<u64, ReverseIndexEntry>;
 pub type TranslationVerses = HashMap<Translation, HashMap<VerseKey, String>>;
-pub type ProximitiesByVerseByTranslation =
-    HashMap<usize, HashMap<VerseKey, HashMap<usize, HashMap<usize, i32>>>>;
 
 static MAX_RESULTS: usize = 20;
 static PREFIX_EXPANSION_FACTOR: usize = 2;
@@ -57,7 +55,7 @@ struct ReverseIndexEntryWithMatch<'a> {
 pub struct VersearchIndex {
     fst_map: FstMap,
     reverse_index: ReverseIndex,
-    proximities: ProximitiesByVerseByTranslation,
+    proximities: FstMap,
     translation_verses: TranslationVerses,
     highlight_words: Vec<String>,
 }
@@ -67,14 +65,15 @@ impl VersearchIndex {
     pub fn new(
         fst_bytes: Vec<u8>,
         reverse_index: ReverseIndex,
-        proximities: ProximitiesByVerseByTranslation,
+        proximities: Vec<u8>,
         translation_verses: TranslationVerses,
         highlight_words: Vec<String>,
     ) -> VersearchIndex {
         VersearchIndex {
             fst_map: FstMap::from_bytes(fst_bytes).expect("Could not load map from FST bytes"),
             reverse_index,
-            proximities,
+            proximities: FstMap::from_bytes(proximities)
+                .expect("Could not load map from proximity bytes"),
             translation_verses,
             highlight_words,
         }
@@ -209,21 +208,20 @@ impl VersearchIndex {
                                 _ => {}
                             }
                             // Calculate the proximity between current and last word
-                            let proximity: i32 = if !last_indices.is_empty() {
+                            let proximity = if !last_indices.is_empty() {
                                 last_indices
                                     .iter()
                                     .map(|li| {
-                                        if let Some(m1) = self.proximities.get(&i) {
-                                            if let Some(m2) = m1.get(&result_key) {
-                                                if let Some(m3) = m2.get(&(*li as usize)) {
-                                                    if let Some(p) = m3.get(&(*this_index as usize))
-                                                    {
-                                                        return *p;
-                                                    }
-                                                }
-                                            }
+                                        if let Some(p) = self.proximities.get(proximity_bytes_key(
+                                            i as u8,
+                                            result_key,
+                                            *li as u16,
+                                            *this_index as u16,
+                                        )) {
+                                            p
+                                        } else {
+                                            0
                                         }
-                                        0
                                     })
                                     .filter(|p| *p != 0)
                                     .min()
@@ -232,7 +230,7 @@ impl VersearchIndex {
                                 0
                             };
                             // Increment proximity
-                            result_match.add_proximity(i, proximity);
+                            result_match.add_proximity(i, proximity as i32);
                         }
                     }
                 }
