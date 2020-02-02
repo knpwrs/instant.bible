@@ -65,14 +65,14 @@ impl VersearchIndex {
     pub fn new(
         fst_bytes: Vec<u8>,
         reverse_index: ReverseIndex,
-        proximities: Vec<u8>,
+        proximities_bytes: Vec<u8>,
         translation_verses: TranslationVerses,
         highlight_words: Vec<String>,
     ) -> VersearchIndex {
         VersearchIndex {
             fst_map: FstMap::from_bytes(fst_bytes).expect("Could not load map from FST bytes"),
             reverse_index,
-            proximities: FstMap::from_bytes(proximities)
+            proximities: FstMap::from_bytes(proximities_bytes)
                 .expect("Could not load map from proximity bytes"),
             translation_verses,
             highlight_words,

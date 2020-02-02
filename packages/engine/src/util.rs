@@ -328,13 +328,13 @@ pub fn get_index() -> VersearchIndex {
 
     let now = Instant::now();
 
-    let proximities = build_proximity_fst_bytes(&wip_proximities, &wip_token_counts)
+    let proximities_bytes = build_proximity_fst_bytes(&wip_proximities, &wip_token_counts)
         .expect("Could not build proximities map");
 
     info!(
         "Proximities FST compiled: {} tokens, {} bytes in {}ms",
         wip_token_counts.len(),
-        proximities.len(),
+        proximities_bytes.len(),
         now.elapsed().as_millis()
     );
 
@@ -343,7 +343,7 @@ pub fn get_index() -> VersearchIndex {
     VersearchIndex::new(
         fst_bytes,
         reverse_index,
-        proximities,
+        proximities_bytes,
         translation_verses,
         highlight_words,
     )
