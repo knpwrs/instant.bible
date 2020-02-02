@@ -11,9 +11,9 @@ use proto::service::{
     response::{Timings, VerseResult},
     Response as ServiceResponse,
 };
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::time::Instant;
-use util::{proximity_bytes_key, tokenize, Tokenized};
+use util::{proximity_bytes_key, tokenize, translation_verses_bytes_key, Tokenized};
 
 pub use util::{Config, MAX_PROXIMITY};
 
@@ -28,7 +28,7 @@ pub struct ReverseIndexEntry {
 }
 
 pub type ReverseIndex = HashMap<u64, ReverseIndexEntry>;
-pub type TranslationVerses = HashMap<Translation, HashMap<VerseKey, String>>;
+pub type TranslationVerses = BTreeMap<Translation, BTreeMap<VerseKey, String>>;
 
 static MAX_RESULTS: usize = 20;
 static PREFIX_EXPANSION_FACTOR: usize = 2;
@@ -56,8 +56,9 @@ pub struct VersearchIndex {
     fst_map: FstMap,
     reverse_index: ReverseIndex,
     proximities: FstMap,
-    translation_verses: TranslationVerses,
     highlight_words: Vec<String>,
+    translation_verses_map: FstMap,
+    translation_verses_strings: Vec<String>,
 }
 
 impl VersearchIndex {
@@ -66,16 +67,19 @@ impl VersearchIndex {
         fst_bytes: Vec<u8>,
         reverse_index: ReverseIndex,
         proximities_bytes: Vec<u8>,
-        translation_verses: TranslationVerses,
         highlight_words: Vec<String>,
-    ) -> VersearchIndex {
+        translation_verses_bytes: Vec<u8>,
+        translation_verses_strings: Vec<String>,
+    ) -> Self {
         VersearchIndex {
             fst_map: FstMap::from_bytes(fst_bytes).expect("Could not load map from FST bytes"),
             reverse_index,
             proximities: FstMap::from_bytes(proximities_bytes)
                 .expect("Could not load map from proximity bytes"),
-            translation_verses,
             highlight_words,
+            translation_verses_map: FstMap::from_bytes(translation_verses_bytes)
+                .expect("Could not load map from translation verses bytes"),
+            translation_verses_strings,
         }
     }
 
@@ -260,11 +264,15 @@ impl VersearchIndex {
                 top_translation: r.top_translation(),
                 text: (0..TRANSLATION_COUNT)
                     .map(|i| {
-                        self.translation_verses
-                            .get(&Translation::from_i32(i as i32).unwrap())
-                            .unwrap()
-                            .get(&r.key)
-                            .map_or_else(|| "".to_string(), |s| s.clone())
+                        let key = translation_verses_bytes_key(i as u8, &r.key);
+                        self.translation_verses_map.get(key).map_or_else(
+                            || "".to_string(),
+                            |idx| {
+                                self.translation_verses_strings
+                                    .get(idx as usize)
+                                    .map_or_else(|| "".to_string(), |s| s.clone())
+                            },
+                        )
                     })
                     .collect(),
                 highlights: r

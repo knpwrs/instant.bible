@@ -83,6 +83,16 @@ pub fn proximity_bytes_key(tidx: u8, vkey: &VerseKey, w1i: u16, w2i: u16) -> Vec
     v
 }
 
+/// Given a translation id and a verse key, generates a sequence of bytes which
+/// can be used as a key into an FST map
+pub fn translation_verses_bytes_key(tidx: u8, vkey: &VerseKey) -> Vec<u8> {
+    let capacity = std::mem::size_of::<u8>() + VerseKey::get_byte_size();
+    let mut v = Vec::with_capacity(capacity);
+    v.extend(&tidx.to_be_bytes());
+    v.extend(&vkey.to_be_bytes());
+    v
+}
+
 /// Reads and returns the bytes of a file located at the given path
 #[inline]
 fn read_file_bytes(path: &std::path::PathBuf) -> Result<Vec<u8>> {
@@ -113,7 +123,7 @@ fn process_verses(
     for verse in verses {
         translation_verses
             .entry(translation_key)
-            .or_insert_with(HashMap::new)
+            .or_insert_with(BTreeMap::new)
             .entry(verse.key.unwrap())
             .or_insert_with(|| verse.text.clone());
         let vkey = verse.key.expect("Missing verse key");
@@ -298,13 +308,37 @@ fn build_proximity_fst_bytes(
     Ok(proximities)
 }
 
+#[inline]
+fn build_translation_verses_bytes(
+    translation_verses: &TranslationVerses,
+) -> Result<(Vec<u8>, Vec<String>)> {
+    let mut strings = Vec::new();
+    let mut build = MapBuilder::memory();
+
+    for (tidx, verses) in translation_verses.iter() {
+        for (verse_key, text) in verses {
+            let key = translation_verses_bytes_key(*tidx as u8, verse_key);
+            build
+                .insert(key, strings.len() as u64)
+                .context("Could not insert into translation verses map builder")?;
+            strings.push(text.clone());
+        }
+    }
+
+    let bytes = build
+        .into_inner()
+        .context("Could not build translation verses fst bytes")?;
+
+    Ok((bytes, strings))
+}
+
 /// Creates and returns a search index
 pub fn get_index() -> VersearchIndex {
     let start = Instant::now();
 
     let mut wip_token_counts = BTreeMap::new();
     let mut wip_proximities = BTreeMap::new();
-    let mut translation_verses: TranslationVerses = HashMap::new();
+    let mut translation_verses: TranslationVerses = BTreeMap::new();
     let mut highlight_words = BTreeSet::new();
 
     load_data(
@@ -338,14 +372,22 @@ pub fn get_index() -> VersearchIndex {
         now.elapsed().as_millis()
     );
 
+    let (translation_verses_bytes, translation_verses_strings) =
+        build_translation_verses_bytes(&translation_verses)
+            .expect("Could not construct translation verses fst map");
+
+    translation_verses_bytes.len();
+    translation_verses_strings.len();
+
     info!("get_index done in {}ms", start.elapsed().as_millis());
 
     VersearchIndex::new(
         fst_bytes,
         reverse_index,
         proximities_bytes,
-        translation_verses,
         highlight_words,
+        translation_verses_bytes,
+        translation_verses_strings,
     )
 }
 
