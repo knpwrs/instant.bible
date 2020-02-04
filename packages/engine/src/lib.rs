@@ -27,7 +27,7 @@ pub struct ReverseIndexEntry {
     highlights: HashMap<VerseKey, Vec<usize>>,
 }
 
-pub type ReverseIndex = HashMap<u64, ReverseIndexEntry>;
+pub type ReverseIndex = Vec<ReverseIndexEntry>;
 pub type TranslationVerses = BTreeMap<Translation, BTreeMap<VerseKey, String>>;
 
 static MAX_RESULTS: usize = 20;
@@ -122,7 +122,7 @@ impl VersearchIndex {
                     found_indices
                         .entry(*idx)
                         .or_insert_with(|| ReverseIndexEntryWithMatch {
-                            entry: self.reverse_index.get(&idx).unwrap(),
+                            entry: &self.reverse_index[*idx as usize],
                             match_type: if is_typo {
                                 MatchType::Typo
                             } else {

@@ -233,7 +233,7 @@ fn build_reverse_index(
     wip_token_counts: &WipTokenCountsMap,
 ) -> (ReverseIndex, Vec<u8>, Vec<String>) {
     let mut build = MapBuilder::memory();
-    let mut reverse_index: ReverseIndex = HashMap::new();
+    let mut reverse_index: ReverseIndex = Vec::with_capacity(wip_token_counts.len());
     let highlight_words: Vec<_> = highlight_words.iter().cloned().collect();
 
     for (i, (token, entries)) in wip_token_counts.iter().enumerate() {
@@ -254,16 +254,13 @@ fn build_reverse_index(
             highlights.insert(*key, indices);
         }
 
-        reverse_index.insert(
-            i as u64,
-            ReverseIndexEntry {
-                counts: entries
-                    .iter()
-                    .map(|(key, vs)| (*key, vs.counts.clone()))
-                    .collect(),
-                highlights,
-            },
-        );
+        reverse_index.push(ReverseIndexEntry {
+            counts: entries
+                .iter()
+                .map(|(key, vs)| (*key, vs.counts.clone()))
+                .collect(),
+            highlights,
+        });
     }
 
     let fst_bytes = build.into_inner().expect("Could not flush bytes for FST");
