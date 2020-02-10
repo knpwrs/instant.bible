@@ -1,6 +1,6 @@
 mod matches;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use bytes::buf::BufExt;
 use flate2::read::MultiGzDecoder;
 use futures::stream::{self, StreamExt};
@@ -39,10 +39,16 @@ async fn get_index(year: &str, crawl: &str) -> Result<String> {
     );
 
     log::info!("(H:{}) Downloading {}", hash_url(&url), url);
-    let bytes = reqwest::get(&url).await?.bytes().await?;
+    let bytes = reqwest::get(&url)
+        .await?
+        .bytes()
+        .await
+        .context("Could not download index")?;
     let mut decoder = MultiGzDecoder::new(bytes.reader());
     let mut index = String::new();
-    decoder.read_to_string(&mut index)?;
+    decoder
+        .read_to_string(&mut index)
+        .context("Could not read index to string")?;
 
     Ok(index)
 }
@@ -54,12 +60,19 @@ async fn get_warc_bytes(path: &str) -> Result<Vec<u8>> {
     let hash = hash_url(&url);
     log::info!("(H:{}) Downloading {}", hash, url);
 
-    let bytes = reqwest::get(&url).await?.bytes().await?;
+    let bytes = reqwest::get(&url)
+        .await
+        .context(format!("(H:{}) Could not download WARC file", hash))?
+        .bytes()
+        .await
+        .context(format!("(H:{}) Could not get WARC bytes", hash))?;
     log::info!("(H:{}) Downloaded {} bytes", hash, bytes.len());
     let mut decoder = MultiGzDecoder::new(bytes.reader());
     let mut buf = Vec::new();
-    decoder.read_to_end(&mut buf)?;
-    log::info!("(H:{}) Uncompressed to {} bytes ", hash, buf.len());
+    decoder
+        .read_to_end(&mut buf)
+        .context(format!("(H:{}) Could not decompress WARC bytes", hash))?;
+    log::info!("(H:{}) Decompressed to {} bytes ", hash, buf.len());
 
     Ok(buf)
 }
@@ -67,30 +80,38 @@ async fn get_warc_bytes(path: &str) -> Result<Vec<u8>> {
 /// Given a line out of a common crawl index, calls the download function, parses
 /// the WARC, and processes the result
 async fn process_index_line(line: &str, map: MutexMap) -> Result<()> {
-    let warc_bytes = get_warc_bytes(line).await?;
+    let warc_bytes = get_warc_bytes(line)
+        .await
+        .context("Could not get WARC bytes")?;
     let parsed = records(&warc_bytes);
     match parsed {
         Err(_) => log::error!("Error parsing WARC data!"),
         Ok((_i, records)) => {
             log::info!("Processing {} WARC records", records.len());
             for record in records {
-                let content = String::from_utf8(record.content)?;
+                let content =
+                    String::from_utf8(record.content).context("Could not parse UTF-8 from WARC")?;
                 let matches = get_matches(&content);
                 std::mem::drop(content);
-                if !matches.is_empty() {
-                    let url = &record.headers["WARC-Target-URI"];
-                    let url_hash = hash_url(url);
-                    log::info!("(H:{}) {} matches at {}", url_hash, matches.len(), url);
-                    let map = &mut *map.lock().await;
-                    for mat in matches {
-                        map.entry(mat.book)
-                            .or_insert_with(BTreeMap::new)
-                            .entry(mat.chapter)
-                            .or_insert_with(BTreeMap::new)
-                            .entry(mat.verse)
-                            .or_insert_with(BTreeSet::new)
-                            .insert(url_hash);
+                match matches {
+                    Ok(matches) => {
+                        if !matches.is_empty() {
+                            let url = &record.headers["WARC-Target-URI"];
+                            let url_hash = hash_url(url);
+                            log::info!("(H:{}) {} matches at {}", url_hash, matches.len(), url);
+                            let map = &mut *map.lock().await;
+                            for mat in matches {
+                                map.entry(mat.book)
+                                    .or_insert_with(BTreeMap::new)
+                                    .entry(mat.chapter)
+                                    .or_insert_with(BTreeMap::new)
+                                    .entry(mat.verse)
+                                    .or_insert_with(BTreeSet::new)
+                                    .insert(url_hash);
+                            }
+                        }
                     }
+                    Err(err) => log::error!("Error prcessing index line! {:?}", err),
                 }
             }
         }
@@ -150,13 +171,21 @@ async fn main() -> Result<()> {
     let args: Vec<_> = env::args().skip(1).collect();
     let year = &args[0];
     let crawl = &args[1];
-    let index = get_index(year, crawl).await?;
-    let mutex_map = process_index(&index).await?;
+    let index = get_index(year, crawl)
+        .await
+        .context("Could not get index")?;
+    let mutex_map = process_index(&index)
+        .await
+        .context("Could not process index")?;
     let map = &*mutex_map.lock().await;
     let counts = make_counts_map(map);
-    let json = serde_json::to_string(&counts)?;
-    let mut file = File::create(format!("{}-{}.json", year, crawl)).await?;
-    file.write_all(json.as_bytes()).await?;
+    let json = serde_json::to_string(&counts).context("Could not convert counts to JSON")?;
+    let mut file = File::create(format!("{}-{}.json", year, crawl))
+        .await
+        .context("Could not create JSON file on disk")?;
+    file.write_all(json.as_bytes())
+        .await
+        .context("Could not write JSON to disk")?;
 
     Ok(())
 }

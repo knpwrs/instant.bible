@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -79,7 +80,7 @@ lazy_static! {
               Revelation
             )
             \s?
-            (?P<chapter>\d+):(?P<verse>\d+)
+            (?P<chapter>\d{1,3}):(?P<verse>\d{1,3})
           )
           # Match single-chapter books
           |(
@@ -94,7 +95,7 @@ lazy_static! {
               Jude
             )
             \s?
-            (?:1:)?(?P<verse_single>\d+) # Optionally match `1:` followed by verse
+            (?:1:)?(?P<verse_single>\d{1,3}) # Optionally match `1:` followed by verse
           )"
     )
     .unwrap();
@@ -110,7 +111,7 @@ pub struct Match {
 
 /// Given an input string, finds all occurrences of what look like scripture
 /// references and returns a vector of those
-pub fn get_matches(input: &str) -> Vec<Match> {
+pub fn get_matches(input: &str) -> Result<Vec<Match>> {
     RE.captures_iter(input)
         .map(|cap| {
             let book = cap
@@ -122,19 +123,17 @@ pub fn get_matches(input: &str) -> Vec<Match> {
                 .replace("THIRD", "3");
             let chapter = cap
                 .name("chapter")
-                .map_or(1, |m| m.as_str().parse::<u8>().unwrap());
-            let verse = cap.name("verse").map_or_else(
-                || {
-                    cap.name("verse_single")
-                        .unwrap()
-                        .as_str()
-                        .parse::<u8>()
-                        .unwrap()
-                },
-                |m| m.as_str().parse::<u8>().unwrap(),
-            );
+                .map_or(Ok(1), |m| m.as_str().parse::<u8>())
+                .context("Failed to parse chapter")?;
+            let verse = cap
+                .name("verse")
+                .map_or_else(
+                    || cap.name("verse_single").unwrap().as_str().parse::<u8>(),
+                    |m| m.as_str().parse::<u8>(),
+                )
+                .context("Failed to parse verse")?;
 
-            Match {
+            Ok(Match {
                 // I actually cite as 'Psalm' with no trailing 's', but in the interest
                 // of data consitency with a `book` field this makes sense
                 book: if book == "PSALM" {
@@ -144,7 +143,7 @@ pub fn get_matches(input: &str) -> Vec<Match> {
                 },
                 chapter,
                 verse,
-            }
+            })
         })
         .collect()
 }
@@ -186,7 +185,7 @@ mod test {
         );
         println!("{:?}", matches);
         assert_eq!(
-            matches,
+            matches.unwrap(),
             vec![
                 Match {
                     book: "GENESIS".to_string(),
