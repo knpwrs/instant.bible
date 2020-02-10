@@ -1,0 +1,162 @@
+mod matches;
+
+use anyhow::Result;
+use bytes::buf::BufExt;
+use flate2::read::MultiGzDecoder;
+use futures::stream::{self, StreamExt};
+use matches::get_matches;
+use std::collections::{BTreeMap, BTreeSet};
+use std::env;
+use std::io::prelude::*;
+use std::sync::Arc;
+use tokio::fs::File;
+use tokio::prelude::*;
+use tokio::sync::Mutex;
+use warc_parser::records;
+
+type DataMap = BTreeMap<String, BTreeMap<u8, BTreeMap<u8, BTreeSet<u64>>>>;
+type MutexMap = Arc<Mutex<DataMap>>;
+type CountsMap = BTreeMap<String, BTreeMap<u8, BTreeMap<u8, u32>>>;
+
+static BASE_URL: &str = "https://commoncrawl.s3.amazonaws.com";
+
+/// Hash a given URL into a u64
+fn hash_url(url: &str) -> u64 {
+    use core::hash::Hasher;
+    let mut hasher = metrohash::MetroHash64::new();
+    hasher.write(url.as_bytes());
+    hasher.finish()
+}
+
+/// Given a year and a crawl number, downloads and uncompresses a common crawl
+/// WET index
+async fn get_index(year: &str, crawl: &str) -> Result<String> {
+    log::info!("Getting index {}-{}", year, crawl);
+
+    let url = format!(
+        "{}/crawl-data/CC-MAIN-{}-{}/wet.paths.gz",
+        BASE_URL, year, crawl,
+    );
+
+    log::info!("(H:{}) Downloading {}", hash_url(&url), url);
+    let bytes = reqwest::get(&url).await?.bytes().await?;
+    let mut decoder = MultiGzDecoder::new(bytes.reader());
+    let mut index = String::new();
+    decoder.read_to_string(&mut index)?;
+
+    Ok(index)
+}
+
+/// Given the path to a WARC/WET download, downloads, uncompresses, and returns
+/// the bytes of the file
+async fn get_warc_bytes(path: &str) -> Result<Vec<u8>> {
+    let url = format!("{}/{}", BASE_URL, path);
+    let hash = hash_url(&url);
+    log::info!("(H:{}) Downloading {}", hash, url);
+
+    let bytes = reqwest::get(&url).await?.bytes().await?;
+    log::info!("(H:{}) Downloaded {} bytes", hash, bytes.len());
+    let mut decoder = MultiGzDecoder::new(bytes.reader());
+    let mut buf = Vec::new();
+    decoder.read_to_end(&mut buf)?;
+    log::info!("(H:{}) Uncompressed to {} bytes ", hash, buf.len());
+
+    Ok(buf)
+}
+
+/// Given a line out of a common crawl index, calls the download function, parses
+/// the WARC, and processes the result
+async fn process_index_line(line: &str, map: MutexMap) -> Result<()> {
+    let warc_bytes = get_warc_bytes(line).await?;
+    let parsed = records(&warc_bytes);
+    match parsed {
+        Err(_) => log::error!("Error parsing WARC data!"),
+        Ok((_i, records)) => {
+            log::info!("Processing {} WARC records", records.len());
+            for record in records {
+                let content = String::from_utf8(record.content)?;
+                let matches = get_matches(&content);
+                std::mem::drop(content);
+                if !matches.is_empty() {
+                    let url = &record.headers["WARC-Target-URI"];
+                    let url_hash = hash_url(url);
+                    log::info!("(H:{}) {} matches at {}", url_hash, matches.len(), url);
+                    let map = &mut *map.lock().await;
+                    for mat in matches {
+                        map.entry(mat.book)
+                            .or_insert_with(BTreeMap::new)
+                            .entry(mat.chapter)
+                            .or_insert_with(BTreeMap::new)
+                            .entry(mat.verse)
+                            .or_insert_with(BTreeSet::new)
+                            .insert(url_hash);
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+#[cfg(debug_assertions)]
+fn get_concurrency() -> usize {
+    1
+}
+
+#[cfg(not(debug_assertions))]
+fn get_concurrency() -> usize {
+    num_cpus::get()
+}
+
+/// Given a CommonCrawl index, downloads and processes all entries
+async fn process_index(index: &str) -> Result<MutexMap> {
+    let map: DataMap = BTreeMap::new();
+    let guarded_map: MutexMap = Arc::new(Mutex::new(map));
+
+    stream::iter(index.lines())
+        .for_each_concurrent(get_concurrency(), |line| {
+            let map = Arc::clone(&guarded_map);
+            async move {
+                process_index_line(line, map).await.unwrap();
+            }
+        })
+        .await;
+
+    Ok(guarded_map)
+}
+
+/// Converts a data map to a counts map for serialization
+fn make_counts_map(data_map: &DataMap) -> CountsMap {
+    let mut counts_map: CountsMap = BTreeMap::new();
+    for (book, chapters) in data_map {
+        for (chapter, verses) in chapters {
+            for (verse, set) in verses {
+                counts_map
+                    .entry(book.clone())
+                    .or_insert_with(BTreeMap::new)
+                    .entry(*chapter)
+                    .or_insert_with(BTreeMap::new)
+                    .insert(*verse, set.len() as u32);
+            }
+        }
+    }
+    counts_map
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    std::env::set_var("RUST_LOG", "crawler=info");
+    env_logger::init();
+    let args: Vec<_> = env::args().skip(1).collect();
+    let year = &args[0];
+    let crawl = &args[1];
+    let index = get_index(year, crawl).await?;
+    let mutex_map = process_index(&index).await?;
+    let map = &*mutex_map.lock().await;
+    let counts = make_counts_map(map);
+    let json = serde_json::to_string(&counts)?;
+    let mut file = File::create(format!("{}-{}.json", year, crawl)).await?;
+    file.write_all(json.as_bytes()).await?;
+
+    Ok(())
+}

@@ -1,6 +1,3 @@
 [workspace]
-
-members = [
-    "engine",
-    "server",
-]
+members = ["engine", "server"]
+exclude = ["crawler"]
