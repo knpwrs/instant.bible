@@ -21,10 +21,10 @@ async fn main() {
             "accept",
             "application/protobuf",
         ))
-        .and(search::search_filter(index.clone()))
+        .and(search::search_filter(Arc::clone(&index)))
         .map(|res: ServiceResponse| response::protobuf(&res));
     let route_json = route_search
-        .and(search::search_filter(index.clone()))
+        .and(search::search_filter(Arc::clone(&index)))
         .map(|res: ServiceResponse| warp::reply::json(&res));
 
     let route = route_proto.or(route_json);
