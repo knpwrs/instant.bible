@@ -40,10 +40,11 @@ async fn get_index(year: &str, crawl: &str) -> Result<String> {
 
     log::info!("(H:{}) Downloading {}", hash_url(&url), url);
     let bytes = reqwest::get(&url)
-        .await?
+        .await
+        .context("Could not download index")?
         .bytes()
         .await
-        .context("Could not download index")?;
+        .context("Could not get bytes from index reponse")?;
     let mut decoder = MultiGzDecoder::new(bytes.reader());
     let mut index = String::new();
     decoder
@@ -65,7 +66,10 @@ async fn get_warc_bytes(path: &str) -> Result<Vec<u8>> {
         .context(format!("(H:{}) Could not download WARC file", hash))?
         .bytes()
         .await
-        .context(format!("(H:{}) Could not get WARC bytes", hash))?;
+        .context(format!(
+            "(H:{}) Could not get WARC bytes from response",
+            hash
+        ))?;
     log::info!("(H:{}) Downloaded {} bytes", hash, bytes.len());
     let mut decoder = MultiGzDecoder::new(bytes.reader());
     let mut buf = Vec::new();
@@ -80,9 +84,23 @@ async fn get_warc_bytes(path: &str) -> Result<Vec<u8>> {
 /// Given a line out of a common crawl index, calls the download function, parses
 /// the WARC, and processes the result
 async fn process_index_line(line: &str, map: MutexMap) -> Result<()> {
-    let warc_bytes = get_warc_bytes(line)
-        .await
-        .context("Could not get WARC bytes")?;
+    let hash = hash_url(line);
+    log::info!("(H:{}) processing line {}", hash, line);
+    let warc_bytes = match get_warc_bytes(line).await {
+        Ok(bytes) => bytes,
+        Err(_) => {
+            // Wait 10 seconds and try again
+            log::error!(
+                "(H:{}) Error getting WARC bytes for line. Waiting 10 seconds and trying again.",
+                hash
+            );
+            tokio::time::delay_for(std::time::Duration::from_secs(10)).await;
+            get_warc_bytes(line).await.context(format!(
+                "(H:{}) Error retrying to get WARC bytes. Giving up.",
+                hash
+            ))?
+        }
+    };
     let parsed = records(&warc_bytes);
     match parsed {
         Err(_) => log::error!("Error parsing WARC data!"),
@@ -130,7 +148,7 @@ fn get_concurrency() -> usize {
 }
 
 /// Given a CommonCrawl index, downloads and processes all entries
-async fn process_index(index: &str) -> Result<MutexMap> {
+async fn process_index(index: &str) -> MutexMap {
     let map: DataMap = BTreeMap::new();
     let guarded_map: MutexMap = Arc::new(Mutex::new(map));
 
@@ -138,12 +156,16 @@ async fn process_index(index: &str) -> Result<MutexMap> {
         .for_each_concurrent(get_concurrency(), |line| {
             let map = Arc::clone(&guarded_map);
             async move {
-                process_index_line(line, map).await.unwrap();
+                let hash = hash_url(line);
+                match process_index_line(line, map).await {
+                    Ok(_) => log::info!("(H:{}) Done processing line!", hash),
+                    Err(e) => log::error!("(H:{}) Error processing line! {:?}", hash, e),
+                }
             }
         })
         .await;
 
-    Ok(guarded_map)
+    guarded_map
 }
 
 /// Converts a data map to a counts map for serialization
@@ -174,9 +196,7 @@ async fn main() -> Result<()> {
     let index = get_index(year, crawl)
         .await
         .context("Could not get index")?;
-    let mutex_map = process_index(&index)
-        .await
-        .context("Could not process index")?;
+    let mutex_map = process_index(&index).await;
     let map = &*mutex_map.lock().await;
     let counts = make_counts_map(map);
     let json = serde_json::to_string(&counts).context("Could not convert counts to JSON")?;
