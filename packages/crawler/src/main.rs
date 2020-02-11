@@ -84,9 +84,9 @@ async fn get_warc_bytes(path: &str) -> Result<Vec<u8>> {
 
 /// Given a line out of a common crawl index, calls the download function, parses
 /// the WARC, and processes the result
-async fn process_index_line(line: &str, map: MutexMap) -> Result<()> {
+async fn process_index_line(i: usize, line: &str, map: MutexMap) -> Result<()> {
     let hash = hash_url(line);
-    log::info!("(H:{}) processing line {}", hash, line);
+    log::info!("(L:{}) (H:{}) processing line {}", i, hash, line);
     let warc_bytes = match get_warc_bytes(line).await {
         Ok(bytes) => bytes,
         Err(_) => {
@@ -153,12 +153,12 @@ async fn process_index(index: &str) -> MutexMap {
     let map: DataMap = BTreeMap::new();
     let guarded_map: MutexMap = Arc::new(Mutex::new(map));
 
-    stream::iter(index.lines())
-        .for_each_concurrent(get_concurrency(), |line| {
+    stream::iter(index.lines().enumerate())
+        .for_each_concurrent(get_concurrency(), |(i, line)| {
             let map = Arc::clone(&guarded_map);
             async move {
                 let hash = hash_url(line);
-                match process_index_line(line, map).await {
+                match process_index_line(i + 1, line, map).await {
                     Ok(_) => log::info!("(H:{}) Done processing line!", hash),
                     Err(e) => log::error!("(H:{}) Error processing line! {:?}", hash, e),
                 }
