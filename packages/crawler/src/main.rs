@@ -9,6 +9,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::io::prelude::*;
 use std::sync::Arc;
+use std::time::Instant;
 use tokio::fs::File;
 use tokio::prelude::*;
 use tokio::sync::Mutex;
@@ -188,6 +189,7 @@ fn make_counts_map(data_map: &DataMap) -> CountsMap {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let start = Instant::now();
     std::env::set_var("RUST_LOG", "crawler=info");
     env_logger::init();
     let args: Vec<_> = env::args().skip(1).collect();
@@ -206,6 +208,7 @@ async fn main() -> Result<()> {
     file.write_all(json.as_bytes())
         .await
         .context("Could not write JSON to disk")?;
+    log::info!("Done in {}s", start.elapsed().as_secs_f64());
 
     Ok(())
 }
