@@ -32,7 +32,7 @@ lazy_static! {
               Psalms?| # Match Psalm or Psalms
               Proverbs|
               Ecclesiastes|
-              Song of Solomon|
+              Song\sof\s(?:Solomon|Songs)|Song|
               Isaiah|
               Jeremiah|
               Lamentations|
@@ -138,6 +138,8 @@ pub fn get_matches(input: &str) -> Result<Vec<Match>> {
                 // of data consitency with a `book` field this makes sense
                 book: if book == "PSALM" {
                     "PSALMS".to_string()
+                } else if book.starts_with("SONG") {
+                    "SONG OF SOLOMON".to_string()
                 } else {
                     book
                 },
