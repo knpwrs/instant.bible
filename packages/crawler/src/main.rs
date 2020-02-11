@@ -99,6 +99,7 @@ async fn process_index_line(i: usize, line: &str, map: MutexMap) -> Result<()> {
     let warc_bytes = match get_warc_bytes(line).await {
         Ok(bytes) => bytes,
         Err(_) => {
+            // TODO: Use a better abstracted retry system
             // Wait 10 seconds and try again
             log::error!(
                 "(H:{}) Error getting WARC bytes for line. Waiting 10 seconds and trying again.",
