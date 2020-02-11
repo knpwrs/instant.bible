@@ -117,8 +117,11 @@ async fn process_index_line(i: usize, line: &str, map: MutexMap) -> Result<()> {
         Err(_) => log::error!("(H:{}) Error parsing WARC data!", hash),
         Ok((_i, records)) => {
             log::info!("(H:{}) Processing {} WARC records", hash, records.len());
+            log::info!(
+                "(H:{}) Converting records to strings and searching with regex on blocking threads",
+                hash
+            );
             for warc_parser::Record { content, headers } in records {
-                log::info!("(H:{}) Converting record to string and searching with regex on blocking thread", hash);
                 let matches = spawn_blocking(move || {
                     let content =
                         String::from_utf8(content).context("Could not parse UTF-8 from WARC")?;
