@@ -13,6 +13,7 @@ use std::time::Instant;
 use tokio::fs::File;
 use tokio::prelude::*;
 use tokio::sync::Mutex;
+use tokio::task::spawn_blocking;
 use warc_parser::records;
 
 type DataMap = BTreeMap<String, BTreeMap<u8, BTreeMap<u8, BTreeSet<u64>>>>;
@@ -72,14 +73,22 @@ async fn get_warc_bytes(path: &str) -> Result<Vec<u8>> {
             hash
         ))?;
     log::info!("(H:{}) Downloaded {} bytes", hash, bytes.len());
-    let mut decoder = MultiGzDecoder::new(bytes.reader());
-    let mut buf = Vec::new();
-    decoder
-        .read_to_end(&mut buf)
-        .context(format!("(H:{}) Could not decompress WARC bytes", hash))?;
-    log::info!("(H:{}) Decompressed to {} bytes ", hash, buf.len());
-
-    Ok(buf)
+    spawn_blocking(move || {
+        log::info!(
+            "(H:{}) Decompressing {} bytes on blocking thread",
+            hash,
+            bytes.len()
+        );
+        let mut decoder = MultiGzDecoder::new(bytes.reader());
+        let mut buf = Vec::new();
+        decoder
+            .read_to_end(&mut buf)
+            .context(format!("(H:{}) Could not decompress WARC bytes", hash))?;
+        log::info!("(H:{}) Decompressed to {} bytes ", hash, buf.len());
+        Ok(buf)
+    })
+    .await
+    .context("Failure in spawned decompression task")?
 }
 
 /// Given a line out of a common crawl index, calls the download function, parses
@@ -104,18 +113,25 @@ async fn process_index_line(i: usize, line: &str, map: MutexMap) -> Result<()> {
     };
     let parsed = records(&warc_bytes);
     match parsed {
-        Err(_) => log::error!("Error parsing WARC data!"),
+        Err(_) => log::error!("(H:{}) Error parsing WARC data!", hash),
         Ok((_i, records)) => {
-            log::info!("Processing {} WARC records", records.len());
-            for record in records {
-                let content =
-                    String::from_utf8(record.content).context("Could not parse UTF-8 from WARC")?;
-                let matches = get_matches(&content);
-                std::mem::drop(content);
+            log::info!("(H:{}) Processing {} WARC records", hash, records.len());
+            for warc_parser::Record { content, headers } in records {
+                log::info!("(H:{}) Converting record to string and searching with regex on blocking thread", hash);
+                let matches = spawn_blocking(move || {
+                    let content =
+                        String::from_utf8(content).context("Could not parse UTF-8 from WARC")?;
+                    get_matches(&content)
+                })
+                .await
+                .context(format!(
+                    "(H:{}) Could not get matches from blocking thread",
+                    hash
+                ))?;
                 match matches {
                     Ok(matches) => {
                         if !matches.is_empty() {
-                            let url = &record.headers["WARC-Target-URI"];
+                            let url = &headers["WARC-Target-URI"];
                             let url_hash = hash_url(url);
                             log::info!("(H:{}) {} matches at {}", url_hash, matches.len(), url);
                             let map = &mut *map.lock().await;
