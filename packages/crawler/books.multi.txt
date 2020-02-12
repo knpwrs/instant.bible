@@ -16,7 +16,6 @@ Ezra
 Nehemiah
 Esther
 Job
-Psalms?
 Proverbs
 Ecclesiastes
 Song(?:\sof\s(?:Solomon|Songs))?
@@ -53,7 +52,6 @@ Colossians
 (?:First|1)\sTimothy
 (?:Second|2)\sTimothy
 Titus
-Philemon
 Hebrews
 James
 (?:First|1)\sPeter
