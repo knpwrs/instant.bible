@@ -1,5 +1,5 @@
 Obadiah
 Philemon
-(?:Second|2) John
-(?:Third|3) John
+(?:Second|2|II) John
+(?:Third|3|III) John
 Jude

@@ -6,12 +6,12 @@ Deuteronomy
 Joshua
 Judges
 Ruth
-(?:First|1) Samuel
-(?:Second|2) Samuel
-(?:First|1) Kings
-(?:Second|2) Kings
-(?:First|1) Chronicles
-(?:Second|2) Chronicles
+(?:First|1|I) Samuel
+(?:Second|2|II) Samuel
+(?:First|1|I) Kings
+(?:Second|2|II) Kings
+(?:First|1|I) Chronicles
+(?:Second|2|II) Chronicles
 Ezra
 Nehemiah
 Esther
@@ -41,20 +41,20 @@ Luke
 John
 Acts
 Romans
-(?:First|1) Corinthians
-(?:Second|2) Corinthians
+(?:First|1|I) Corinthians
+(?:Second|2|II) Corinthians
 Galatians
 Ephesians
 Philippians
 Colossians
-(?:First|1) Thessalonians
-(?:Second|2) Thessalonians
-(?:First|1) Timothy
-(?:Second|2) Timothy
+(?:First|1|I) Thessalonians
+(?:Second|2|II) Thessalonians
+(?:First|1|I) Timothy
+(?:Second|2|II) Timothy
 Titus
 Hebrews
 James
-(?:First|1) Peter
-(?:Second|2) Peter
-(?:First|1) John
+(?:First|1|I) Peter
+(?:Second|2|II) Peter
+(?:First|1|I) John
 Revelations?
