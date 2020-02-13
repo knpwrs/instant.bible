@@ -6,19 +6,19 @@ Deuteronomy
 Joshua
 Judges
 Ruth
-(?:First|1)\sSamuel
-(?:Second|2)\sSamuel
-(?:First|1)\sKings
-(?:Second|2)\sKings
-(?:First|1)\sChronicles
-(?:Second|2)\sChronicles
+(?:First|1) Samuel
+(?:Second|2) Samuel
+(?:First|1) Kings
+(?:Second|2) Kings
+(?:First|1) Chronicles
+(?:Second|2) Chronicles
 Ezra
 Nehemiah
 Esther
 Job
 Proverbs
 Ecclesiastes
-Song(?:\sof\s(?:Solomon|Songs))?
+Song(?: of (?:Solomon|Songs))?
 Isaiah
 Jeremiah
 Lamentations
@@ -41,20 +41,20 @@ Luke
 John
 Acts
 Romans
-(?:First|1)\sCorinthians
-(?:Second|2)\sCorinthians
+(?:First|1) Corinthians
+(?:Second|2) Corinthians
 Galatians
 Ephesians
 Philippians
 Colossians
-(?:First|1)\sThessalonians
-(?:Second|2)\sThessalonians
-(?:First|1)\sTimothy
-(?:Second|2)\sTimothy
+(?:First|1) Thessalonians
+(?:Second|2) Thessalonians
+(?:First|1) Timothy
+(?:Second|2) Timothy
 Titus
 Hebrews
 James
-(?:First|1)\sPeter
-(?:Second|2)\sPeter
-(?:First|1)\sJohn
+(?:First|1) Peter
+(?:Second|2) Peter
+(?:First|1) John
 Revelations?
