@@ -1,0 +1,60 @@
+Genesis
+Exodus
+Leviticus
+Numbers
+Deuteronomy
+Joshua
+Judges
+Ruth
+(?:First|1|I) Samuel
+(?:Second|2|II) Samuel
+(?:First|1|I) Kings
+(?:Second|2|II) Kings
+(?:First|1|I) Chronicles
+(?:Second|2|II) Chronicles
+Ezra
+Nehemiah
+Esther
+Job
+Proverbs
+Ecclesiastes
+Song(?: of (?:Solomon|Songs))?
+Isaiah
+Jeremiah
+Lamentations
+Ezekiel
+Daniel
+Hosea
+Joel
+Amos
+Jonah
+Micah
+Nahum
+Habakkuk
+Zephaniah
+Haggai
+Zechariah
+Malachi
+Matthew
+Mark
+Luke
+John
+Acts
+Romans
+(?:First|1|I) Corinthians
+(?:Second|2|II) Corinthians
+Galatians
+Ephesians
+Philippians
+Colossians
+(?:First|1|I) Thessalonians
+(?:Second|2|II) Thessalonians
+(?:First|1|I) Timothy
+(?:Second|2|II) Timothy
+Titus
+Hebrews
+James
+(?:First|1|I) Peter
+(?:Second|2|II) Peter
+(?:First|1|I) John
+Revelations?
