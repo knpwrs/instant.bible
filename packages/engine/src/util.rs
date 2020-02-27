@@ -1,11 +1,10 @@
-use crate::proto::data::{Translation, TranslationData, VerseKey, VerseText};
 use crate::{
     ReverseIndex, ReverseIndexEntry, TranslationVerses, VersearchIndex, TRANSLATION_COUNT,
 };
 use anyhow::{Context, Result};
+use engine_proto::data::{decode_translation_data, Translation, VerseKey, VerseText};
 use fst::MapBuilder;
 use log::info;
-use prost::Message;
 use serde::Deserialize;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -195,7 +194,7 @@ fn load_data(
             info!("Load translation {:?} from {:?}", translation_name, path);
             let now = Instant::now();
             let file_bytes = read_file_bytes(&path).expect("Could not read protobuf file");
-            let data = TranslationData::decode(&*file_bytes).expect("Could not parse protobuf");
+            let data = decode_translation_data(&*file_bytes).expect("Could not parse protobuf");
             let translation_key =
                 Translation::from_i32(data.translation).expect("Invalid translation field value");
             info!(

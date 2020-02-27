@@ -1,16 +1,15 @@
 mod internal;
-pub mod proto;
 pub mod util;
 
+use engine_proto::data::{Translation, VerseKey};
+use engine_proto::service::{
+    response::{Timings, VerseResult},
+    Response as ServiceResponse,
+};
 use fst::{automaton, Automaton, IntoStreamer, Map as FstMap};
 use fst_levenshtein::Levenshtein;
 use internal::VerseMatch;
 use itertools::Itertools;
-use proto::data::{Translation, VerseKey};
-use proto::service::{
-    response::{Timings, VerseResult},
-    Response as ServiceResponse,
-};
 use std::collections::{BTreeMap, HashMap};
 use std::time::Instant;
 use util::{proximity_bytes_key, tokenize, translation_verses_bytes_key, Tokenized};
@@ -253,7 +252,7 @@ impl VersearchIndex {
     #[inline]
     fn collect_results(
         &self,
-        results_map: HashMap<proto::data::VerseKey, VerseMatch>,
+        results_map: HashMap<engine_proto::data::VerseKey, VerseMatch>,
     ) -> Vec<VerseResult> {
         results_map
             .values()

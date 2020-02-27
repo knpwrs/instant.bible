@@ -1,4 +1,7 @@
 pub mod data {
+    use anyhow::{Context, Result};
+    use prost::Message;
+
     include!(concat!(env!("OUT_DIR"), "/instantbible.data.rs"));
 
     impl VerseKey {
@@ -13,6 +16,10 @@ pub mod data {
         pub const fn get_byte_size() -> usize {
             std::mem::size_of::<u8>() + 3
         }
+    }
+
+    pub fn decode_translation_data(bytes: &[u8]) -> Result<TranslationData> {
+        TranslationData::decode(bytes).context("Decoding Translation Data")
     }
 }
 

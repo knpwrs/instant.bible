@@ -1,6 +1,2 @@
 [workspace]
-
-members = [
-    "engine",
-    "server",
-]
+members = ["engine", "engine-proto", "server"]

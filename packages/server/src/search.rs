@@ -1,5 +1,5 @@
-use engine::proto::service::Response as ServiceResponse;
 use engine::VersearchIndex;
+use engine_proto::service::Response as ServiceResponse;
 use log::info;
 use std::sync::Arc;
 use warp::{Filter, Rejection};
