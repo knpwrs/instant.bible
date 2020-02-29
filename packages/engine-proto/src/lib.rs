@@ -14,7 +14,7 @@ pub mod data {
         }
 
         pub const fn get_byte_size() -> usize {
-            std::mem::size_of::<u8>() + 3
+            std::mem::size_of::<u8>() * 3
         }
     }
 
