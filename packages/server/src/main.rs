@@ -1,8 +1,8 @@
 mod response;
 mod search;
 
+use engine::proto::service::Response as ServiceResponse;
 use engine::util::get_index;
-use engine_proto::service::Response as ServiceResponse;
 use log::info;
 use std::sync::Arc;
 use warp::Filter;

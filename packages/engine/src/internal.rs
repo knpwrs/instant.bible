@@ -1,6 +1,6 @@
+use crate::proto::data::VerseKey;
+use crate::proto::service::response::verse_result::Ranking as ServiceRanking;
 use crate::TRANSLATION_COUNT;
-use engine_proto::data::VerseKey;
-use engine_proto::service::response::verse_result::Ranking as ServiceRanking;
 use std::cmp::Ordering;
 
 #[derive(PartialEq, Eq)]

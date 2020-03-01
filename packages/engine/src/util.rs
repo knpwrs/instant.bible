@@ -1,6 +1,6 @@
+use crate::proto::data::{decode_translation_data, Translation, VerseKey, VerseText};
 use crate::{ReverseIndexEntryBytes, VersearchIndex, TRANSLATION_COUNT};
 use anyhow::{Context, Result};
-use engine_proto::data::{decode_translation_data, Translation, VerseKey, VerseText};
 use fst::MapBuilder;
 use log::info;
 use serde::Deserialize;
