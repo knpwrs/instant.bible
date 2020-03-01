@@ -2,7 +2,7 @@ mod data;
 pub mod proto;
 pub mod util;
 
-use data::VerseMatch;
+use data::{ReverseIndex, ReverseIndexEntry, ReverseIndexEntryBytes, VerseMatch};
 use fst::{automaton, Automaton, IntoStreamer, Map as FstMap};
 use fst_levenshtein::Levenshtein;
 use itertools::Itertools;
@@ -16,66 +16,6 @@ use std::time::Instant;
 use util::{proximity_bytes_key, tokenize, translation_verses_bytes_key, Tokenized};
 
 pub use util::{Config, MAX_PROXIMITY};
-
-/// Different strings can end up creating the same token (e.g., it's and its both
-/// produce ITS); therefore, it is important to account for this in the index
-/// structure, particularly for when it comes to highlighting.
-pub struct ReverseIndexEntry {
-    /// VerseKey => Translation Id => Token Count
-    counts_map: FstMap,
-    counts_data: Vec<Vec<u64>>,
-    /// VerseKey => Vec<Highlight Word Ids>
-    highlights_map: FstMap,
-    highlights_data: Vec<Vec<u64>>,
-}
-
-impl ReverseIndexEntry {
-    pub fn from_bytes_struct(input: &ReverseIndexEntryBytes) -> Self {
-        Self {
-            counts_map: FstMap::from_bytes(input.counts_map_bytes.clone())
-                .expect("Could not construct counts_map from bytes"),
-            counts_data: input
-                .counts_map_data
-                .iter()
-                .map(|bytes| {
-                    let mut v = Vec::new();
-                    for i in (0..bytes.len()).step_by(8) {
-                        let mut chunk = [0u8; 8];
-                        chunk.copy_from_slice(&bytes[i..(i + 8)]);
-                        v.push(u64::from_be_bytes(chunk));
-                    }
-                    v
-                })
-                .collect(),
-            highlights_map: FstMap::from_bytes(input.highlights_map_bytes.clone())
-                .expect("Could not construct highlights_map from bytes"),
-            highlights_data: input
-                .highlights_map_data
-                .iter()
-                .map(|bytes| {
-                    let mut v = Vec::new();
-                    for i in (0..bytes.len()).step_by(8) {
-                        let mut chunk = [0u8; 8];
-                        chunk.copy_from_slice(&bytes[i..(i + 8)]);
-                        v.push(u64::from_be_bytes(chunk));
-                    }
-                    v
-                })
-                .collect(),
-        }
-    }
-}
-
-/// The idea behind this datastructure is to map a verse key to represent the
-/// reverse index entry struct in a format which is easy to serialize
-pub struct ReverseIndexEntryBytes {
-    counts_map_bytes: Vec<u8>,
-    counts_map_data: Vec<Vec<u8>>, // `repeated bytes`, concatenated count bytes
-    highlights_map_bytes: Vec<u8>,
-    highlights_map_data: Vec<Vec<u8>>, // `repeated bytes`, bytes are concatenated word ids
-}
-
-pub type ReverseIndex = Vec<ReverseIndexEntry>;
 
 static MAX_RESULTS: usize = 20;
 static PREFIX_EXPANSION_FACTOR: usize = 2;
