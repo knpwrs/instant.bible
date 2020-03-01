@@ -1,13 +1,11 @@
-use crate::{
-    ReverseIndex, ReverseIndexEntry, TranslationVerses, VersearchIndex, TRANSLATION_COUNT,
-};
+use crate::{ReverseIndexEntryBytes, VersearchIndex, TRANSLATION_COUNT};
 use anyhow::{Context, Result};
 use engine_proto::data::{decode_translation_data, Translation, VerseKey, VerseText};
 use fst::MapBuilder;
 use log::info;
 use serde::Deserialize;
 use std::cmp::Ordering;
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::io::prelude::*;
 use std::iter::Iterator;
@@ -44,6 +42,8 @@ struct VerseStats {
     counts: Vec<usize>,
     highlights: BTreeSet<String>,
 }
+
+type TranslationVerses = BTreeMap<Translation, BTreeMap<VerseKey, String>>;
 
 pub fn tokenize(input: &str) -> Vec<Tokenized> {
     input
@@ -107,7 +107,7 @@ fn read_file_bytes(path: &std::path::PathBuf) -> Result<Vec<u8>> {
 type WipProximitiesMap =
     BTreeMap<usize, BTreeMap<VerseKey, BTreeMap<String, BTreeMap<String, u64>>>>;
 // Stores work-in-progress token counts per verse and translation
-type WipTokenCountsMap = BTreeMap<String, HashMap<VerseKey, VerseStats>>;
+type WipTokenCountsMap = BTreeMap<String, BTreeMap<VerseKey, VerseStats>>;
 
 /// Performs initial processing of verses read from disk
 #[inline]
@@ -116,7 +116,7 @@ fn process_verses(
     verses: &[VerseText],
     translation_verses: &mut TranslationVerses,
     highlight_words: &mut BTreeSet<String>,
-    wip_token_counts: &mut BTreeMap<String, HashMap<VerseKey, VerseStats>>,
+    wip_token_counts: &mut BTreeMap<String, BTreeMap<VerseKey, VerseStats>>,
     proximities: &mut WipProximitiesMap,
 ) {
     for verse in verses {
@@ -134,7 +134,7 @@ fn process_verses(
             // Create new stats entry if needed
             let entry = wip_token_counts
                 .entry(tokenized.token.clone())
-                .or_insert_with(HashMap::new)
+                .or_insert_with(BTreeMap::new)
                 .entry(vkey.clone())
                 .or_insert_with(|| VerseStats {
                     counts: vec![0; TRANSLATION_COUNT],
@@ -230,35 +230,65 @@ fn load_data(
 fn build_reverse_index(
     highlight_words: &BTreeSet<String>,
     wip_token_counts: &WipTokenCountsMap,
-) -> (ReverseIndex, Vec<u8>, Vec<String>) {
+) -> (Vec<ReverseIndexEntryBytes>, Vec<u8>, Vec<String>) {
     let mut build = MapBuilder::memory();
-    let mut reverse_index: ReverseIndex = Vec::with_capacity(wip_token_counts.len());
+    let mut reverse_index = Vec::with_capacity(wip_token_counts.len());
     let highlight_words: Vec<_> = highlight_words.iter().cloned().collect();
 
     for (i, (token, entries)) in wip_token_counts.iter().enumerate() {
         build.insert(token.clone(), i as u64).unwrap();
 
-        let mut highlights = HashMap::new();
+        let mut counts_map_builder = MapBuilder::memory();
+        let mut counts_map_data = Vec::new();
+        let mut highlights_map_builder = MapBuilder::memory();
+        let mut highlights_map_data = Vec::new();
 
-        for (key, vs) in entries {
-            let indices = vs
-                .highlights
+        for (i, (key, vs)) in entries.iter().enumerate() {
+            let counts_bytes: Vec<u8> = vs
+                .counts
                 .iter()
-                .map(|s| {
-                    highlight_words
-                        .binary_search(s)
-                        .expect("Could not find index for highlight entry")
+                .flat_map(|c| {
+                    (*c as u64)
+                        .to_be_bytes()
+                        .iter()
+                        .copied()
+                        .collect::<Vec<u8>>()
                 })
                 .collect();
-            highlights.insert(*key, indices);
+            counts_map_builder
+                .insert(key.to_be_bytes(), i as u64)
+                .expect("Could not insert into counts map builder");
+            counts_map_data.push(counts_bytes);
+
+            let highlight_index_bytes: Vec<u8> = vs
+                .highlights
+                .iter()
+                .flat_map(|s| {
+                    (highlight_words
+                        .binary_search(s)
+                        .expect("Could not find index for highlight entry")
+                        as u64)
+                        .to_be_bytes()
+                        .iter()
+                        .copied()
+                        .collect::<Vec<u8>>()
+                })
+                .collect();
+            highlights_map_builder
+                .insert(key.to_be_bytes(), i as u64)
+                .expect("Could not insert into highlights map builder");
+            highlights_map_data.push(highlight_index_bytes);
         }
 
-        reverse_index.push(ReverseIndexEntry {
-            counts: entries
-                .iter()
-                .map(|(key, vs)| (*key, vs.counts.clone()))
-                .collect(),
-            highlights,
+        reverse_index.push(ReverseIndexEntryBytes {
+            counts_map_bytes: counts_map_builder
+                .into_inner()
+                .expect("Could not construct counts map bytes"),
+            counts_map_data,
+            highlights_map_bytes: highlights_map_builder
+                .into_inner()
+                .expect("Could not construct highlight map bytes"),
+            highlights_map_data,
         });
     }
 
@@ -291,7 +321,7 @@ fn build_proximity_fst_bytes(
                         as u16;
                     proximities_build
                         .insert(proximity_bytes_key(*tidx as u8, vkey, w1i, w2i), *p)
-                        .unwrap();
+                        .expect("Could not insert into proximities build");
                 }
             }
         }
@@ -347,14 +377,10 @@ pub fn get_index() -> VersearchIndex {
 
     let now = Instant::now();
 
-    let (reverse_index, fst_bytes, highlight_words) =
+    let (reverse_index_bytes, fst_bytes, highlight_words) =
         build_reverse_index(&highlight_words, &wip_token_counts);
 
-    info!(
-        "Indexed {} tokens in {}ms",
-        reverse_index.len(),
-        now.elapsed().as_millis()
-    );
+    info!("Indexed data {}ms", now.elapsed().as_millis());
 
     let now = Instant::now();
 
@@ -379,7 +405,7 @@ pub fn get_index() -> VersearchIndex {
 
     VersearchIndex::new(
         fst_bytes,
-        reverse_index,
+        reverse_index_bytes,
         proximities_bytes,
         highlight_words,
         translation_verses_bytes,

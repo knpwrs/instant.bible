@@ -10,7 +10,7 @@ use fst::{automaton, Automaton, IntoStreamer, Map as FstMap};
 use fst_levenshtein::Levenshtein;
 use internal::VerseMatch;
 use itertools::Itertools;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use std::time::Instant;
 use util::{proximity_bytes_key, tokenize, translation_verses_bytes_key, Tokenized};
 
@@ -21,13 +21,60 @@ pub use util::{Config, MAX_PROXIMITY};
 /// structure, particularly for when it comes to highlighting.
 pub struct ReverseIndexEntry {
     /// VerseKey => Translation Id => Token Count
-    counts: HashMap<VerseKey, Vec<usize>>,
+    counts_map: FstMap,
+    counts_data: Vec<Vec<u64>>,
     /// VerseKey => Vec<Highlight Word Ids>
-    highlights: HashMap<VerseKey, Vec<usize>>,
+    highlights_map: FstMap,
+    highlights_data: Vec<Vec<u64>>,
+}
+
+impl ReverseIndexEntry {
+    pub fn from_bytes_struct(input: &ReverseIndexEntryBytes) -> Self {
+        Self {
+            counts_map: FstMap::from_bytes(input.counts_map_bytes.clone())
+                .expect("Could not construct counts_map from bytes"),
+            counts_data: input
+                .counts_map_data
+                .iter()
+                .map(|bytes| {
+                    let mut v = Vec::new();
+                    for i in (0..bytes.len()).step_by(8) {
+                        let mut chunk = [0u8; 8];
+                        chunk.copy_from_slice(&bytes[i..(i + 8)]);
+                        v.push(u64::from_be_bytes(chunk));
+                    }
+                    v
+                })
+                .collect(),
+            highlights_map: FstMap::from_bytes(input.highlights_map_bytes.clone())
+                .expect("Could not construct highlights_map from bytes"),
+            highlights_data: input
+                .highlights_map_data
+                .iter()
+                .map(|bytes| {
+                    let mut v = Vec::new();
+                    for i in (0..bytes.len()).step_by(8) {
+                        let mut chunk = [0u8; 8];
+                        chunk.copy_from_slice(&bytes[i..(i + 8)]);
+                        v.push(u64::from_be_bytes(chunk));
+                    }
+                    v
+                })
+                .collect(),
+        }
+    }
+}
+
+/// The idea behind this datastructure is to map a verse key to represent the
+/// reverse index entry struct in a format which is easy to serialize
+pub struct ReverseIndexEntryBytes {
+    counts_map_bytes: Vec<u8>,
+    counts_map_data: Vec<Vec<u8>>, // `repeated bytes`, concatenated count bytes
+    highlights_map_bytes: Vec<u8>,
+    highlights_map_data: Vec<Vec<u8>>, // `repeated bytes`, bytes are concatenated word ids
 }
 
 pub type ReverseIndex = Vec<ReverseIndexEntry>;
-pub type TranslationVerses = BTreeMap<Translation, BTreeMap<VerseKey, String>>;
 
 static MAX_RESULTS: usize = 20;
 static PREFIX_EXPANSION_FACTOR: usize = 2;
@@ -64,7 +111,7 @@ impl VersearchIndex {
     #[allow(clippy::new_without_default)]
     pub fn new(
         fst_bytes: Vec<u8>,
-        reverse_index: ReverseIndex,
+        reverse_index_bytes: Vec<ReverseIndexEntryBytes>,
         proximities_bytes: Vec<u8>,
         highlight_words: Vec<String>,
         translation_verses_bytes: Vec<u8>,
@@ -72,7 +119,10 @@ impl VersearchIndex {
     ) -> Self {
         VersearchIndex {
             fst_map: FstMap::from_bytes(fst_bytes).expect("Could not load map from FST bytes"),
-            reverse_index,
+            reverse_index: reverse_index_bytes
+                .iter()
+                .map(|b| ReverseIndexEntry::from_bytes_struct(b))
+                .collect(),
             proximities: FstMap::from_bytes(proximities_bytes)
                 .expect("Could not load map from proximity bytes"),
             highlight_words,
@@ -83,7 +133,7 @@ impl VersearchIndex {
     }
 
     #[inline]
-    fn traverse_fst(&self, tokens: Vec<Tokenized>) -> HashMap<u64, ReverseIndexEntryWithMatch> {
+    fn traverse_fst(&self, tokens: &[Tokenized]) -> HashMap<u64, ReverseIndexEntryWithMatch> {
         let mut found_indices: HashMap<u64, ReverseIndexEntryWithMatch> = HashMap::new();
 
         let mut last_indices: Vec<u64> = Vec::new();
@@ -130,7 +180,7 @@ impl VersearchIndex {
                             this_index: *idx,
                             last_indices: last_indices.clone(),
                         });
-                if *result == token && token.len() > 1 {
+                if *result == *token && token.len() > 1 {
                     container.match_type = MatchType::Exact;
                 }
             }
@@ -151,8 +201,8 @@ impl VersearchIndex {
     #[inline]
     fn score_results(
         &self,
-        found_indices: HashMap<u64, ReverseIndexEntryWithMatch>,
-    ) -> HashMap<VerseKey, VerseMatch> {
+        found_indices: &HashMap<u64, ReverseIndexEntryWithMatch>,
+    ) -> HashMap<Vec<u8>, VerseMatch> {
         let mut priority_lists: Vec<_> = found_indices.values().collect();
         priority_lists.sort_by(|a, b| {
             if a.match_type != b.match_type {
@@ -160,33 +210,37 @@ impl VersearchIndex {
                 a.match_type.cmp(&b.match_type)
             } else {
                 // Order by matches ascending
-                a.entry.counts.len().cmp(&b.entry.counts.len())
+                a.entry.counts_data.len().cmp(&b.entry.counts_data.len())
             }
         });
         // Pick a token list to use as result candidates
         let candidates_list = priority_lists
             .iter()
             // First, try to find a list with >= 3x max results
-            .find(|l| l.entry.counts.len() >= MAX_RESULTS * 3)
+            .find(|l| l.entry.counts_data.len() >= MAX_RESULTS * 3)
             .unwrap_or_else(|| {
                 priority_lists
                     .iter()
                     // Second, try to find a list with >= 2x max results
-                    .find(|l| l.entry.counts.len() >= MAX_RESULTS * 2)
+                    .find(|l| l.entry.counts_data.len() >= MAX_RESULTS * 2)
                     .unwrap_or_else(|| {
                         priority_lists
                             .iter()
                             // Third, try to find a list with >= max results
-                            .find(|l| l.entry.counts.len() >= MAX_RESULTS)
+                            .find(|l| l.entry.counts_data.len() >= MAX_RESULTS)
                             // Fall back to just taking the list with the most results
                             .unwrap_or_else(|| priority_lists.last().unwrap())
                     })
             });
         // Construct empty scores map with each candidate verse
-        let mut result_scores = HashMap::with_capacity(candidates_list.entry.counts.len());
-        for key in candidates_list.entry.counts.keys() {
-            result_scores.insert(*key, VerseMatch::new(*key));
+        let mut result_scores = HashMap::with_capacity(candidates_list.entry.counts_data.len());
+        for key_bytes in candidates_list.entry.counts_map.stream().into_byte_keys() {
+            result_scores.insert(
+                key_bytes.clone(),
+                VerseMatch::new(VerseKey::from_be_bytes(&key_bytes.clone())),
+            );
         }
+
         // Loop over each candidate verse for scoring
         for (result_key, result_match) in result_scores.iter_mut() {
             // Loop over each found index entry (query word) from the previous step
@@ -198,7 +252,8 @@ impl VersearchIndex {
             } in found_indices.values()
             {
                 // Does this found entry match the current verse?
-                if let Some(found_counts) = entry.counts.get(&result_key) {
+                if let Some(counts_idx) = entry.counts_map.get(&result_key) {
+                    let found_counts = &entry.counts_data[counts_idx as usize];
                     for (i, count) in found_counts.iter().enumerate() {
                         // Does the found entry match the current translation?
                         if *count > 0 {
@@ -217,7 +272,7 @@ impl VersearchIndex {
                                     .map(|li| {
                                         if let Some(p) = self.proximities.get(proximity_bytes_key(
                                             i as u8,
-                                            result_key,
+                                            &VerseKey::from_be_bytes(result_key), // TODO: avoid unnecessary conversion
                                             *li as u16,
                                             *this_index as u16,
                                         )) {
@@ -239,7 +294,8 @@ impl VersearchIndex {
                 }
 
                 // Track words to highlight for this result
-                if let Some(found_highlights) = entry.highlights.get(&result_key) {
+                if let Some(found_highlights_idx) = entry.highlights_map.get(result_key) {
+                    let found_highlights = &entry.highlights_data[found_highlights_idx as usize];
                     result_match.extend_highlights(found_highlights);
                 }
             }
@@ -250,10 +306,7 @@ impl VersearchIndex {
     }
 
     #[inline]
-    fn collect_results(
-        &self,
-        results_map: HashMap<engine_proto::data::VerseKey, VerseMatch>,
-    ) -> Vec<VerseResult> {
+    fn collect_results(&self, results_map: &HashMap<Vec<u8>, VerseMatch>) -> Vec<VerseResult> {
         results_map
             .values()
             .sorted_by(|r1, r2| r1.cmp(r2))
@@ -279,7 +332,7 @@ impl VersearchIndex {
                     .iter()
                     .map(|i| {
                         self.highlight_words
-                            .get(*i)
+                            .get(*i as usize)
                             .expect("Invalid highlight word index")
                     })
                     .cloned()
@@ -305,17 +358,17 @@ impl VersearchIndex {
 
         // Expand and determine score multiplier for each token
         let start = Instant::now();
-        let found_indices = self.traverse_fst(tokens);
+        let found_indices = self.traverse_fst(&tokens);
         let fst_us = start.elapsed().as_micros() as i32;
 
         // Score all results
         let start = Instant::now();
-        let result_scores = self.score_results(found_indices);
+        let result_scores = self.score_results(&found_indices);
         let score_us = start.elapsed().as_micros() as i32;
 
         // Collect ranked results
         let start = Instant::now();
-        let results = self.collect_results(result_scores);
+        let results = self.collect_results(&result_scores);
         let rank_us = start.elapsed().as_micros() as i32;
 
         // Construct and return response

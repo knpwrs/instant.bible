@@ -88,7 +88,7 @@ impl PartialOrd for InternalServiceRanking {
 #[derive(PartialEq, Eq)]
 pub struct VerseMatch {
     pub key: VerseKey,
-    pub highlights: Vec<usize>,
+    pub highlights: Vec<u64>,
     rankings: Vec<InternalServiceRanking>,
 }
 
@@ -123,7 +123,7 @@ impl VerseMatch {
         self.rankings[idx].inc_exact();
     }
 
-    pub fn extend_highlights(&mut self, hi: &[usize]) {
+    pub fn extend_highlights(&mut self, hi: &[u64]) {
         self.highlights.extend(hi)
     }
 
