@@ -1,10 +1,10 @@
-mod internal;
+mod data;
 pub mod proto;
 pub mod util;
 
+use data::VerseMatch;
 use fst::{automaton, Automaton, IntoStreamer, Map as FstMap};
 use fst_levenshtein::Levenshtein;
-use internal::VerseMatch;
 use itertools::Itertools;
 use proto::data::{Translation, VerseKey};
 use proto::service::{
