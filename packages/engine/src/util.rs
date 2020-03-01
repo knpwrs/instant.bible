@@ -72,12 +72,12 @@ pub fn tokenize(input: &str) -> Vec<Tokenized> {
 
 /// Given a translation id, a verse key, and two word ids, generates a sequence
 /// of bytes which can be used as a key into an FST map
-pub fn proximity_bytes_key(tidx: u8, vkey: &VerseKey, w1i: u16, w2i: u16) -> Vec<u8> {
+pub fn proximity_bytes_key(tidx: u8, vkey: &[u8], w1i: u16, w2i: u16) -> Vec<u8> {
     let capacity =
         std::mem::size_of::<u8>() + std::mem::size_of::<u16>() * 2 + VerseKey::get_byte_size();
     let mut v = Vec::with_capacity(capacity);
     v.extend(&tidx.to_be_bytes());
-    v.extend(&vkey.to_be_bytes());
+    v.extend(vkey);
     v.extend(&w1i.to_be_bytes());
     v.extend(&w2i.to_be_bytes());
     v
@@ -321,7 +321,10 @@ fn build_proximity_fst_bytes(
                         .expect("Could not find index for token for proximity map")
                         as u16;
                     proximities_build
-                        .insert(proximity_bytes_key(*tidx as u8, vkey, w1i, w2i), *p)
+                        .insert(
+                            proximity_bytes_key(*tidx as u8, &vkey.to_be_bytes(), w1i, w2i),
+                            *p,
+                        )
                         .expect("Could not insert into proximities build");
                 }
             }

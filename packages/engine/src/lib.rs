@@ -213,7 +213,7 @@ impl VersearchIndex {
                                     .map(|li| {
                                         if let Some(p) = self.proximities.get(proximity_bytes_key(
                                             i as u8,
-                                            &VerseKey::from_be_bytes(result_key), // TODO: avoid unnecessary conversion
+                                            result_key,
                                             *li as u16,
                                             *this_index as u16,
                                         )) {
