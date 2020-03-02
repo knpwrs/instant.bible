@@ -239,9 +239,8 @@ fn build_reverse_index(
     for (i, (token, entries)) in wip_token_counts.iter().enumerate() {
         build.insert(token.clone(), i as u64).unwrap();
 
-        let mut counts_map_builder = MapBuilder::memory();
+        let mut map_builder = MapBuilder::memory();
         let mut counts_map_data = Vec::new();
-        let mut highlights_map_builder = MapBuilder::memory();
         let mut highlights_map_data = Vec::new();
 
         for (i, (key, vs)) in entries.iter().enumerate() {
@@ -256,11 +255,6 @@ fn build_reverse_index(
                         .collect::<Vec<u8>>()
                 })
                 .collect();
-            counts_map_builder
-                .insert(key.to_be_bytes(), i as u64)
-                .expect("Could not insert into counts map builder");
-            counts_map_data.push(counts_bytes);
-
             let highlight_index_bytes: Vec<u8> = vs
                 .highlights
                 .iter()
@@ -275,20 +269,20 @@ fn build_reverse_index(
                         .collect::<Vec<u8>>()
                 })
                 .collect();
-            highlights_map_builder
-                .insert(key.to_be_bytes(), i as u64)
-                .expect("Could not insert into highlights map builder");
+
+            let key_bytes = key.to_be_bytes();
+            map_builder
+                .insert([key_bytes[0], key_bytes[1], key_bytes[2]], i as u64)
+                .expect("Could not insert into reverse index entry map");
+            counts_map_data.push(counts_bytes);
             highlights_map_data.push(highlight_index_bytes);
         }
 
         reverse_index.push(ReverseIndexEntryBytes {
-            counts_map_bytes: counts_map_builder
+            map_bytes: map_builder
                 .into_inner()
                 .expect("Could not construct counts map bytes"),
             counts_map_data,
-            highlights_map_bytes: highlights_map_builder
-                .into_inner()
-                .expect("Could not construct highlight map bytes"),
             highlights_map_data,
         });
     }

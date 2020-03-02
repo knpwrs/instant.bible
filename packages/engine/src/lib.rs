@@ -151,31 +151,31 @@ impl VersearchIndex {
                 a.match_type.cmp(&b.match_type)
             } else {
                 // Order by matches ascending
-                a.entry.counts_data.len().cmp(&b.entry.counts_data.len())
+                a.entry.len().cmp(&b.entry.len())
             }
         });
         // Pick a token list to use as result candidates
         let candidates_list = priority_lists
             .iter()
             // First, try to find a list with >= 3x max results
-            .find(|l| l.entry.counts_data.len() >= MAX_RESULTS * 3)
+            .find(|l| l.entry.len() >= MAX_RESULTS * 3)
             .unwrap_or_else(|| {
                 priority_lists
                     .iter()
                     // Second, try to find a list with >= 2x max results
-                    .find(|l| l.entry.counts_data.len() >= MAX_RESULTS * 2)
+                    .find(|l| l.entry.len() >= MAX_RESULTS * 2)
                     .unwrap_or_else(|| {
                         priority_lists
                             .iter()
                             // Third, try to find a list with >= max results
-                            .find(|l| l.entry.counts_data.len() >= MAX_RESULTS)
+                            .find(|l| l.entry.len() >= MAX_RESULTS)
                             // Fall back to just taking the list with the most results
                             .unwrap_or_else(|| priority_lists.last().unwrap())
                     })
             });
         // Construct empty scores map with each candidate verse
-        let mut result_scores = HashMap::with_capacity(candidates_list.entry.counts_data.len());
-        for key_bytes in candidates_list.entry.counts_map.stream().into_byte_keys() {
+        let mut result_scores = HashMap::with_capacity(candidates_list.entry.len());
+        for key_bytes in candidates_list.entry.get_verse_keys() {
             result_scores.insert(
                 key_bytes.clone(),
                 VerseMatch::new(VerseKey::from_be_bytes(&key_bytes.clone())),
@@ -193,8 +193,7 @@ impl VersearchIndex {
             } in found_indices.values()
             {
                 // Does this found entry match the current verse?
-                if let Some(counts_idx) = entry.counts_map.get(&result_key) {
-                    let found_counts = &entry.counts_data[counts_idx as usize];
+                if let Some(found_counts) = entry.get_counts(&result_key) {
                     for (i, count) in found_counts.iter().enumerate() {
                         // Does the found entry match the current translation?
                         if *count > 0 {
@@ -235,8 +234,7 @@ impl VersearchIndex {
                 }
 
                 // Track words to highlight for this result
-                if let Some(found_highlights_idx) = entry.highlights_map.get(result_key) {
-                    let found_highlights = &entry.highlights_data[found_highlights_idx as usize];
+                if let Some(found_highlights) = entry.get_highlights(result_key) {
                     result_match.extend_highlights(found_highlights);
                 }
             }

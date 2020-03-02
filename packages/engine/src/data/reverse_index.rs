@@ -1,23 +1,31 @@
 use fst::Map as FstMap;
 
+/// The idea behind this datastructure is to map a verse key to represent the
+/// reverse index entry struct in a format which is easy to serialize
+pub struct ReverseIndexEntryBytes {
+    pub map_bytes: Vec<u8>,
+    pub counts_map_data: Vec<Vec<u8>>, // `repeated bytes`, concatenated count bytes
+    pub highlights_map_data: Vec<Vec<u8>>, // `repeated bytes`, bytes are concatenated word ids
+}
+
 /// Different strings can end up creating the same token (e.g., it's and its both
 /// produce ITS); therefore, it is important to account for this in the index
 /// structure, particularly for when it comes to highlighting.
 pub struct ReverseIndexEntry {
+    /// VerseKey => u64 into...
+    map: FstMap,
     /// VerseKey => Translation Id => Token Count
-    pub counts_map: FstMap,
-    pub counts_data: Vec<Vec<u64>>,
+    counts: Vec<Vec<u64>>, // TODO: does this need to be u64? Refactoring would just mean changing the from_bytes stuff
     /// VerseKey => Vec<Highlight Word Ids>
-    pub highlights_map: FstMap,
-    pub highlights_data: Vec<Vec<u64>>,
+    highlights: Vec<Vec<u64>>,
 }
 
 impl ReverseIndexEntry {
     pub fn from_bytes_struct(input: &ReverseIndexEntryBytes) -> Self {
         Self {
-            counts_map: FstMap::from_bytes(input.counts_map_bytes.clone())
-                .expect("Could not construct counts_map from bytes"),
-            counts_data: input
+            map: FstMap::from_bytes(input.map_bytes.clone())
+                .expect("Could not construct map from bytes"),
+            counts: input
                 .counts_map_data
                 .iter()
                 .map(|bytes| {
@@ -30,9 +38,7 @@ impl ReverseIndexEntry {
                     v
                 })
                 .collect(),
-            highlights_map: FstMap::from_bytes(input.highlights_map_bytes.clone())
-                .expect("Could not construct highlights_map from bytes"),
-            highlights_data: input
+            highlights: input
                 .highlights_map_data
                 .iter()
                 .map(|bytes| {
@@ -47,15 +53,24 @@ impl ReverseIndexEntry {
                 .collect(),
         }
     }
-}
 
-/// The idea behind this datastructure is to map a verse key to represent the
-/// reverse index entry struct in a format which is easy to serialize
-pub struct ReverseIndexEntryBytes {
-    pub counts_map_bytes: Vec<u8>,
-    pub counts_map_data: Vec<Vec<u8>>, // `repeated bytes`, concatenated count bytes
-    pub highlights_map_bytes: Vec<u8>,
-    pub highlights_map_data: Vec<Vec<u8>>, // `repeated bytes`, bytes are concatenated word ids
+    pub fn len(&self) -> usize {
+        self.map.len()
+    }
+
+    pub fn get_counts(&self, verse_key: &[u8]) -> Option<&Vec<u64>> {
+        let idx = self.map.get(verse_key);
+        idx.map(|idx| &self.counts[idx as usize])
+    }
+
+    pub fn get_verse_keys(&self) -> Vec<Vec<u8>> {
+        self.map.stream().into_byte_keys()
+    }
+
+    pub fn get_highlights(&self, verse_key: &[u8]) -> Option<&Vec<u64>> {
+        let idx = self.map.get(verse_key);
+        idx.map(|idx| &self.highlights[idx as usize])
+    }
 }
 
 pub type ReverseIndex = Vec<ReverseIndexEntry>;

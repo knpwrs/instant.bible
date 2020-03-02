@@ -1,5 +1,5 @@
 mod internal_service_ranking;
-mod reverse_index;
+pub mod reverse_index;
 mod verse_match;
 
 pub use internal_service_ranking::InternalServiceRanking;
