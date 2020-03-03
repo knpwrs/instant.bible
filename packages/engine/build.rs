@@ -1,5 +1,6 @@
 fn main() {
     println!("cargo:rerun-if-changed=../proto/data.proto");
+    println!("cargo:rerun-if-changed=../proto/engine.proto");
     println!("cargo:rerun-if-changed=../proto/service.proto");
 
     let mut prost = prost_build::Config::new();
@@ -19,7 +20,11 @@ fn main() {
 
     prost
         .compile_protos(
-            &["../proto/data.proto", "../proto/service.proto"],
+            &[
+                "../proto/data.proto",
+                "../proto/engine.proto",
+                "../proto/service.proto",
+            ],
             &["../proto"],
         )
         .unwrap();

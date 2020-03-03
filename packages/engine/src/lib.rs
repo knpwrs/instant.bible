@@ -2,7 +2,8 @@ mod data;
 pub mod proto;
 pub mod util;
 
-use data::{ReverseIndex, ReverseIndexEntry, ReverseIndexEntryBytes, VerseMatch};
+use crate::proto::engine::IndexData;
+use data::{ReverseIndex, ReverseIndexEntry, VerseMatch};
 use fst::{automaton, Automaton, IntoStreamer, Map as FstMap};
 use fst_levenshtein::Levenshtein;
 use itertools::Itertools;
@@ -50,26 +51,20 @@ pub struct VersearchIndex {
 
 impl VersearchIndex {
     #[allow(clippy::new_without_default)]
-    pub fn new(
-        fst_bytes: Vec<u8>,
-        reverse_index_bytes: Vec<ReverseIndexEntryBytes>,
-        proximities_bytes: Vec<u8>,
-        highlight_words: Vec<String>,
-        translation_verses_bytes: Vec<u8>,
-        translation_verses_strings: Vec<String>,
-    ) -> Self {
+    pub fn from_index_data_proto_struct(index_data: IndexData) -> Self {
         VersearchIndex {
-            fst_map: FstMap::from_bytes(fst_bytes).expect("Could not load map from FST bytes"),
-            reverse_index: reverse_index_bytes
+            fst_map: FstMap::from_bytes(index_data.fst).expect("Could not load map from FST bytes"),
+            reverse_index: index_data
+                .reverse_index_entries
                 .iter()
                 .map(|b| ReverseIndexEntry::from_bytes_struct(b))
                 .collect(),
-            proximities: FstMap::from_bytes(proximities_bytes)
+            proximities: FstMap::from_bytes(index_data.proximities)
                 .expect("Could not load map from proximity bytes"),
-            highlight_words,
-            translation_verses_map: FstMap::from_bytes(translation_verses_bytes)
+            highlight_words: index_data.highlight_words,
+            translation_verses_map: FstMap::from_bytes(index_data.translation_verses)
                 .expect("Could not load map from translation verses bytes"),
-            translation_verses_strings,
+            translation_verses_strings: index_data.translation_verses_strings,
         }
     }
 

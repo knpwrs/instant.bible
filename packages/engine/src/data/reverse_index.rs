@@ -1,12 +1,5 @@
+use crate::proto::engine::ReverseIndexEntry as ReverseIndexEntryBytes;
 use fst::Map as FstMap;
-
-/// The idea behind this datastructure is to map a verse key to represent the
-/// reverse index entry struct in a format which is easy to serialize
-pub struct ReverseIndexEntryBytes {
-    pub map_bytes: Vec<u8>,
-    pub counts_map_data: Vec<Vec<u8>>, // `repeated bytes`, concatenated count bytes
-    pub highlights_map_data: Vec<Vec<u8>>, // `repeated bytes`, bytes are concatenated word ids
-}
 
 /// Different strings can end up creating the same token (e.g., it's and its both
 /// produce ITS); therefore, it is important to account for this in the index

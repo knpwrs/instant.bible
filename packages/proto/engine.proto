@@ -1,0 +1,19 @@
+syntax = "proto3";
+package instantbible.engine;
+
+import "data.proto";
+
+message ReverseIndexEntry {
+  bytes map_bytes = 1;
+  repeated bytes counts_map_data = 2;
+  repeated bytes highlights_map_data = 3;
+}
+
+message IndexData {
+  bytes fst = 1;
+  repeated ReverseIndexEntry reverseIndexEntries = 2;
+  bytes proximities = 3;
+  repeated string highlightWords = 4;
+  bytes translationVerses = 5;
+  repeated string translationVersesStrings = 6;
+}

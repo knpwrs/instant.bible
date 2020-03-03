@@ -2,7 +2,8 @@ mod response;
 mod search;
 
 use engine::proto::service::Response as ServiceResponse;
-use engine::util::get_index;
+use engine::util::get_or_create_index_proto_struct;
+use engine::VersearchIndex;
 use log::info;
 use std::sync::Arc;
 use warp::Filter;
@@ -11,8 +12,11 @@ use warp::Filter;
 async fn main() {
     env_logger::init();
 
-    let index = Arc::new(get_index());
-    info!("Index created! Starting server...");
+    let index = Arc::new(VersearchIndex::from_index_data_proto_struct(
+        get_or_create_index_proto_struct(),
+    ));
+
+    info!("Starting server...");
 
     let route_search = warp::path("api");
 

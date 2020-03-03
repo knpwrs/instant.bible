@@ -1,6 +1,9 @@
-use crate::data::ReverseIndexEntryBytes;
 use crate::proto::data::{decode_translation_data, Translation, VerseKey, VerseText};
-use crate::{VersearchIndex, TRANSLATION_COUNT};
+use crate::proto::engine::{
+    decode_index_data, IndexData as IndexDataProtoStruct,
+    ReverseIndexEntry as ReverseIndexEntryBytes,
+};
+use crate::TRANSLATION_COUNT;
 use anyhow::{Context, Result};
 use fst::MapBuilder;
 use log::info;
@@ -357,7 +360,7 @@ fn build_translation_verses_bytes(
 }
 
 /// Creates and returns a search index
-pub fn get_index() -> VersearchIndex {
+pub fn create_index_proto_struct() -> IndexDataProtoStruct {
     let start = Instant::now();
 
     let mut wip_token_counts = BTreeMap::new();
@@ -396,19 +399,30 @@ pub fn get_index() -> VersearchIndex {
         build_translation_verses_bytes(&translation_verses)
             .expect("Could not construct translation verses fst map");
 
-    translation_verses_bytes.len();
-    translation_verses_strings.len();
-
-    info!("get_index done in {}ms", start.elapsed().as_millis());
-
-    VersearchIndex::new(
-        fst_bytes,
-        reverse_index_bytes,
-        proximities_bytes,
+    info!(
+        "get_index_proto_struct done in {}ms",
+        start.elapsed().as_millis()
+    );
+    IndexDataProtoStruct {
+        fst: fst_bytes,
+        reverse_index_entries: reverse_index_bytes,
+        proximities: proximities_bytes,
         highlight_words,
-        translation_verses_bytes,
+        translation_verses: translation_verses_bytes,
         translation_verses_strings,
-    )
+    }
+}
+
+pub fn get_index_proto_struct_from_disk() -> Result<IndexDataProtoStruct> {
+    let bytes = read_file_bytes(&std::path::PathBuf::from("index.pb"))?;
+    decode_index_data(&bytes).context("get_index_proto_struct_from_disk")
+}
+
+pub fn get_or_create_index_proto_struct() -> IndexDataProtoStruct {
+    match get_index_proto_struct_from_disk() {
+        Ok(data) => data,
+        _ => create_index_proto_struct(),
+    }
 }
 
 #[cfg(test)]

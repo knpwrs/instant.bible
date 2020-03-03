@@ -55,3 +55,14 @@ pub mod data {
 pub mod service {
     include!(concat!(env!("OUT_DIR"), "/instantbible.service.rs"));
 }
+
+pub mod engine {
+    use anyhow::{Context, Result};
+    use prost::Message;
+
+    include!(concat!(env!("OUT_DIR"), "/instantbible.engine.rs"));
+
+    pub fn decode_index_data(bytes: &[u8]) -> Result<IndexData> {
+        IndexData::decode(bytes).context("Decoding Translation Data")
+    }
+}
