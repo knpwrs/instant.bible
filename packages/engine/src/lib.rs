@@ -4,7 +4,7 @@ pub mod util;
 
 use crate::proto::engine::IndexData;
 use data::{ReverseIndex, ReverseIndexEntry, VerseMatch};
-use fst::{automaton, Automaton, IntoStreamer, Map as FstMap};
+use fst::{automaton, Automaton, IntoStreamer, Map as FstMap, Streamer};
 use fst_levenshtein::Levenshtein;
 use itertools::Itertools;
 use proto::data::{Translation, VerseKey};
@@ -19,8 +19,6 @@ use util::{proximity_bytes_key, tokenize, translation_verses_bytes_key, Tokenize
 pub use util::{Config, MAX_PROXIMITY};
 
 static MAX_RESULTS: usize = 20;
-static PREFIX_EXPANSION_FACTOR: usize = 2;
-static PREFIX_EXPANSION_MINIMUM: usize = 4;
 static TYPO_1_LEN: usize = 4;
 static TYPO_2_LEN: usize = 8;
 pub static TRANSLATION_COUNT: usize = Translation::Total as usize;
@@ -37,7 +35,7 @@ struct ReverseIndexEntryWithMatch<'a> {
     entry: &'a ReverseIndexEntry,
     match_type: MatchType,
     this_index: u64,
-    last_indices: Vec<u64>,
+    last_index: Option<u64>,
 }
 
 pub struct VersearchIndex {
@@ -71,63 +69,44 @@ impl VersearchIndex {
     #[inline]
     fn traverse_fst(&self, tokens: &[Tokenized]) -> HashMap<u64, ReverseIndexEntryWithMatch> {
         let mut found_indices: HashMap<u64, ReverseIndexEntryWithMatch> = HashMap::new();
-
-        let mut last_indices: Vec<u64> = Vec::new();
+        let mut last_index: Option<u64> = None;
 
         for Tokenized { token, .. } in tokens {
             // Attempt a prefix search
             let prefix_automaton = automaton::Str::new(&token).starts_with();
-            let mut results = self
-                .fst_map
-                .search(prefix_automaton)
-                .into_stream()
-                .into_str_vec()
-                .unwrap();
-
-            // If nothing was found in the prefix search then this token was a typo
-            let is_typo = results.is_empty() && token.len() >= TYPO_1_LEN;
-            if is_typo {
+            if let Some((found_token, idx)) =
+                self.fst_map.search(prefix_automaton).into_stream().next()
+            {
+                let mut entry =
+                    found_indices
+                        .entry(idx)
+                        .or_insert_with(|| ReverseIndexEntryWithMatch {
+                            entry: &self.reverse_index[idx as usize],
+                            match_type: MatchType::Exact,
+                            last_index,
+                            this_index: idx,
+                        });
+                entry.match_type = if found_token.len() == token.len() {
+                    MatchType::Exact
+                } else {
+                    MatchType::Prefix
+                };
+                last_index = Some(idx);
+            } else if token.len() >= TYPO_1_LEN {
+                // If nothing was found in the prefix search then this token is possibly a typo
                 let distance = if token.len() >= TYPO_2_LEN { 2 } else { 1 };
                 let lev_automaton = Levenshtein::new(&token, distance).unwrap();
-                results.extend(
-                    self.fst_map
-                        .search(&lev_automaton)
-                        .into_stream()
-                        .into_str_vec()
-                        .unwrap(),
-                );
-            }
-
-            // Process found tokens
-            for (result, idx) in results.iter().filter(|(res, _)| {
-                // Tokens should be less than an expansion limit with a reasonable expansion for small tokens
-                res.len() < (token.len() * PREFIX_EXPANSION_FACTOR).max(PREFIX_EXPANSION_MINIMUM)
-            }) {
-                let mut container =
+                if let Some((_, idx)) = self.fst_map.search(lev_automaton).into_stream().next() {
                     found_indices
-                        .entry(*idx)
+                        .entry(idx)
                         .or_insert_with(|| ReverseIndexEntryWithMatch {
-                            entry: &self.reverse_index[*idx as usize],
-                            match_type: if is_typo {
-                                MatchType::Typo
-                            } else {
-                                MatchType::Prefix
-                            },
-                            this_index: *idx,
-                            last_indices: last_indices.clone(),
+                            entry: &self.reverse_index[idx as usize],
+                            match_type: MatchType::Typo,
+                            last_index,
+                            this_index: idx,
                         });
-                if *result == *token && token.len() > 1 {
-                    container.match_type = MatchType::Exact;
+                    last_index = Some(idx);
                 }
-            }
-
-            // Store last indices
-            last_indices = Vec::new();
-            for (_, idx) in results.iter().filter(|(res, _)| {
-                // Tokens should be less than an expansion limit with a reasonable expansion for small tokens
-                res.len() < (token.len() * PREFIX_EXPANSION_FACTOR).max(PREFIX_EXPANSION_MINIMUM)
-            }) {
-                last_indices.push(*idx);
             }
         }
 
@@ -184,7 +163,7 @@ impl VersearchIndex {
                 match_type,
                 entry,
                 this_index,
-                last_indices,
+                last_index,
             } in found_indices.values()
             {
                 // Does this found entry match the current verse?
@@ -201,24 +180,17 @@ impl VersearchIndex {
                                 _ => {}
                             }
                             // Calculate the proximity between current and last word
-                            let proximity = if !last_indices.is_empty() {
-                                last_indices
-                                    .iter()
-                                    .map(|li| {
-                                        if let Some(p) = self.proximities.get(proximity_bytes_key(
-                                            i as u8,
-                                            result_key,
-                                            *li as u16,
-                                            *this_index as u16,
-                                        )) {
-                                            p
-                                        } else {
-                                            0
-                                        }
-                                    })
-                                    .filter(|p| *p != 0)
-                                    .min()
-                                    .unwrap_or_else(|| 0)
+                            let proximity = if let Some(li) = last_index {
+                                if let Some(p) = self.proximities.get(proximity_bytes_key(
+                                    i as u8,
+                                    result_key,
+                                    *li as u16,
+                                    *this_index as u16,
+                                )) {
+                                    p
+                                } else {
+                                    0
+                                }
                             } else {
                                 0
                             };
