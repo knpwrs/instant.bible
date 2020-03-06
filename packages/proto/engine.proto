@@ -16,4 +16,5 @@ message IndexData {
   repeated string highlightWords = 4;
   bytes translationVerses = 5;
   repeated string translationVersesStrings = 6;
+  bytes popularity = 7;
 }
