@@ -1,4 +1,4 @@
-use crate::proto::data::{decode_translation_data, Translation, VerseKey, VerseText};
+use crate::proto::data::{decode_translation_data, Book, Translation, VerseKey, VerseText};
 use crate::proto::engine::{
     decode_index_data, IndexData as IndexDataProtoStruct,
     ReverseIndexEntry as ReverseIndexEntryBytes,
@@ -7,11 +7,13 @@ use crate::TRANSLATION_COUNT;
 use anyhow::{Context, Result};
 use fst::MapBuilder;
 use log::info;
+use regex::Regex;
 use serde::Deserialize;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::io::prelude::*;
+use std::io::{self, BufRead};
 use std::iter::Iterator;
 use std::time::Instant;
 
@@ -21,6 +23,7 @@ pub static MAX_PROXIMITY: u64 = 8;
 #[derive(Deserialize)]
 pub struct Config {
     pub translation_dir: String,
+    pub crawl_data: String,
 }
 
 #[cfg_attr(test, derive(Debug))]
@@ -73,6 +76,11 @@ pub fn tokenize(input: &str) -> Vec<Tokenized> {
         .collect()
 }
 
+fn get_config() -> Result<Config> {
+    let conf = envy::from_env::<Config>().context("envy failed to read environment")?;
+    Ok(conf)
+}
+
 /// Given a translation id, a verse key, and two word ids, generates a sequence
 /// of bytes which can be used as a key into an FST map
 pub fn proximity_bytes_key(tidx: u8, vkey: &[u8], w1i: u16, w2i: u16) -> Vec<u8> {
@@ -97,7 +105,6 @@ pub fn translation_verses_bytes_key(tidx: u8, vkey: &VerseKey) -> Vec<u8> {
 }
 
 /// Reads and returns the bytes of a file located at the given path
-#[inline]
 fn read_file_bytes(path: &std::path::PathBuf) -> Result<Vec<u8>> {
     let mut file_bytes = Vec::new();
     fs::File::open(path)
@@ -114,23 +121,24 @@ type WipProximitiesMap =
 type WipTokenCountsMap = BTreeMap<String, BTreeMap<VerseKey, VerseStats>>;
 
 /// Performs initial processing of verses read from disk
-#[inline]
 fn process_verses(
     translation_key: Translation,
     verses: &[VerseText],
     translation_verses: &mut TranslationVerses,
+    verse_counts: &mut BTreeMap<VerseKey, u64>,
     highlight_words: &mut BTreeSet<String>,
     wip_token_counts: &mut BTreeMap<String, BTreeMap<VerseKey, VerseStats>>,
     proximities: &mut WipProximitiesMap,
 ) {
     for verse in verses {
+        let vkey = verse.key.expect("Missing verse key");
+        let verse_tokens = tokenize(&verse.text);
         translation_verses
             .entry(translation_key)
             .or_insert_with(BTreeMap::new)
-            .entry(verse.key.unwrap())
+            .entry(vkey)
             .or_insert_with(|| verse.text.clone());
-        let vkey = verse.key.expect("Missing verse key");
-        let verse_tokens = tokenize(&verse.text);
+        verse_counts.entry(vkey).or_insert(0);
         // Count up tokens
         for (i, tokenized) in verse_tokens.iter().enumerate() {
             // Save word to get a highlight id later
@@ -172,15 +180,15 @@ fn process_verses(
     }
 }
 
-/// Loads data from disk and returns the total number of documents
-#[inline]
-fn load_data(
+/// Loads translation data from disk and returns the total number of documents
+fn load_translation_data(
     translation_verses: &mut TranslationVerses,
+    verse_counts: &mut BTreeMap<VerseKey, u64>,
     highlight_words: &mut BTreeSet<String>,
     wip_token_counts: &mut WipTokenCountsMap,
     proximities: &mut WipProximitiesMap,
 ) -> Result<()> {
-    let config = envy::from_env::<Config>()?;
+    let config = get_config().context("load_translation_data")?;
     info!("Loading translations from {:?}", config.translation_dir);
 
     let mut total_docs: usize = 0;
@@ -188,7 +196,9 @@ fn load_data(
     for entry in
         fs::read_dir(config.translation_dir).context("Could not read translation data directory")?
     {
-        let path = entry.unwrap().path();
+        let path = entry
+            .context("Could not convert translation data entry to path")?
+            .path();
         if path.is_file() && path.extension().map(|s| s == "pb").unwrap_or(false) {
             let translation_name = path
                 .file_stem()
@@ -212,6 +222,7 @@ fn load_data(
                 translation_key,
                 &data.verses,
                 translation_verses,
+                verse_counts,
                 highlight_words,
                 wip_token_counts,
                 proximities,
@@ -230,7 +241,6 @@ fn load_data(
 }
 
 /// Build and return a reverse index, fst bytes, and vector of highlight words
-#[inline]
 fn build_reverse_index(
     highlight_words: &BTreeSet<String>,
     wip_token_counts: &WipTokenCountsMap,
@@ -297,7 +307,6 @@ fn build_reverse_index(
     (reverse_index, fst_bytes, highlight_words)
 }
 
-#[inline]
 fn build_proximity_fst_bytes(
     wip_proximities: &WipProximitiesMap,
     wip_token_counts: &WipTokenCountsMap,
@@ -335,7 +344,6 @@ fn build_proximity_fst_bytes(
     Ok(proximities)
 }
 
-#[inline]
 fn build_translation_verses_bytes(
     translation_verses: &TranslationVerses,
 ) -> Result<(Vec<u8>, Vec<String>)> {
@@ -359,17 +367,70 @@ fn build_translation_verses_bytes(
     Ok((bytes, strings))
 }
 
+/// Loads crawl data from disk
+fn load_crawl_data(verse_rankings: &mut BTreeMap<VerseKey, u64>) -> Result<()> {
+    let config = get_config().context("load_crawl_data")?;
+
+    let re = Regex::new(r"^(.+)\s+(\d{1,3}):(\d{1,3})$")
+        .context("Could not compile regex for parsing crawl data")?;
+
+    // I really did try to avoid this...
+    let file = fs::File::open(config.crawl_data).context("Could not open crawl data file")?;
+    for line in io::BufReader::new(file).lines().filter_map(Result::ok) {
+        if let Some(caps) = re.captures(&line) {
+            if let (Some(book), Some(chapter), Some(verse)) =
+                (caps.get(1), caps.get(2), caps.get(3))
+            {
+                if let (Ok(book), Ok(chapter), Ok(verse)) = (
+                    Book::from_string(book.as_str()),
+                    chapter.as_str().parse::<u32>(),
+                    verse.as_str().parse::<u32>(),
+                ) {
+                    let key = VerseKey {
+                        book: book as i32,
+                        chapter,
+                        verse,
+                    };
+                    verse_rankings.entry(key).and_modify(|count| {
+                        *count += 1;
+                    });
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Processes crawl data after it is loaded and produce an FST map of verse => count
+fn build_verse_counts_fst(verse_counts: &BTreeMap<VerseKey, u64>) -> Result<Vec<u8>> {
+    let mut builder = MapBuilder::memory();
+
+    for (key, count) in verse_counts {
+        let bytes = key.to_be_bytes();
+        builder
+            .insert(bytes, *count)
+            .context("Could not insert into verse counts fst")?;
+    }
+
+    builder
+        .into_inner()
+        .context("Could not build verse counts bytes")
+}
+
 /// Creates and returns a search index
 pub fn create_index_proto_struct() -> IndexDataProtoStruct {
     let start = Instant::now();
 
     let mut wip_token_counts = BTreeMap::new();
     let mut wip_proximities = BTreeMap::new();
+    let mut verse_counts = BTreeMap::new();
     let mut translation_verses: TranslationVerses = BTreeMap::new();
     let mut highlight_words = BTreeSet::new();
 
-    load_data(
+    load_translation_data(
         &mut translation_verses,
+        &mut verse_counts,
         &mut highlight_words,
         &mut wip_token_counts,
         &mut wip_proximities,
@@ -399,10 +460,23 @@ pub fn create_index_proto_struct() -> IndexDataProtoStruct {
         build_translation_verses_bytes(&translation_verses)
             .expect("Could not construct translation verses fst map");
 
+    let now = Instant::now();
+    info!("Building popularlity index");
+    load_crawl_data(&mut verse_counts).expect("Could not load crawl data");
+    let popularity_bytes =
+        build_verse_counts_fst(&verse_counts).expect("Could not construct popularity index");
+    info!(
+        "Done building popularity index for {} verses in {}ms ({} bytes)",
+        verse_counts.len(),
+        now.elapsed().as_millis(),
+        popularity_bytes.len()
+    );
+
     info!(
         "get_index_proto_struct done in {}ms",
         start.elapsed().as_millis()
     );
+
     IndexDataProtoStruct {
         fst: fst_bytes,
         reverse_index_entries: reverse_index_bytes,
@@ -410,6 +484,7 @@ pub fn create_index_proto_struct() -> IndexDataProtoStruct {
         highlight_words,
         translation_verses: translation_verses_bytes,
         translation_verses_strings,
+        popularity: popularity_bytes,
     }
 }
 
