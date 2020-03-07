@@ -1,10 +1,12 @@
 use crate::proto::service::response::verse_result::Ranking as ServiceRanking;
 use std::cmp::Ordering;
+use std::collections::BTreeSet;
 
-#[derive(PartialEq, Eq)]
+#[derive(Eq)]
 pub struct InternalServiceRanking {
-    ranking: ServiceRanking,
+    pub ranking: ServiceRanking,
     idx: usize,
+    query_word_matches: BTreeSet<usize>,
 }
 
 impl InternalServiceRanking {
@@ -12,11 +14,12 @@ impl InternalServiceRanking {
         Self {
             ranking: ServiceRanking {
                 typos: 0,
-                words: 0,
+                query_words: 0,
                 proximity: 0,
                 exact: 0,
             },
             idx,
+            query_word_matches: BTreeSet::new(),
         }
     }
 
@@ -24,8 +27,9 @@ impl InternalServiceRanking {
         self.ranking.typos += 1;
     }
 
-    pub fn inc_words(&mut self) {
-        self.ranking.words += 1;
+    pub fn inc_query_words(&mut self, query_word: usize) {
+        self.query_word_matches.insert(query_word);
+        self.ranking.query_words = self.query_word_matches.len() as i32;
     }
 
     pub fn add_proximity(&mut self, prox: i32) {
@@ -38,6 +42,13 @@ impl InternalServiceRanking {
 
     pub fn to_service_ranking(&self) -> ServiceRanking {
         self.ranking.clone()
+    }
+}
+
+/// Only consider ranking information for equality
+impl PartialEq for InternalServiceRanking {
+    fn eq(&self, other: &Self) -> bool {
+        self.ranking == other.ranking
     }
 }
 
@@ -69,8 +80,8 @@ impl Ord for InternalServiceRanking {
             return self.ranking.typos.cmp(&other.ranking.typos);
         }
         // Sort by matched query words descending (more words matched == higher rank)
-        if self.ranking.words != other.ranking.words {
-            return other.ranking.words.cmp(&self.ranking.words);
+        if self.ranking.query_words != other.ranking.query_words {
+            return other.ranking.query_words.cmp(&self.ranking.query_words);
         }
         // Fall back to translation index
         self.idx.cmp(&other.idx)

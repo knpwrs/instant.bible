@@ -9,7 +9,7 @@ message Response {
       // The number of typos matched
       int32 typos = 1;
       // The number of words matched from the query
-      int32 words = 2;
+      int32 queryWords = 2;
       // The total proximity of adjacent word pairs in the query
       int32 proximity = 3;
       // The number of exact words matched (no prefix or typo)
@@ -21,6 +21,7 @@ message Response {
     repeated string text = 3;
     repeated string highlights = 4;
     repeated Ranking rankings = 5;
+    int32 popularity = 6;
   }
 
   message Timings {
