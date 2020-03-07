@@ -9,10 +9,11 @@ pub struct VerseMatch {
     pub key: VerseKey,
     pub highlights: Vec<u64>,
     rankings: Vec<InternalServiceRanking>,
+    pub popularity: u64,
 }
 
 impl VerseMatch {
-    pub fn new(key: VerseKey) -> Self {
+    pub fn new(key: VerseKey, popularity: u64) -> Self {
         let mut rankings = Vec::with_capacity(TRANSLATION_COUNT);
 
         for i in 0..TRANSLATION_COUNT {
@@ -23,6 +24,7 @@ impl VerseMatch {
             key,
             rankings,
             highlights: Vec::new(),
+            popularity,
         }
     }
 
@@ -30,8 +32,8 @@ impl VerseMatch {
         self.rankings[idx].inc_typos();
     }
 
-    pub fn inc_words(&mut self, idx: usize) {
-        self.rankings[idx].inc_words();
+    pub fn inc_query_words(&mut self, idx: usize, query_word: usize) {
+        self.rankings[idx].inc_query_words(query_word);
     }
 
     pub fn add_proximity(&mut self, idx: usize, prox: i32) {
@@ -68,10 +70,13 @@ impl PartialOrd for VerseMatch {
         let self_min = self.rankings.iter().min()?;
         let other_min = other.rankings.iter().min()?;
 
-        if self_min != other_min {
-            self_min.partial_cmp(other_min)
+        if self_min.ranking.query_words != other_min.ranking.query_words {
+            other_min
+                .ranking
+                .query_words
+                .partial_cmp(&self_min.ranking.query_words)
         } else {
-            self.key.partial_cmp(&other.key)
+            other.popularity.partial_cmp(&self.popularity)
         }
     }
 }

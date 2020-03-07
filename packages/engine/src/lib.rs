@@ -19,7 +19,7 @@ use util::{proximity_bytes_key, tokenize, translation_verses_bytes_key, Tokenize
 pub use util::{Config, MAX_PROXIMITY};
 
 static MAX_RESULTS: usize = 20;
-static PREFIX_EXPANSION_FACTOR: usize = 2;
+static PREFIX_EXPANSION_FACTOR: usize = 3;
 static PREFIX_EXPANSION_MINIMUM: usize = 4;
 static TYPO_1_LEN: usize = 4;
 static TYPO_2_LEN: usize = 8;
@@ -38,6 +38,7 @@ struct ReverseIndexEntryWithMatch<'a> {
     match_type: MatchType,
     this_index: u64,
     last_indices: Vec<u64>,
+    qidx: usize,
 }
 
 pub struct VersearchIndex {
@@ -47,6 +48,7 @@ pub struct VersearchIndex {
     highlight_words: Vec<String>,
     translation_verses_map: FstMap,
     translation_verses_strings: Vec<String>,
+    verse_popularity: FstMap,
 }
 
 impl VersearchIndex {
@@ -65,6 +67,8 @@ impl VersearchIndex {
             translation_verses_map: FstMap::from_bytes(index_data.translation_verses)
                 .expect("Could not load map from translation verses bytes"),
             translation_verses_strings: index_data.translation_verses_strings,
+            verse_popularity: FstMap::from_bytes(index_data.popularity)
+                .expect("Could not loap map from popularity bytes"),
         }
     }
 
@@ -74,7 +78,7 @@ impl VersearchIndex {
 
         let mut last_indices: Vec<u64> = Vec::new();
 
-        for Tokenized { token, .. } in tokens {
+        for (qidx, Tokenized { token, .. }) in tokens.iter().enumerate() {
             // Attempt a prefix search
             let prefix_automaton = automaton::Str::new(&token).starts_with();
             let mut results = self
@@ -115,6 +119,7 @@ impl VersearchIndex {
                             },
                             this_index: *idx,
                             last_indices: last_indices.clone(),
+                            qidx,
                         });
                 if *result == *token && token.len() > 1 {
                     container.match_type = MatchType::Exact;
@@ -171,9 +176,10 @@ impl VersearchIndex {
         // Construct empty scores map with each candidate verse
         let mut result_scores = HashMap::with_capacity(candidates_list.entry.len());
         for key_bytes in candidates_list.entry.get_verse_keys() {
+            let key = VerseKey::from_be_bytes(&key_bytes);
             result_scores.insert(
                 key_bytes.clone(),
-                VerseMatch::new(VerseKey::from_be_bytes(&key_bytes.clone())),
+                VerseMatch::new(key, self.verse_popularity.get(key_bytes).map_or(0, |v| v)),
             );
         }
 
@@ -185,6 +191,7 @@ impl VersearchIndex {
                 entry,
                 this_index,
                 last_indices,
+                qidx,
             } in found_indices.values()
             {
                 // Does this found entry match the current verse?
@@ -193,7 +200,7 @@ impl VersearchIndex {
                         // Does the found entry match the current translation?
                         if *count > 0 {
                             // Increment words matched
-                            result_match.inc_words(i);
+                            result_match.inc_query_words(i, *qidx);
                             // Increment exact/typo matches if necessary
                             match *match_type {
                                 MatchType::Exact => result_match.inc_exact(i),
@@ -272,6 +279,7 @@ impl VersearchIndex {
                     .cloned()
                     .collect(),
                 rankings: r.to_service_rankings(),
+                popularity: r.popularity as i32,
             })
             .collect()
     }
