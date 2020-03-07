@@ -7,5 +7,6 @@ OUTDIR="data/${YEAR}-${CRAWL}"
 export LC_ALL='C'
 
 ./cat.sh $YEAR $CRAWL \
-  | sort
-  | uniq -c
+  | sort \
+  | uniq -c \
+  | sort -nrk1
