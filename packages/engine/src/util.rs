@@ -6,6 +6,7 @@ use crate::proto::engine::{
 use crate::TRANSLATION_COUNT;
 use anyhow::{Context, Result};
 use fst::MapBuilder;
+use itertools::Itertools;
 use log::info;
 use regex::Regex;
 use serde::Deserialize;
@@ -73,6 +74,34 @@ pub fn tokenize(input: &str) -> Vec<Tokenized> {
                 .map(|(_i, c)| c)
                 .collect::<String>(),
         })
+        .collect()
+}
+
+pub type TupleChar = (usize, char);
+pub type TripleCharOptions = (Option<TupleChar>, Option<TupleChar>, Option<TupleChar>);
+pub type Tuples = Vec<TripleCharOptions>;
+
+pub fn tuplize(input: &str) -> Tuples {
+    let mut chars: Vec<Option<TupleChar>> = input
+        .to_uppercase()
+        .char_indices()
+        .filter(|(_, c)| c.is_ascii_alphanumeric() && !c.is_whitespace())
+        .map(Some)
+        .collect();
+
+    if chars.len() < 3 {
+        for _ in chars.len()..3 {
+            chars.push(None);
+        }
+    }
+
+    chars.iter().cloned().tuple_windows().collect()
+}
+
+pub fn untuplize((one, two, three): TripleCharOptions) -> String {
+    [one, two, three]
+        .iter()
+        .filter_map(|tup| tup.map(|(_, c)| c))
         .collect()
 }
 
@@ -559,6 +588,45 @@ mod tests {
                     token: "GOOD".to_string()
                 },
             ]
+        );
+    }
+
+    #[test]
+    fn test_tuplize() {
+        assert_eq!(
+            tuplize("hello"),
+            vec![
+                (Some((0, 'H')), Some((1, 'E')), Some((2, 'L'))),
+                (Some((1, 'E')), Some((2, 'L')), Some((3, 'L'))),
+                (Some((2, 'L')), Some((3, 'L')), Some((4, 'O'))),
+            ]
+        );
+        assert_eq!(
+            tuplize("it's all good"),
+            vec![
+                (Some((0, 'I')), Some((1, 'T')), Some((3, 'S'))),
+                (Some((1, 'T')), Some((3, 'S')), Some((5, 'A'))),
+                (Some((3, 'S')), Some((5, 'A')), Some((6, 'L'))),
+                (Some((5, 'A')), Some((6, 'L')), Some((7, 'L'))),
+                (Some((6, 'L')), Some((7, 'L')), Some((9, 'G'))),
+                (Some((7, 'L')), Some((9, 'G')), Some((10, 'O'))),
+                (Some((9, 'G')), Some((10, 'O')), Some((11, 'O'))),
+                (Some((10, 'O')), Some((11, 'O')), Some((12, 'D'))),
+            ]
+        );
+        assert_eq!(tuplize(""), vec![(None, None, None)]);
+        assert_eq!(tuplize("I"), vec![(Some((0, 'I')), None, None)]);
+        assert_eq!(tuplize("hi!"), vec![(Some((0, 'H')), Some((1, 'I')), None)]);
+    }
+
+    #[test]
+    fn test_untuplize() {
+        assert_eq!(untuplize((None, None, None)), "");
+        assert_eq!(untuplize((Some((0, 'A')), None, None)), "A");
+        assert_eq!(untuplize((Some((0, 'A')), Some((1, 'L')), None)), "AL");
+        assert_eq!(
+            untuplize((Some((0, 'A')), Some((1, 'L')), Some((2, 'L')))),
+            "ALL"
         );
     }
 }
