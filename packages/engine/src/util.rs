@@ -46,9 +46,10 @@ impl PartialOrd for Tokenized {
     }
 }
 
-struct VerseStats {
+struct VerseGramStats {
     counts: Vec<usize>,
-    highlights: BTreeSet<String>,
+    // highlights: BTreeSet<String>,
+    highlights: BTreeSet<usize>,
 }
 
 type TranslationVerses = BTreeMap<Translation, BTreeMap<VerseKey, String>>;
@@ -81,46 +82,60 @@ pub type TupleChar = (usize, char);
 pub type TripleCharOptions = (Option<TupleChar>, Option<TupleChar>, Option<TupleChar>);
 pub type Tuples = Vec<TripleCharOptions>;
 
-pub fn tuplize(input: &str) -> Tuples {
-    let mut chars: Vec<Option<TupleChar>> = input
+#[inline]
+fn tuplize(input: &str) -> Tuples {
+    input
         .to_uppercase()
         .char_indices()
         .filter(|(_, c)| c.is_ascii_alphanumeric() && !c.is_whitespace())
         .map(Some)
-        .collect();
-
-    if chars.len() < 3 {
-        for _ in chars.len()..3 {
-            chars.push(None);
-        }
-    }
-
-    chars.iter().cloned().tuple_windows().collect()
+        .pad_using(3, |_| None)
+        .tuple_windows()
+        .collect()
 }
 
-pub fn untuplize((one, two, three): TripleCharOptions) -> String {
+#[inline]
+fn tuple_to_gram((one, two, three): &TripleCharOptions) -> String {
     [one, two, three]
         .iter()
         .filter_map(|tup| tup.map(|(_, c)| c))
         .collect()
 }
 
+fn tuple_to_indices((one, two, three): &TripleCharOptions) -> Vec<usize> {
+    [one, two, three]
+        .iter()
+        .filter_map(|tup| tup.map(|(i, _)| i))
+        .collect()
+}
+
+pub fn gramize(input: &str) -> Vec<String> {
+    if input.is_empty() {
+        Vec::new()
+    } else {
+        tuplize(input).iter().map(tuple_to_gram).collect()
+    }
+}
+
+// https://stackoverflow.com/a/50392400/355325
+fn consecutive_slices(data: &[usize]) -> Vec<&[usize]> {
+    let mut slice_start = 0;
+    let mut result = Vec::new();
+    for i in 1..data.len() {
+        if data[i - 1] + 1 != data[i] {
+            result.push(&data[slice_start..i]);
+            slice_start = i;
+        }
+    }
+    if slice_start > 0 {
+        result.push(&data[slice_start..]);
+    }
+    result
+}
+
 fn get_config() -> Result<Config> {
     let conf = envy::from_env::<Config>().context("envy failed to read environment")?;
     Ok(conf)
-}
-
-/// Given a translation id, a verse key, and two word ids, generates a sequence
-/// of bytes which can be used as a key into an FST map
-pub fn proximity_bytes_key(tidx: u8, vkey: &[u8], w1i: u16, w2i: u16) -> Vec<u8> {
-    let capacity =
-        std::mem::size_of::<u8>() + std::mem::size_of::<u16>() * 2 + VerseKey::get_byte_size();
-    let mut v = Vec::with_capacity(capacity);
-    v.extend(&tidx.to_be_bytes());
-    v.extend(vkey);
-    v.extend(&w1i.to_be_bytes());
-    v.extend(&w2i.to_be_bytes());
-    v
 }
 
 /// Given a translation id and a verse key, generates a sequence of bytes which
@@ -147,7 +162,7 @@ fn read_file_bytes(path: &std::path::PathBuf) -> Result<Vec<u8>> {
 type WipProximitiesMap =
     BTreeMap<usize, BTreeMap<VerseKey, BTreeMap<String, BTreeMap<String, u64>>>>;
 // Stores work-in-progress token counts per verse and translation
-type WipTokenCountsMap = BTreeMap<String, BTreeMap<VerseKey, VerseStats>>;
+type WipTokenCountsMap = BTreeMap<String, BTreeMap<VerseKey, VerseGramStats>>;
 
 /// Performs initial processing of verses read from disk
 fn process_verses(
@@ -155,13 +170,11 @@ fn process_verses(
     verses: &[VerseText],
     translation_verses: &mut TranslationVerses,
     verse_counts: &mut BTreeMap<VerseKey, u64>,
-    highlight_words: &mut BTreeSet<String>,
-    wip_token_counts: &mut BTreeMap<String, BTreeMap<VerseKey, VerseStats>>,
-    proximities: &mut WipProximitiesMap,
+    wip_gram_counts: &mut BTreeMap<String, BTreeMap<VerseKey, VerseGramStats>>,
 ) {
     for verse in verses {
         let vkey = verse.key.expect("Missing verse key");
-        let verse_tokens = tokenize(&verse.text);
+        let verse_gram_tuples = tuplize(&verse.text);
         translation_verses
             .entry(translation_key)
             .or_insert_with(BTreeMap::new)
@@ -169,42 +182,22 @@ fn process_verses(
             .or_insert_with(|| verse.text.clone());
         verse_counts.entry(vkey).or_insert(0);
         // Count up tokens
-        for (i, tokenized) in verse_tokens.iter().enumerate() {
-            // Save word to get a highlight id later
-            highlight_words.insert(tokenized.source.to_uppercase());
+        for gram_tuple in &verse_gram_tuples {
+            let gram = tuple_to_gram(gram_tuple);
+            let gram_indices = tuple_to_indices(gram_tuple);
             // Create new stats entry if needed
-            let entry = wip_token_counts
-                .entry(tokenized.token.clone())
+            let entry = wip_gram_counts
+                .entry(gram)
                 .or_insert_with(BTreeMap::new)
                 .entry(vkey.clone())
-                .or_insert_with(|| VerseStats {
+                .or_insert_with(|| VerseGramStats {
                     counts: vec![0; TRANSLATION_COUNT],
                     highlights: BTreeSet::new(),
                 });
             // Increment counts
             entry.counts[translation_key as usize] += 1;
             // Track highlights
-            entry.highlights.insert(tokenized.source.to_uppercase());
-            // Track proximities
-            for (j, other_tokenized) in verse_tokens.iter().enumerate().skip(i + 1) {
-                let prox = (j - i) as u64;
-                proximities
-                    .entry(translation_key as usize)
-                    .or_insert_with(BTreeMap::new)
-                    .entry(vkey.clone())
-                    .or_insert_with(BTreeMap::new)
-                    .entry(tokenized.token.clone())
-                    .or_insert_with(BTreeMap::new)
-                    .entry(other_tokenized.token.clone())
-                    .and_modify(|p: &mut u64| {
-                        if prox < *p {
-                            *p = prox;
-                        } else if prox > MAX_PROXIMITY {
-                            *p = MAX_PROXIMITY
-                        }
-                    })
-                    .or_insert(prox);
-            }
+            entry.highlights.extend(gram_indices);
         }
     }
 }
@@ -213,9 +206,7 @@ fn process_verses(
 fn load_translation_data(
     translation_verses: &mut TranslationVerses,
     verse_counts: &mut BTreeMap<VerseKey, u64>,
-    highlight_words: &mut BTreeSet<String>,
     wip_token_counts: &mut WipTokenCountsMap,
-    proximities: &mut WipProximitiesMap,
 ) -> Result<()> {
     let config = get_config().context("load_translation_data")?;
     info!("Loading translations from {:?}", config.translation_dir);
@@ -252,9 +243,7 @@ fn load_translation_data(
                 &data.verses,
                 translation_verses,
                 verse_counts,
-                highlight_words,
                 wip_token_counts,
-                proximities,
             );
             info!(
                 "Processed {} verses in {}ms",
@@ -271,22 +260,20 @@ fn load_translation_data(
 
 /// Build and return a reverse index, fst bytes, and vector of highlight words
 fn build_reverse_index(
-    highlight_words: &BTreeSet<String>,
-    wip_token_counts: &WipTokenCountsMap,
-) -> (Vec<ReverseIndexEntryBytes>, Vec<u8>, Vec<String>) {
+    wip_gram_counts: &WipTokenCountsMap,
+) -> (Vec<ReverseIndexEntryBytes>, Vec<u8>) {
     let mut build = MapBuilder::memory();
-    let mut reverse_index = Vec::with_capacity(wip_token_counts.len());
-    let highlight_words: Vec<_> = highlight_words.iter().cloned().collect();
+    let mut reverse_index = Vec::with_capacity(wip_gram_counts.len());
 
-    for (i, (token, entries)) in wip_token_counts.iter().enumerate() {
+    for (i, (token, entries)) in wip_gram_counts.iter().enumerate() {
         build.insert(token.clone(), i as u64).unwrap();
 
         let mut map_builder = MapBuilder::memory();
         let mut counts_map_data = Vec::new();
         let mut highlights_map_data = Vec::new();
 
-        for (i, (key, vs)) in entries.iter().enumerate() {
-            let counts_bytes: Vec<u8> = vs
+        for (i, (key, verse_gram_stats)) in entries.iter().enumerate() {
+            let counts_bytes: Vec<u8> = verse_gram_stats
                 .counts
                 .iter()
                 .flat_map(|c| {
@@ -297,18 +284,25 @@ fn build_reverse_index(
                         .collect::<Vec<u8>>()
                 })
                 .collect();
-            let highlight_index_bytes: Vec<u8> = vs
-                .highlights
+            // Group consecutive highlight indices into ranges
+            let highlight_indices = verse_gram_stats.highlights.iter().copied().collect_vec();
+            let highlight_groups = consecutive_slices(&highlight_indices);
+            let highlights_bytes: Vec<u8> = highlight_groups
                 .iter()
-                .flat_map(|s| {
-                    (highlight_words
-                        .binary_search(s)
-                        .expect("Could not find index for highlight entry")
-                        as u64)
+                .flat_map(|indices| {
+                    // First and last numbers concatenated as bytes
+                    let mut bytes = (*indices.first().unwrap() as u64)
                         .to_be_bytes()
                         .iter()
                         .copied()
-                        .collect::<Vec<u8>>()
+                        .collect::<Vec<u8>>();
+                    bytes.extend(
+                        (*indices.last().unwrap() as u64)
+                            .to_be_bytes()
+                            .iter()
+                            .copied(),
+                    );
+                    bytes
                 })
                 .collect();
 
@@ -317,7 +311,7 @@ fn build_reverse_index(
                 .insert([key_bytes[0], key_bytes[1], key_bytes[2]], i as u64)
                 .expect("Could not insert into reverse index entry map");
             counts_map_data.push(counts_bytes);
-            highlights_map_data.push(highlight_index_bytes);
+            highlights_map_data.push(highlights_bytes);
         }
 
         reverse_index.push(ReverseIndexEntryBytes {
@@ -331,46 +325,8 @@ fn build_reverse_index(
 
     let fst_bytes = build.into_inner().expect("Could not flush bytes for FST");
     info!("FST compiled: {} bytes", fst_bytes.len());
-    info!("Stored {} words for highlighting", highlight_words.len());
 
-    (reverse_index, fst_bytes, highlight_words)
-}
-
-fn build_proximity_fst_bytes(
-    wip_proximities: &WipProximitiesMap,
-    wip_token_counts: &WipTokenCountsMap,
-) -> Result<Vec<u8>> {
-    let ordered_tokens: Vec<_> = wip_token_counts.keys().cloned().collect();
-    let mut proximities_build = MapBuilder::memory();
-
-    for (tidx, m1) in wip_proximities {
-        for (vkey, m2) in m1 {
-            for (w1, m3) in m2 {
-                let w1i = ordered_tokens
-                    .binary_search(w1)
-                    .expect("Could not find index for token for proximity map")
-                    as u16;
-                for (w2, p) in m3 {
-                    let w2i = ordered_tokens
-                        .binary_search(w2)
-                        .expect("Could not find index for token for proximity map")
-                        as u16;
-                    proximities_build
-                        .insert(
-                            proximity_bytes_key(*tidx as u8, &vkey.to_be_bytes(), w1i, w2i),
-                            *p,
-                        )
-                        .expect("Could not insert into proximities build");
-                }
-            }
-        }
-    }
-
-    let proximities = proximities_build
-        .into_inner()
-        .context("Could not build proximities map bytes")?;
-
-    Ok(proximities)
+    (reverse_index, fst_bytes)
 }
 
 fn build_translation_verses_bytes(
@@ -452,38 +408,24 @@ pub fn create_index_proto_struct() -> IndexDataProtoStruct {
     let start = Instant::now();
 
     let mut wip_token_counts = BTreeMap::new();
-    let mut wip_proximities = BTreeMap::new();
-    let mut verse_counts = BTreeMap::new();
+    let mut verse_gram_counts = BTreeMap::new();
     let mut translation_verses: TranslationVerses = BTreeMap::new();
-    let mut highlight_words = BTreeSet::new();
+    let mut verse_counts = BTreeMap::new();
 
     load_translation_data(
         &mut translation_verses,
-        &mut verse_counts,
-        &mut highlight_words,
+        &mut verse_gram_counts,
         &mut wip_token_counts,
-        &mut wip_proximities,
     )
     .expect("Could not load data from disk");
 
     let now = Instant::now();
 
-    let (reverse_index_bytes, fst_bytes, highlight_words) =
-        build_reverse_index(&highlight_words, &wip_token_counts);
+    let (reverse_index_entries, fst_bytes) = build_reverse_index(&wip_token_counts);
 
     info!("Indexed data {}ms", now.elapsed().as_millis());
 
     let now = Instant::now();
-
-    let proximities_bytes = build_proximity_fst_bytes(&wip_proximities, &wip_token_counts)
-        .expect("Could not build proximities map");
-
-    info!(
-        "Proximities FST compiled: {} tokens, {} bytes in {}ms",
-        wip_token_counts.len(),
-        proximities_bytes.len(),
-        now.elapsed().as_millis()
-    );
 
     let (translation_verses_bytes, translation_verses_strings) =
         build_translation_verses_bytes(&translation_verses)
@@ -508,9 +450,7 @@ pub fn create_index_proto_struct() -> IndexDataProtoStruct {
 
     IndexDataProtoStruct {
         fst: fst_bytes,
-        reverse_index_entries: reverse_index_bytes,
-        proximities: proximities_bytes,
-        highlight_words,
+        reverse_index_entries,
         translation_verses: translation_verses_bytes,
         translation_verses_strings,
         popularity: popularity_bytes,
@@ -621,12 +561,31 @@ mod tests {
 
     #[test]
     fn test_untuplize() {
-        assert_eq!(untuplize((None, None, None)), "");
-        assert_eq!(untuplize((Some((0, 'A')), None, None)), "A");
-        assert_eq!(untuplize((Some((0, 'A')), Some((1, 'L')), None)), "AL");
+        assert_eq!(tuple_to_gram(&(None, None, None)), "");
+        assert_eq!(tuple_to_gram(&(Some((0, 'A')), None, None)), "A");
+        assert_eq!(tuple_to_gram(&(Some((0, 'A')), Some((1, 'L')), None)), "AL");
         assert_eq!(
-            untuplize((Some((0, 'A')), Some((1, 'L')), Some((2, 'L')))),
+            tuple_to_gram(&(Some((0, 'A')), Some((1, 'L')), Some((2, 'L')))),
             "ALL"
         );
+    }
+
+    #[test]
+    fn test_gramize() {
+        assert_eq!(gramize(""), Vec::<String>::new());
+        assert_eq!(gramize("Hi!"), vec!["HI".to_string()]);
+        assert_eq!(
+            gramize("Hello, World!"),
+            vec![
+                "HEL".to_string(),
+                "ELL".to_string(),
+                "LLO".to_string(),
+                "LOW".to_string(),
+                "OWO".to_string(),
+                "WOR".to_string(),
+                "ORL".to_string(),
+                "RLD".to_string(),
+            ]
+        )
     }
 }

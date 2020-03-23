@@ -10,7 +10,7 @@ pub struct ReverseIndexEntry {
     /// VerseKey => Translation Id => Token Count
     counts: Vec<Vec<u64>>, // TODO: does this need to be u64? Refactoring would just mean changing the from_bytes stuff
     /// VerseKey => Vec<Highlight Word Ids>
-    highlights: Vec<Vec<u64>>,
+    highlights: Vec<(u64, u64)>,
 }
 
 impl ReverseIndexEntry {
@@ -35,13 +35,19 @@ impl ReverseIndexEntry {
                 .highlights_map_data
                 .iter()
                 .map(|bytes| {
-                    let mut v = Vec::new();
-                    for i in (0..bytes.len()).step_by(8) {
+                    let mut first: u64 = 0;
+                    let mut last: u64 = 0;
+                    for i in (0..bytes.len() / 2).step_by(8) {
                         let mut chunk = [0u8; 8];
                         chunk.copy_from_slice(&bytes[i..(i + 8)]);
-                        v.push(u64::from_be_bytes(chunk));
+                        first = u64::from_be_bytes(chunk);
                     }
-                    v
+                    for i in ((bytes.len() / 2)..bytes.len()).step_by(8) {
+                        let mut chunk = [0u8; 8];
+                        chunk.copy_from_slice(&bytes[i..(i + 8)]);
+                        last = u64::from_be_bytes(chunk);
+                    }
+                    (first, last)
                 })
                 .collect(),
         }
@@ -60,9 +66,9 @@ impl ReverseIndexEntry {
         self.map.stream().into_byte_keys()
     }
 
-    pub fn get_highlights(&self, verse_key: &[u8]) -> Option<&Vec<u64>> {
+    pub fn get_highlights(&self, verse_key: &[u8]) -> Option<(u64, u64)> {
         let idx = self.map.get(verse_key);
-        idx.map(|idx| &self.highlights[idx as usize])
+        idx.map(|idx| self.highlights[idx as usize])
     }
 }
 

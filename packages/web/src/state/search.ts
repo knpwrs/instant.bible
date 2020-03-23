@@ -59,7 +59,7 @@ const { actions, reducer } = createSlice({
           sq.res = res.map(r => ({
             key: r.key,
             topTranslation: r.topTranslation,
-            highlights: r.highlights,
+            highlights: [],
           }));
         });
       }

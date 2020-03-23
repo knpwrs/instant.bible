@@ -28,20 +28,8 @@ impl VerseMatch {
         }
     }
 
-    pub fn inc_typos(&mut self, idx: usize) {
-        self.rankings[idx].inc_typos();
-    }
-
-    pub fn inc_query_words(&mut self, idx: usize, query_word: usize) {
-        self.rankings[idx].inc_query_words(query_word);
-    }
-
-    pub fn add_proximity(&mut self, idx: usize, prox: i32) {
-        self.rankings[idx].add_proximity(prox);
-    }
-
-    pub fn inc_exact(&mut self, idx: usize) {
-        self.rankings[idx].inc_exact();
+    pub fn inc_gram_matches(&mut self, idx: usize) {
+        self.rankings[idx].inc_gram_matches();
     }
 
     pub fn extend_highlights(&mut self, hi: &[u64]) {
