@@ -102,26 +102,37 @@ impl VersearchIndex {
                 );
             }
 
+            // Sort results by token length (undo lexicographical iteration)
+            results.sort_by_key(|(t, _)| t.len());
+
             // Process found tokens
-            for (result, idx) in results.iter().filter(|(res, _)| {
-                // Tokens should be less than an expansion limit with a reasonable expansion for small tokens
-                res.len() < (token.len() * PREFIX_EXPANSION_FACTOR).max(PREFIX_EXPANSION_MINIMUM)
-            }) {
+            for (mid, (result, rid)) in results
+                .iter()
+                .filter(|(res, _)| {
+                    // Tokens should be less than an expansion limit with a reasonable expansion for small tokens
+                    res.len()
+                        < (token.len() * PREFIX_EXPANSION_FACTOR).max(PREFIX_EXPANSION_MINIMUM)
+                })
+                .enumerate()
+            {
                 let mut container =
                     found_indices
-                        .entry(*idx)
+                        .entry(*rid)
                         .or_insert_with(|| ReverseIndexEntryWithMatch {
-                            entry: &self.reverse_index[*idx as usize],
+                            entry: &self.reverse_index[*rid as usize],
                             match_type: if is_typo {
                                 MatchType::Typo
                             } else {
                                 MatchType::Prefix
                             },
-                            this_index: *idx,
+                            this_index: *rid,
                             last_indices: last_indices.clone(),
                             qidx,
                         });
-                if *result == *token && token.len() > 1 {
+                // This is an exact result if
+                //   1. The result token matches the query token OR this is the first result token
+                //   2. The token length is greater than 1
+                if (*result == *token || mid == 0) && token.len() > 1 {
                     container.match_type = MatchType::Exact;
                 }
             }
