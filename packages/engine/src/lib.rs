@@ -4,8 +4,7 @@ pub mod util;
 
 use crate::proto::engine::IndexData;
 use data::{ReverseIndex, ReverseIndexEntry, VerseMatch};
-use fst::{automaton, Automaton, IntoStreamer, Map as FstMap};
-use fst_levenshtein::Levenshtein;
+use fst::{automaton, raw, Automaton, IntoStreamer, Map as FstMap};
 use itertools::Itertools;
 use proto::data::{Translation, VerseKey};
 use proto::service::{
@@ -42,33 +41,41 @@ struct ReverseIndexEntryWithMatch<'a> {
 }
 
 pub struct VersearchIndex {
-    fst_map: FstMap,
+    fst_map: FstMap<Vec<u8>>,
     reverse_index: ReverseIndex,
-    proximities: FstMap,
+    proximities: FstMap<Vec<u8>>,
     highlight_words: Vec<String>,
-    translation_verses_map: FstMap,
+    translation_verses_map: FstMap<Vec<u8>>,
     translation_verses_strings: Vec<String>,
-    verse_popularity: FstMap,
+    verse_popularity: FstMap<Vec<u8>>,
 }
 
 impl VersearchIndex {
     #[allow(clippy::new_without_default)]
     pub fn from_index_data_proto_struct(index_data: IndexData) -> Self {
         VersearchIndex {
-            fst_map: FstMap::from_bytes(index_data.fst).expect("Could not load map from FST bytes"),
+            fst_map: FstMap::from(
+                raw::Fst::new(index_data.fst).expect("Could not load map from FST bytes"),
+            ),
             reverse_index: index_data
                 .reverse_index_entries
                 .iter()
                 .map(|b| ReverseIndexEntry::from_bytes_struct(b))
                 .collect(),
-            proximities: FstMap::from_bytes(index_data.proximities)
-                .expect("Could not load map from proximity bytes"),
+            proximities: FstMap::from(
+                raw::Fst::new(index_data.proximities)
+                    .expect("Could not load map from proximity bytes"),
+            ),
             highlight_words: index_data.highlight_words,
-            translation_verses_map: FstMap::from_bytes(index_data.translation_verses)
-                .expect("Could not load map from translation verses bytes"),
+            translation_verses_map: FstMap::from(
+                raw::Fst::new(index_data.translation_verses)
+                    .expect("Could not load map from verses bytes"),
+            ),
             translation_verses_strings: index_data.translation_verses_strings,
-            verse_popularity: FstMap::from_bytes(index_data.popularity)
-                .expect("Could not loap map from popularity bytes"),
+            verse_popularity: FstMap::from(
+                raw::Fst::new(index_data.popularity)
+                    .expect("Could not load map from popularity bytes"),
+            ),
         }
     }
 
@@ -92,7 +99,7 @@ impl VersearchIndex {
             let is_typo = results.is_empty() && token.len() >= TYPO_1_LEN;
             if is_typo {
                 let distance = if token.len() >= TYPO_2_LEN { 2 } else { 1 };
-                let lev_automaton = Levenshtein::new(&token, distance).unwrap();
+                let lev_automaton = automaton::Levenshtein::new(&token, distance).unwrap();
                 results.extend(
                     self.fst_map
                         .search(&lev_automaton)

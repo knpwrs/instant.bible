@@ -1,12 +1,12 @@
 use crate::proto::engine::ReverseIndexEntry as ReverseIndexEntryBytes;
-use fst::Map as FstMap;
+use fst::{raw, Map as FstMap};
 
 /// Different strings can end up creating the same token (e.g., it's and its both
 /// produce ITS); therefore, it is important to account for this in the index
 /// structure, particularly for when it comes to highlighting.
 pub struct ReverseIndexEntry {
     /// VerseKey => u64 into...
-    map: FstMap,
+    map: FstMap<Vec<u8>>,
     /// VerseKey => Translation Id => Token Count
     counts: Vec<Vec<u64>>, // TODO: does this need to be u64? Refactoring would just mean changing the from_bytes stuff
     /// VerseKey => Vec<Highlight Word Ids>
@@ -16,8 +16,9 @@ pub struct ReverseIndexEntry {
 impl ReverseIndexEntry {
     pub fn from_bytes_struct(input: &ReverseIndexEntryBytes) -> Self {
         Self {
-            map: FstMap::from_bytes(input.map_bytes.clone())
-                .expect("Could not construct map from bytes"),
+            map: FstMap::from(
+                raw::Fst::new(input.map_bytes.clone()).expect("Could not construct map from bytes"),
+            ),
             counts: input
                 .counts_map_data
                 .iter()
