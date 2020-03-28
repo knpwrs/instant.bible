@@ -11,6 +11,7 @@ module.exports = {
   plugins: [
     '@babel/plugin-proposal-optional-chaining',
     'react-hot-loader/babel',
+    'babel-plugin-lodash',
     'emotion',
     'macros',
   ],
