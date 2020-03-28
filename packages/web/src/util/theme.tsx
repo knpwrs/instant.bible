@@ -4,7 +4,7 @@ import {
   ThemeProvider as ThemeProviderComp,
 } from 'emotion-theming';
 import { Global, css } from '@emotion/core';
-import { lighten, mix } from 'polished';
+import { lighten, mix, transparentize } from 'polished';
 import { noop, isString } from 'lodash';
 
 export type ThemeKey = 'light' | 'dark';
@@ -19,6 +19,8 @@ const colors = {
   gray04: '#13131A',
   white01: '#FFFFFF',
   white02: '#F8F8F9',
+  black: '#171725',
+  green: '#3DD598',
 };
 
 export type Font = {
@@ -30,6 +32,7 @@ export type Font = {
 const base = {
   colors,
   text: {
+    secondaryColor: '#696974',
     subhead3Regular: {
       family: 'Roboto',
       weight: 400,
@@ -52,6 +55,7 @@ export const light = {
   key: 'light' as ThemeKey,
   ...base,
   background: colors.white02,
+  facade: transparentize(0.7, colors.black),
   text: {
     ...base.text,
     color: colors.gray02,
@@ -66,6 +70,15 @@ export const light = {
     input: {
       placeholder: colors.gray01,
     },
+    progress: {
+      background: '#E2E2EA',
+      foreground: colors.green,
+    },
+    checkbox: {
+      border: '#B5B5BE',
+      checked: colors.green,
+    },
+    icon: colors.gray01,
   },
 };
 
@@ -75,6 +88,7 @@ export const dark: Theme = {
   key: 'dark',
   ...base,
   background: colors.gray04,
+  facade: transparentize(0.7, colors.gray01),
   text: {
     ...base.text,
     color: colors.white02,
@@ -89,6 +103,15 @@ export const dark: Theme = {
     input: {
       placeholder: colors.gray01,
     },
+    progress: {
+      background: '#CFCFD7',
+      foreground: colors.green,
+    },
+    checkbox: {
+      border: '#B5B5BE',
+      checked: colors.green,
+    },
+    icon: colors.gray01,
   },
 };
 

@@ -2,6 +2,8 @@ import * as webpack from 'webpack';
 import { resolve } from 'path';
 import * as HtmlWebpackPlugin from 'html-webpack-plugin';
 
+const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin');
+
 const conf: webpack.Configuration = {
   context: __dirname,
   entry: [
@@ -54,10 +56,16 @@ const conf: webpack.Configuration = {
       template: './src/index.html',
       inject: 'body',
     }),
+    new WasmPackPlugin({
+      crateDirectory: resolve(__dirname, '../bridge'),
+      forceMode: 'production',
+      outDir: resolve(__dirname, 'src/wasm'),
+    }),
   ],
   devServer: {
     hot: true,
     port: 8080,
+    contentBase: resolve(__dirname, '..'),
     proxy: {
       '/api': 'http://localhost:8081',
     },

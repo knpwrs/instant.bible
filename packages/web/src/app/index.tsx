@@ -3,6 +3,7 @@ import { css } from '@emotion/core';
 import Header from './header';
 import Results from './results';
 import Copyright from './copyright';
+import Settings from './settings';
 import { useDirty } from '../state/search';
 
 export default React.memo(() => {
@@ -29,6 +30,7 @@ export default React.memo(() => {
           bottom: 0;
         `}
       />
+      <Settings />
     </div>
   );
 });

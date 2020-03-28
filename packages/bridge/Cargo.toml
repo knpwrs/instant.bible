@@ -1,0 +1,17 @@
+[package]
+name = "bridge"
+version = "0.0.0"
+publish = false
+authors = ["Kenneth Powers <ken@kenpowers.net> (https://knpw.rs)"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+engine = { path = "../engine" }
+lazy_static = "1.4.0"
+mut_static = "5.0.0"
+wasm-bindgen = "0.2.59"
+wee_alloc = "0.4.5"
+prost = "0.6.1"

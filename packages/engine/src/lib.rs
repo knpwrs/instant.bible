@@ -12,8 +12,8 @@ use proto::service::{
     Response as ServiceResponse,
 };
 use std::collections::HashMap;
-use std::time::Instant;
 use util::{proximity_bytes_key, tokenize, translation_verses_bytes_key, Tokenized};
+use wasm_timer::Instant;
 
 pub use util::{Config, MAX_PROXIMITY};
 

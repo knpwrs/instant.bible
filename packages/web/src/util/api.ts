@@ -1,21 +1,37 @@
 import { stringify } from 'qs';
+import * as PProgress from 'p-progress';
+import pImmediate from 'p-immediate';
 import {
   verseKeyToString,
   textToTranslationsObject,
   topTranslation,
 } from './proto';
+import { getWasm, getLocalBytes, setLocalBytes } from './bridge';
 import { instantbible as proto } from '../proto';
 
 const endpoint = process.env.IB_ENDPOINT as string;
 const headers = { accept: 'application/protobuf' };
 
-export const search = async (q: string) => {
+const doSearch = async (q: string, offline: boolean) => {
+  const wasm = getWasm();
+
+  if (wasm && offline) {
+    await pImmediate();
+    return wasm.search(q);
+  }
+
+  const query = stringify({ q });
+  const res = await fetch(`${endpoint}?${query}`, {
+    headers,
+  });
+  const buf = await res.arrayBuffer();
+
+  return buf;
+};
+
+export const search = async (q: string, offline: boolean) => {
   try {
-    const query = stringify({ q });
-    const res = await fetch(`${endpoint}?${query}`, {
-      headers,
-    });
-    const buf = await res.arrayBuffer();
+    const buf = await doSearch(q, offline);
     const decoded = proto.service.Response.decode(new Uint8Array(buf));
 
     return decoded.results.map(res => ({
@@ -29,3 +45,37 @@ export const search = async (q: string) => {
     return null;
   }
 };
+
+export const getIndexBytes = PProgress.fn(async progress => {
+  const localBytes = await getLocalBytes();
+
+  if (localBytes) {
+    return localBytes;
+  }
+
+  const res = await fetch('/index.pb');
+  const length = parseInt(res.headers.get('Content-Length') || '0', 10);
+
+  if (!length || !res.body) {
+    throw new Error('Invalid response');
+  }
+
+  const array = new Uint8Array(length);
+  let i = 0;
+
+  const reader = res.body.getReader();
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) {
+      break;
+    }
+    array.set(value, i);
+    i += value.length;
+    progress(i / length);
+  }
+
+  await setLocalBytes(array);
+
+  return array;
+});

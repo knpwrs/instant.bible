@@ -75,7 +75,7 @@ export default reducer;
 export const { startQuery, endQuery, reset } = actions;
 
 export const doSearch = (q: string): AppThunk => async (dispatch, getState) => {
-  const { search: searchState } = getState();
+  const { search: searchState, offline: offlineState } = getState();
 
   dispatch(startQuery({ q }));
 
@@ -83,7 +83,7 @@ export const doSearch = (q: string): AppThunk => async (dispatch, getState) => {
     return;
   }
 
-  const res = await api.search(q);
+  const res = await api.search(q, offlineState.enabled);
 
   dispatch(endQuery({ q, res }));
 };
