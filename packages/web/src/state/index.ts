@@ -6,7 +6,8 @@ import {
 } from '@reduxjs/toolkit';
 import { ThunkAction } from 'redux-thunk';
 import offline, { doInitOffline } from './offline';
-import search from './search';
+import search, { doSearch } from './search';
+import { selectQuery } from '../util/history';
 import { getLocalBytes } from '../util/bridge';
 
 const rootReducer = combineReducers({
@@ -27,6 +28,11 @@ export type RootState = ReturnType<typeof rootReducer>;
 export type AppThunk = ThunkAction<void, RootState, null, Action<string>>;
 
 (async () => {
+  const query = selectQuery();
+  if (query.q) {
+    store.dispatch(doSearch(query.q));
+  }
+
   const bytes = await getLocalBytes();
   if (bytes) {
     store.dispatch(doInitOffline(true));

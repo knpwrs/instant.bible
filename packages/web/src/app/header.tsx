@@ -4,8 +4,7 @@ import { t } from '@lingui/macro';
 import { css } from '@emotion/core';
 import { I18n } from '@lingui/react';
 import { Logo, Input } from '../elements';
-import { replace, useQuery } from '../util/history';
-import { doSearch, reset, useDirty } from '../state/search';
+import { doSearch, doReset, useDirty, useQuery } from '../state/search';
 import styled, { ThemedFn } from '../util/styled';
 
 const getBackgroundColor: ThemedFn = ({ theme }) => theme.background;
@@ -25,22 +24,15 @@ const Root = styled('header')<{ dirty: boolean }>`
 
 export default React.memo(() => {
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const dispatch = useDispatch();
+  const query = useQuery();
 
   const handleChange = React.useCallback(
     (e: React.FormEvent<HTMLInputElement>) => {
-      replace('/', { q: e.currentTarget.value });
+      dispatch(doSearch(e.currentTarget.value));
     },
-    [],
+    [dispatch],
   );
-
-  const { q = '' } = useQuery();
-  const dispatch = useDispatch();
-
-  React.useEffect(() => {
-    if (q) {
-      dispatch(doSearch(q));
-    }
-  }, [q, dispatch]);
 
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -64,8 +56,7 @@ export default React.memo(() => {
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        replace();
-        dispatch(reset());
+        dispatch(doReset());
       }
     };
 
@@ -98,7 +89,7 @@ export default React.memo(() => {
             `}
             placeholder={i18n._(t`Search...`)}
             onChange={handleChange}
-            value={q}
+            value={query}
             autoFocus={true}
           />
         </Root>
