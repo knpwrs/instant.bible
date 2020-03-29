@@ -53,7 +53,7 @@ export const getIndexBytes = PProgress.fn(async progress => {
     return localBytes;
   }
 
-  const res = await fetch('/index.pb');
+  const res = await fetch('/api/index.pb');
   const length = parseInt(res.headers.get('Content-Length') || '0', 10);
 
   if (!length || !res.body) {
