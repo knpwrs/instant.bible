@@ -3,27 +3,40 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		A9C207B724393343008B9CB2 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C207B624393343008B9CB2 /* AppDelegate.swift */; };
 		A9C207B924393343008B9CB2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C207B824393343008B9CB2 /* SceneDelegate.swift */; };
-		A9C207BB24393343008B9CB2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C207BA24393343008B9CB2 /* ContentView.swift */; };
 		A9C207BD24393344008B9CB2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A9C207BC24393344008B9CB2 /* Assets.xcassets */; };
 		A9C207C024393344008B9CB2 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A9C207BF24393344008B9CB2 /* Preview Assets.xcassets */; };
 		A9C207C324393344008B9CB2 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A9C207C124393344008B9CB2 /* LaunchScreen.storyboard */; };
+		A9CEE96D2439347D0015B572 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = A9CEE96C2439347D0015B572 /* SwiftProtobuf */; };
+		A9CEE971243934D50015B572 /* IbContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE970243934D50015B572 /* IbContentView.swift */; };
+		A9CEE976243934F30015B572 /* IbUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE972243934F20015B572 /* IbUtil.swift */; };
+		A9CEE977243934F30015B572 /* IbApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE973243934F20015B572 /* IbApiClient.swift */; };
+		A9CEE979243934F30015B572 /* IbVerseResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE975243934F20015B572 /* IbVerseResultView.swift */; };
+		A9CEE97D243935000015B572 /* engine.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE97A243935000015B572 /* engine.pb.swift */; };
+		A9CEE97E243935000015B572 /* service.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE97B243935000015B572 /* service.pb.swift */; };
+		A9CEE97F243935000015B572 /* data.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE97C243935000015B572 /* data.pb.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A9C207B324393343008B9CB2 /* instant.bible.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = instant.bible.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9C207B624393343008B9CB2 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A9C207B824393343008B9CB2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		A9C207BA24393343008B9CB2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A9C207BC24393344008B9CB2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A9C207BF24393344008B9CB2 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		A9C207C224393344008B9CB2 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		A9C207C424393344008B9CB2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A9CEE970243934D50015B572 /* IbContentView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IbContentView.swift; sourceTree = "<group>"; };
+		A9CEE972243934F20015B572 /* IbUtil.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IbUtil.swift; sourceTree = "<group>"; };
+		A9CEE973243934F20015B572 /* IbApiClient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IbApiClient.swift; sourceTree = "<group>"; };
+		A9CEE975243934F20015B572 /* IbVerseResultView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IbVerseResultView.swift; sourceTree = "<group>"; };
+		A9CEE97A243935000015B572 /* engine.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = engine.pb.swift; sourceTree = "<group>"; };
+		A9CEE97B243935000015B572 /* service.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = service.pb.swift; sourceTree = "<group>"; };
+		A9CEE97C243935000015B572 /* data.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = data.pb.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -31,6 +44,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A9CEE96D2439347D0015B572 /* SwiftProtobuf in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -56,9 +70,13 @@
 		A9C207B524393343008B9CB2 /* instant.bible */ = {
 			isa = PBXGroup;
 			children = (
+				A9CEE973243934F20015B572 /* IbApiClient.swift */,
+				A9CEE975243934F20015B572 /* IbVerseResultView.swift */,
+				A9CEE972243934F20015B572 /* IbUtil.swift */,
+				A9CEE970243934D50015B572 /* IbContentView.swift */,
+				A9CEE96A2439343B0015B572 /* proto */,
 				A9C207B624393343008B9CB2 /* AppDelegate.swift */,
 				A9C207B824393343008B9CB2 /* SceneDelegate.swift */,
-				A9C207BA24393343008B9CB2 /* ContentView.swift */,
 				A9C207BC24393344008B9CB2 /* Assets.xcassets */,
 				A9C207C124393344008B9CB2 /* LaunchScreen.storyboard */,
 				A9C207C424393344008B9CB2 /* Info.plist */,
@@ -73,6 +91,16 @@
 				A9C207BF24393344008B9CB2 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		A9CEE96A2439343B0015B572 /* proto */ = {
+			isa = PBXGroup;
+			children = (
+				A9CEE97C243935000015B572 /* data.pb.swift */,
+				A9CEE97A243935000015B572 /* engine.pb.swift */,
+				A9CEE97B243935000015B572 /* service.pb.swift */,
+			);
+			path = proto;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -91,6 +119,9 @@
 			dependencies = (
 			);
 			name = instant.bible;
+			packageProductDependencies = (
+				A9CEE96C2439347D0015B572 /* SwiftProtobuf */,
+			);
 			productName = instant.bible;
 			productReference = A9C207B324393343008B9CB2 /* instant.bible.app */;
 			productType = "com.apple.product-type.application";
@@ -119,6 +150,9 @@
 				Base,
 			);
 			mainGroup = A9C207AA24393342008B9CB2;
+			packageReferences = (
+				A9CEE96B2439347D0015B572 /* XCRemoteSwiftPackageReference "swift-protobuf" */,
+			);
 			productRefGroup = A9C207B424393343008B9CB2 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -146,9 +180,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A9CEE97D243935000015B572 /* engine.pb.swift in Sources */,
 				A9C207B724393343008B9CB2 /* AppDelegate.swift in Sources */,
+				A9CEE979243934F30015B572 /* IbVerseResultView.swift in Sources */,
+				A9CEE977243934F30015B572 /* IbApiClient.swift in Sources */,
 				A9C207B924393343008B9CB2 /* SceneDelegate.swift in Sources */,
-				A9C207BB24393343008B9CB2 /* ContentView.swift in Sources */,
+				A9CEE971243934D50015B572 /* IbContentView.swift in Sources */,
+				A9CEE97F243935000015B572 /* data.pb.swift in Sources */,
+				A9CEE976243934F30015B572 /* IbUtil.swift in Sources */,
+				A9CEE97E243935000015B572 /* service.pb.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -342,6 +382,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A9CEE96B2439347D0015B572 /* XCRemoteSwiftPackageReference "swift-protobuf" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-protobuf";
+			requirement = {
+				kind = exactVersion;
+				version = 1.8.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A9CEE96C2439347D0015B572 /* SwiftProtobuf */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A9CEE96B2439347D0015B572 /* XCRemoteSwiftPackageReference "swift-protobuf" */;
+			productName = SwiftProtobuf;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A9C207AB24393342008B9CB2 /* Project object */;
 }
