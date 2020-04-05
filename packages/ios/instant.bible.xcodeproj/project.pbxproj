@@ -328,6 +328,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"instant.bible/Preview Content\"";
 				DEVELOPMENT_TEAM = 4E5G297928;
 				ENABLE_PREVIEWS = YES;
+				IB_API_BASE = "https://api.instant.bible";
 				INFOPLIST_FILE = instant.bible/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -348,6 +349,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"instant.bible/Preview Content\"";
 				DEVELOPMENT_TEAM = 4E5G297928;
 				ENABLE_PREVIEWS = YES;
+				IB_API_BASE = "https://api.instant.bible";
 				INFOPLIST_FILE = instant.bible/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

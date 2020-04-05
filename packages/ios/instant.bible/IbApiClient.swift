@@ -5,8 +5,8 @@ class IbApiClient {
     let apiUrl: URL
     let contentType = "application/protobuf"
     
-    init(baseUrl: URL = URL(string: "http://198.211.96.17:8081")!) {
-        self.apiUrl = baseUrl.appendingPathComponent("api");
+    init(baseUrl: URL = URL(string: Bundle.main.object(forInfoDictionaryKey: "IB_API_BASE") as! String)!) {
+        self.apiUrl = baseUrl;
     }
     
     func search(q: String, success: @escaping ((Instantbible_Service_Response) -> Void)) {
