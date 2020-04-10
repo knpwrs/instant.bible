@@ -36,10 +36,13 @@ struct IbContentView: View {
     @ObservedObject var model: ContentViewModel = ContentViewModel();
     
     var body: some View {
-        ScrollView {
-            TextField("Search", text: $model.searchText).padding()
-            ForEach(self.model.results, id: \.self) { result in
-                IbVerseResultView(result: result)
+        ZStack {
+            Color.ibBackground.edgesIgnoringSafeArea(.all)
+            ScrollView {
+                TextField("Search", text: $model.searchText).padding()
+                ForEach(self.model.results, id: \.self) { result in
+                    IbVerseResultView(result: result)
+                }
             }
         }
     }

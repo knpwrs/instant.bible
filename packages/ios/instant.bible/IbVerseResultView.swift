@@ -20,7 +20,7 @@ struct IbVerseResultView: View {
     var body: some View {
         VStack(alignment: .leading) {
             Text("\(IbBookNameMap[self.model.result.key.book] ?? "Unknown Book") \(self.model.result.key.chapter):\(self.model.result.key.verse)").bold()
-            Text("\(self.model.result.text[self.model.selectedTranslation.rawValue])").multilineTextAlignment(.leading)
+            IbHighlighter(text: self.model.result.text[self.model.selectedTranslation.rawValue], words: self.model.result.highlights)
             HStack {
                 Button("KJV") {
                     self.model.selectedTranslation = .kjv
@@ -46,6 +46,7 @@ struct IbVerseResultView_Previews: PreviewProvider {
                 "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
                 "For this is the way God loved the world: He gave his one and only Son, so that everyone who believes in him will not perish but have eternal life.",
             ]
+            $0.highlights = ["HIS", "LIFE"]
         })
     }
 }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A9316C062439753B00A8FE0A /* IbHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9316C052439753B00A8FE0A /* IbHighlighter.swift */; };
 		A9C207B724393343008B9CB2 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C207B624393343008B9CB2 /* AppDelegate.swift */; };
 		A9C207B924393343008B9CB2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C207B824393343008B9CB2 /* SceneDelegate.swift */; };
 		A9C207BD24393344008B9CB2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A9C207BC24393344008B9CB2 /* Assets.xcassets */; };
@@ -23,6 +24,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A9316C052439753B00A8FE0A /* IbHighlighter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IbHighlighter.swift; sourceTree = "<group>"; };
 		A9C207B324393343008B9CB2 /* instant.bible.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = instant.bible.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9C207B624393343008B9CB2 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A9C207B824393343008B9CB2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -73,6 +75,7 @@
 				A9CEE973243934F20015B572 /* IbApiClient.swift */,
 				A9CEE975243934F20015B572 /* IbVerseResultView.swift */,
 				A9CEE972243934F20015B572 /* IbUtil.swift */,
+				A9316C052439753B00A8FE0A /* IbHighlighter.swift */,
 				A9CEE970243934D50015B572 /* IbContentView.swift */,
 				A9CEE96A2439343B0015B572 /* proto */,
 				A9C207B624393343008B9CB2 /* AppDelegate.swift */,
@@ -182,6 +185,7 @@
 			files = (
 				A9CEE97D243935000015B572 /* engine.pb.swift in Sources */,
 				A9C207B724393343008B9CB2 /* AppDelegate.swift in Sources */,
+				A9316C062439753B00A8FE0A /* IbHighlighter.swift in Sources */,
 				A9CEE979243934F30015B572 /* IbVerseResultView.swift in Sources */,
 				A9CEE977243934F30015B572 /* IbApiClient.swift in Sources */,
 				A9C207B924393343008B9CB2 /* SceneDelegate.swift in Sources */,

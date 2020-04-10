@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 let IbBookNameMap: [Instantbible_Data_Book: String] = [
     .genesis: "Genesis",
@@ -68,3 +69,10 @@ let IbBookNameMap: [Instantbible_Data_Book: String] = [
     .jude: "Jude",
     .revelation: "Revelation",
 ]
+
+extension Color {
+    static let ibBackground = Color("ibBackground")
+    static let ibText = Color("ibText")
+    static let ibTextHighlight = Color("ibTextHighlight")
+    static let ibTextSecondary = Color("ibTextSecondary")
+}
