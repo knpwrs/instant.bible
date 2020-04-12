@@ -65,6 +65,7 @@ const conf: webpack.Configuration = {
   devServer: {
     hot: true,
     port: 8080,
+    contentBase: resolve(__dirname, '..'),
     proxy: {
       '/api': 'http://localhost:8081',
     },
