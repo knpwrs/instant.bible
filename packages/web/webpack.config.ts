@@ -50,7 +50,9 @@ const conf: webpack.Configuration = {
   plugins: [
     new webpack.EnvironmentPlugin({
       NODE_ENV: 'development',
-      IB_ENDPOINT: '/api/',
+      IB_API: '/api/',
+      IB_INDEX_URL:
+        'https://storage.googleapis.com/instant-bible-data/index-2020-03-06.pb',
     }),
     new HtmlWebpackPlugin({
       template: './src/index.html',
@@ -65,9 +67,11 @@ const conf: webpack.Configuration = {
   devServer: {
     hot: true,
     port: 8080,
-    contentBase: resolve(__dirname, '..'),
     proxy: {
-      '/api': 'http://localhost:8081',
+      '/api': {
+        target: 'http://localhost:8081',
+        pathRewrite: { '^/api': '' },
+      },
     },
   },
 };

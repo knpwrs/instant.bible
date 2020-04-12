@@ -6,7 +6,7 @@
     "build": "npm-run-all --serial build:pbjs build:pbts --parallel build:webpack build:storybook",
     "build:pbjs": "pbjs -t static-module -w commonjs -o src/proto/index.js ../proto/*.proto",
     "build:pbts": "pbts -o src/proto/index.d.ts src/proto/index.js",
-    "build:webpack": "cross-env TS_NODE_PROJECT=./tsconfig.webpack.json NODE_ENV=production webpack --mode production",
+    "build:webpack": "cross-env TS_NODE_PROJECT=./tsconfig.webpack.json NODE_ENV=production IB_API=https://api.instant.bible webpack --mode production",
     "build:storybook": "build-storybook",
     "predev": "run-s build:pbjs build:pbts",
     "dev": "cross-env TS_NODE_PROJECT=./tsconfig.webpack.json NODE_ENV=development webpack-dev-server",

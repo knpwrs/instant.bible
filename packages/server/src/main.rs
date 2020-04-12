@@ -18,17 +18,10 @@ async fn main() {
 
     info!("Starting server...");
 
-    let route_search = warp::path("api");
-
-    let route_proto = route_search
-        .and(warp::header::exact_ignore_case(
-            "accept",
-            "application/protobuf",
-        ))
+    let route_proto = warp::header::exact_ignore_case("accept", "application/protobuf")
         .and(search::search_filter(Arc::clone(&index)))
         .map(|res: ServiceResponse| response::protobuf(&res));
-    let route_json = route_search
-        .and(search::search_filter(Arc::clone(&index)))
+    let route_json = search::search_filter(Arc::clone(&index))
         .map(|res: ServiceResponse| warp::reply::json(&res));
 
     let route = route_proto.or(route_json);

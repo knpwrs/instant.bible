@@ -9,7 +9,8 @@ import {
 import { getWasm, getLocalBytes, setLocalBytes } from './bridge';
 import { instantbible as proto } from '../proto';
 
-const endpoint = process.env.IB_ENDPOINT as string;
+const apiServer = process.env.IB_API as string;
+const indexUrl = process.env.IB_INDEX_URL as string;
 const headers = { accept: 'application/protobuf' };
 
 const doSearch = async (q: string, offline: boolean) => {
@@ -21,7 +22,7 @@ const doSearch = async (q: string, offline: boolean) => {
   }
 
   const query = stringify({ q });
-  const res = await fetch(`${endpoint}?${query}`, {
+  const res = await fetch(`${apiServer}?${query}`, {
     headers,
   });
   const buf = await res.arrayBuffer();
@@ -53,7 +54,7 @@ export const getIndexBytes = PProgress.fn(async progress => {
     return localBytes;
   }
 
-  const res = await fetch('/index.pb');
+  const res = await fetch(indexUrl);
   const length = parseInt(res.headers.get('Content-Length') || '0', 10);
 
   if (!length || !res.body) {
