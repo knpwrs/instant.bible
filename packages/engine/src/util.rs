@@ -4,7 +4,7 @@ use crate::proto::engine::{
     ReverseIndexEntry as ReverseIndexEntryBytes,
 };
 use crate::TRANSLATION_COUNT;
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use fst::MapBuilder;
 use log::info;
 use regex::Regex;
@@ -22,8 +22,8 @@ pub static MAX_PROXIMITY: u64 = 8;
 #[cfg_attr(test, derive(Debug))]
 #[derive(Deserialize)]
 pub struct Config {
-    pub translation_dir: String,
-    pub crawl_data: String,
+    pub translation_dir: Option<String>,
+    pub crawl_data: Option<String>,
 }
 
 #[cfg_attr(test, derive(Debug))]
@@ -190,11 +190,14 @@ fn load_translation_data(
 ) -> Result<()> {
     let config = get_config().context("load_translation_data")?;
     info!("Loading translations from {:?}", config.translation_dir);
+    let translation_dir = config
+        .translation_dir
+        .ok_or_else(|| anyhow!("Environment TRANSLATION_DIR missing"))?;
 
     let mut total_docs: usize = 0;
 
     for entry in
-        fs::read_dir(config.translation_dir).context("Could not read translation data directory")?
+        fs::read_dir(translation_dir).context("Could not read translation data directory")?
     {
         let path = entry
             .context("Could not convert translation data entry to path")?
@@ -371,11 +374,15 @@ fn build_translation_verses_bytes(
 fn load_crawl_data(verse_rankings: &mut BTreeMap<VerseKey, u64>) -> Result<()> {
     let config = get_config().context("load_crawl_data")?;
 
+    let crawl_data = config
+        .crawl_data
+        .ok_or_else(|| anyhow!("Environment CRAWL_DATA missing"))?;
+
     let re = Regex::new(r"^(.+)\s+(\d{1,3}):(\d{1,3})$")
         .context("Could not compile regex for parsing crawl data")?;
 
     // I really did try to avoid this...
-    let file = fs::File::open(config.crawl_data).context("Could not open crawl data file")?;
+    let file = fs::File::open(crawl_data).context("Could not open crawl data file")?;
     for line in io::BufReader::new(file).lines().filter_map(Result::ok) {
         if let Some(caps) = re.captures(&line) {
             if let (Some(book), Some(chapter), Some(verse)) =
