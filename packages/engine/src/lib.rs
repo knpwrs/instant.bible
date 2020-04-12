@@ -309,6 +309,7 @@ impl VersearchIndex {
         let tokens = tokenize(text);
         let tokenize_us = start.elapsed().as_micros() as i32;
 
+        // If we have no tokens (empty search), bail
         if tokens.is_empty() {
             return ServiceResponse {
                 results: Vec::new(),
@@ -320,6 +321,14 @@ impl VersearchIndex {
         let start = Instant::now();
         let found_indices = self.traverse_fst(&tokens);
         let fst_us = start.elapsed().as_micros() as i32;
+
+        // If we found no index entries (no valid words), bail
+        if found_indices.is_empty() {
+            return ServiceResponse {
+                results: Vec::new(),
+                timings: None,
+            };
+        }
 
         // Score all results
         let start = Instant::now();
