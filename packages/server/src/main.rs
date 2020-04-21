@@ -24,6 +24,8 @@ async fn main() {
     let route_json = search::search_filter(Arc::clone(&index))
         .map(|res: ServiceResponse| warp::reply::json(&res));
 
-    let route = route_proto.or(route_json);
+    let route = route_proto
+        .or(route_json)
+        .with(warp::cors().allow_any_origin());
     warp::serve(route).run(([0, 0, 0, 0], 8081)).await
 }
