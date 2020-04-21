@@ -52,7 +52,7 @@ const conf: webpack.Configuration = {
       NODE_ENV: 'development',
       IB_API: '/api/',
       IB_INDEX_URL:
-        'https://storage.googleapis.com/instant-bible-data/index-2020-03-06.pb',
+        'https://instantbible.nyc3.digitaloceanspaces.com/index.pb',
     }),
     new HtmlWebpackPlugin({
       template: './src/index.html',
