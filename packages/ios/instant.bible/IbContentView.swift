@@ -42,6 +42,8 @@ struct IbContentView: View {
                 TextField("Search", text: $model.searchText).padding()
                 ForEach(self.model.results, id: \.self) { result in
                     IbVerseResultView(result: result)
+                        .padding(.horizontal)
+                        .padding(.bottom)
                 }
             }
         }

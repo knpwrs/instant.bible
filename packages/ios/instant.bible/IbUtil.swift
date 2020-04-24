@@ -1,6 +1,11 @@
 import Foundation
 import SwiftUI
 
+let IbTranslationNameMap: [Instantbible_Data_Translation: String] = [
+    .kjv: "KJV",
+    .net: "NET",
+]
+
 let IbBookNameMap: [Instantbible_Data_Book: String] = [
     .genesis: "Genesis",
     .exodus: "Exodus",
@@ -72,6 +77,7 @@ let IbBookNameMap: [Instantbible_Data_Book: String] = [
 
 extension Color {
     static let ibBackground = Color("ibBackground")
+    static let ibCard = Color("ibCard")
     static let ibText = Color("ibText")
     static let ibTextHighlight = Color("ibTextHighlight")
     static let ibTextSecondary = Color("ibTextSecondary")

@@ -21,6 +21,7 @@
 		A9CEE97D243935000015B572 /* engine.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE97A243935000015B572 /* engine.pb.swift */; };
 		A9CEE97E243935000015B572 /* service.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE97B243935000015B572 /* service.pb.swift */; };
 		A9CEE97F243935000015B572 /* data.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE97C243935000015B572 /* data.pb.swift */; };
+		A9DEADED24525C2A006600A4 /* IbTranslationButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9DEADEC24525C2A006600A4 /* IbTranslationButton.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,6 +40,7 @@
 		A9CEE97A243935000015B572 /* engine.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = engine.pb.swift; sourceTree = "<group>"; };
 		A9CEE97B243935000015B572 /* service.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = service.pb.swift; sourceTree = "<group>"; };
 		A9CEE97C243935000015B572 /* data.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = data.pb.swift; sourceTree = "<group>"; };
+		A9DEADEC24525C2A006600A4 /* IbTranslationButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IbTranslationButton.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +76,7 @@
 			children = (
 				A9CEE973243934F20015B572 /* IbApiClient.swift */,
 				A9CEE975243934F20015B572 /* IbVerseResultView.swift */,
+				A9DEADEC24525C2A006600A4 /* IbTranslationButton.swift */,
 				A9CEE972243934F20015B572 /* IbUtil.swift */,
 				A9316C052439753B00A8FE0A /* IbHighlighter.swift */,
 				A9CEE970243934D50015B572 /* IbContentView.swift */,
@@ -187,6 +190,7 @@
 				A9C207B724393343008B9CB2 /* AppDelegate.swift in Sources */,
 				A9316C062439753B00A8FE0A /* IbHighlighter.swift in Sources */,
 				A9CEE979243934F30015B572 /* IbVerseResultView.swift in Sources */,
+				A9DEADED24525C2A006600A4 /* IbTranslationButton.swift in Sources */,
 				A9CEE977243934F30015B572 /* IbApiClient.swift in Sources */,
 				A9C207B924393343008B9CB2 /* SceneDelegate.swift in Sources */,
 				A9CEE971243934D50015B572 /* IbContentView.swift in Sources */,
