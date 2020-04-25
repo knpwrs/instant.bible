@@ -36,22 +36,51 @@ struct IbContentView: View {
     @ObservedObject var model: ContentViewModel = ContentViewModel();
     
     var body: some View {
-        ZStack {
-            Color.ibBackground.edgesIgnoringSafeArea(.all)
-            ScrollView {
-                TextField("Search", text: $model.searchText).padding()
-                ForEach(self.model.results, id: \.self) { result in
-                    IbVerseResultView(result: result)
-                        .padding(.horizontal)
-                        .padding(.bottom)
+        VStack {
+            TextField("Search", text: $model.searchText)
+                .padding()
+            ScrollView(.vertical) {
+                VStack(spacing: 18) {
+                    ForEach(self.model.results, id: \.self) { result in
+                        IbVerseResultView(result: result)
+                            .padding(.horizontal)
+                    }
                 }
+                .frame(maxWidth: .infinity)
             }
+            .resignKeyboardOnDragGesture()
         }
+        .background(Color.ibBackground.edgesIgnoringSafeArea(.all))
     }
 }
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         IbContentView()
+    }
+}
+
+// From https://github.com/UPetersen/SwiftUI-SearchBar
+extension UIApplication {
+    func endEditing(_ force: Bool) {
+        self.windows
+            .filter{$0.isKeyWindow}
+            .first?
+            .endEditing(force)
+    }
+}
+
+struct ResignKeyboardOnDragGesture: ViewModifier {
+    var gesture = DragGesture().onChanged{_ in
+        UIApplication.shared.endEditing(true)
+    }
+    func body(content: Content) -> some View {
+        content.gesture(gesture)
+    }
+}
+
+extension View {
+    func resignKeyboardOnDragGesture() -> some View {
+        modifier(ResignKeyboardOnDragGesture())
     }
 }
