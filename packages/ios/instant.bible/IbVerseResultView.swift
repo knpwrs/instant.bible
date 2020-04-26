@@ -8,10 +8,37 @@ class IbVerseResultViewModel: ObservableObject {
         self.result = result;
         self.selectedTranslation = result.topTranslation;
     }
+    
+    func getTitle() -> String {
+        "\(IbBookNameMap[self.result.key.book] ?? "Unknown Book") \(self.result.key.chapter):\(self.result.key.verse)"
+    }
+    
+    func getBody() -> String {
+        self.result.text[self.selectedTranslation.rawValue]
+    }
+    
+    func getCopyText() -> String {
+        "\(self.getTitle()) \(IbTranslationNameMap[self.selectedTranslation] ?? "INV")\n\(self.getBody())"
+    }
+}
+
+struct IbVerseResultActivityView: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    let applicationActivities: [UIActivity]?
+
+    func makeUIViewController(context: UIViewControllerRepresentableContext<IbVerseResultActivityView>) -> UIActivityViewController {
+        return UIActivityViewController(activityItems: activityItems,
+                                        applicationActivities: applicationActivities)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController,
+                                context: UIViewControllerRepresentableContext<IbVerseResultActivityView>) {
+    }
 }
 
 struct IbVerseResultView: View {
     @ObservedObject var model: IbVerseResultViewModel
+    @State var showingActions: Bool = false
     
     init(result: Instantbible_Service_Response.VerseResult) {
         self.model = IbVerseResultViewModel(result: result)
@@ -19,8 +46,8 @@ struct IbVerseResultView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Text("\(IbBookNameMap[self.model.result.key.book] ?? "Unknown Book") \(self.model.result.key.chapter):\(self.model.result.key.verse)").bold()
-            IbHighlighter(text: self.model.result.text[self.model.selectedTranslation.rawValue], words: self.model.result.highlights)
+            Text(self.model.getTitle()).bold()
+            IbHighlighter(text: self.model.getBody(), words: self.model.result.highlights)
                 .padding(.vertical)
             HStack {
                 IbTranslationButton(translation: .kjv, selectedTranslation: self.model.selectedTranslation) {
@@ -35,6 +62,16 @@ struct IbVerseResultView: View {
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(Color.ibCard)
         .cornerRadius(10)
+        .onTapGesture {
+            // This empty handler is required to make the ScrollView still scrollable
+            // https://stackoverflow.com/a/59499892/355325
+        }
+        .onLongPressGesture {
+            self.showingActions = true
+        }
+        .sheet(isPresented: $showingActions,
+               content: {
+                IbVerseResultActivityView(activityItems: [self.model.getCopyText()] as [Any], applicationActivities: nil) })
     }
 }
 
