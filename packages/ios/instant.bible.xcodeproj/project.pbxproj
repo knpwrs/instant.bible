@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		A9316C062439753B00A8FE0A /* IbHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9316C052439753B00A8FE0A /* IbHighlighter.swift */; };
+		A9376CDE2457A0FB008E566E /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = A9376CDD2457A0FB008E566E /* Alamofire */; };
+		A9376CE22457AD3A008E566E /* IbNet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9376CE12457AD3A008E566E /* IbNet.swift */; };
 		A9C207B724393343008B9CB2 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C207B624393343008B9CB2 /* AppDelegate.swift */; };
 		A9C207B924393343008B9CB2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C207B824393343008B9CB2 /* SceneDelegate.swift */; };
 		A9C207BD24393344008B9CB2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A9C207BC24393344008B9CB2 /* Assets.xcassets */; };
@@ -16,7 +18,6 @@
 		A9CEE96D2439347D0015B572 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = A9CEE96C2439347D0015B572 /* SwiftProtobuf */; };
 		A9CEE971243934D50015B572 /* IbContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE970243934D50015B572 /* IbContentView.swift */; };
 		A9CEE976243934F30015B572 /* IbUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE972243934F20015B572 /* IbUtil.swift */; };
-		A9CEE977243934F30015B572 /* IbApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE973243934F20015B572 /* IbApiClient.swift */; };
 		A9CEE979243934F30015B572 /* IbVerseResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE975243934F20015B572 /* IbVerseResultView.swift */; };
 		A9CEE97D243935000015B572 /* engine.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE97A243935000015B572 /* engine.pb.swift */; };
 		A9CEE97E243935000015B572 /* service.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE97B243935000015B572 /* service.pb.swift */; };
@@ -26,6 +27,7 @@
 
 /* Begin PBXFileReference section */
 		A9316C052439753B00A8FE0A /* IbHighlighter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IbHighlighter.swift; sourceTree = "<group>"; };
+		A9376CE12457AD3A008E566E /* IbNet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IbNet.swift; sourceTree = "<group>"; };
 		A9C207B324393343008B9CB2 /* instant.bible.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = instant.bible.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9C207B624393343008B9CB2 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A9C207B824393343008B9CB2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -35,7 +37,6 @@
 		A9C207C424393344008B9CB2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A9CEE970243934D50015B572 /* IbContentView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IbContentView.swift; sourceTree = "<group>"; };
 		A9CEE972243934F20015B572 /* IbUtil.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IbUtil.swift; sourceTree = "<group>"; };
-		A9CEE973243934F20015B572 /* IbApiClient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IbApiClient.swift; sourceTree = "<group>"; };
 		A9CEE975243934F20015B572 /* IbVerseResultView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IbVerseResultView.swift; sourceTree = "<group>"; };
 		A9CEE97A243935000015B572 /* engine.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = engine.pb.swift; sourceTree = "<group>"; };
 		A9CEE97B243935000015B572 /* service.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = service.pb.swift; sourceTree = "<group>"; };
@@ -49,6 +50,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A9CEE96D2439347D0015B572 /* SwiftProtobuf in Frameworks */,
+				A9376CDE2457A0FB008E566E /* Alamofire in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,7 +76,7 @@
 		A9C207B524393343008B9CB2 /* instant.bible */ = {
 			isa = PBXGroup;
 			children = (
-				A9CEE973243934F20015B572 /* IbApiClient.swift */,
+				A9376CE12457AD3A008E566E /* IbNet.swift */,
 				A9CEE975243934F20015B572 /* IbVerseResultView.swift */,
 				A9DEADEC24525C2A006600A4 /* IbTranslationButton.swift */,
 				A9CEE972243934F20015B572 /* IbUtil.swift */,
@@ -127,6 +129,7 @@
 			name = instant.bible;
 			packageProductDependencies = (
 				A9CEE96C2439347D0015B572 /* SwiftProtobuf */,
+				A9376CDD2457A0FB008E566E /* Alamofire */,
 			);
 			productName = instant.bible;
 			productReference = A9C207B324393343008B9CB2 /* instant.bible.app */;
@@ -158,6 +161,7 @@
 			mainGroup = A9C207AA24393342008B9CB2;
 			packageReferences = (
 				A9CEE96B2439347D0015B572 /* XCRemoteSwiftPackageReference "swift-protobuf" */,
+				A9376CDC2457A0FB008E566E /* XCRemoteSwiftPackageReference "Alamofire" */,
 			);
 			productRefGroup = A9C207B424393343008B9CB2 /* Products */;
 			projectDirPath = "";
@@ -186,12 +190,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A9376CE22457AD3A008E566E /* IbNet.swift in Sources */,
 				A9CEE97D243935000015B572 /* engine.pb.swift in Sources */,
 				A9C207B724393343008B9CB2 /* AppDelegate.swift in Sources */,
 				A9316C062439753B00A8FE0A /* IbHighlighter.swift in Sources */,
 				A9CEE979243934F30015B572 /* IbVerseResultView.swift in Sources */,
 				A9DEADED24525C2A006600A4 /* IbTranslationButton.swift in Sources */,
-				A9CEE977243934F30015B572 /* IbApiClient.swift in Sources */,
 				A9C207B924393343008B9CB2 /* SceneDelegate.swift in Sources */,
 				A9CEE971243934D50015B572 /* IbContentView.swift in Sources */,
 				A9CEE97F243935000015B572 /* data.pb.swift in Sources */,
@@ -394,6 +398,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		A9376CDC2457A0FB008E566E /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
+			requirement = {
+				kind = exactVersion;
+				version = 5.1.0;
+			};
+		};
 		A9CEE96B2439347D0015B572 /* XCRemoteSwiftPackageReference "swift-protobuf" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-protobuf";
@@ -405,6 +417,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A9376CDD2457A0FB008E566E /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A9376CDC2457A0FB008E566E /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
+		};
 		A9CEE96C2439347D0015B572 /* SwiftProtobuf */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A9CEE96B2439347D0015B572 /* XCRemoteSwiftPackageReference "swift-protobuf" */;

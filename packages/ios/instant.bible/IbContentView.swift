@@ -1,8 +1,6 @@
 import SwiftUI
 
 class ContentViewModel: ObservableObject {
-    let client = IbApiClient()
-    
     @Published private var searchCache: [String: [Instantbible_Service_Response.VerseResult]] = [:]
     @Published private var resultsKey = ""
     
@@ -24,7 +22,7 @@ class ContentViewModel: ObservableObject {
             self.resultsKey = trimmed
             
             if searchCache[trimmed] == nil {
-                client.search(q: trimmed) { response in
+                IbNet.apiSearch(q: trimmed) { response in
                     self.searchCache[trimmed] = response.results
                 }
             }
