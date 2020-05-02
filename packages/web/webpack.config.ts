@@ -59,7 +59,7 @@ const conf: webpack.Configuration = {
       inject: 'body',
     }),
     new WasmPackPlugin({
-      crateDirectory: resolve(__dirname, '../bridge'),
+      crateDirectory: resolve(__dirname, '../bridge-wasm'),
       forceMode: 'production',
       outDir: resolve(__dirname, 'src/wasm'),
     }),
