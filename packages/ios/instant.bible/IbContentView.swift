@@ -16,27 +16,69 @@ class ContentViewModel: ObservableObject {
         return []
     }
     
+    @Published var downloading: Bool = false
+    @Published var downloadProgress: Double = 0.0
+    
+    var offlineInitted = false
+    @Published var offlineEnabled = false {
+        willSet(newOfflineEnabled) {
+            UserDefaults.standard.set(newOfflineEnabled, forKey: "offlineEnabled")
+            if (newOfflineEnabled) {
+                self.downloading = true
+                IbNet.loadIndex(onProgress: { progress in
+                    self.downloadProgress = progress
+                }, onSuccess: { data in
+                    self.downloading = false
+                    if !self.offlineInitted {
+                        IbBridge.initialize(data: data)
+                        self.offlineInitted = true
+                    }
+                })
+            }
+        }
+    }
+    
     @Published var searchText = "" {
         willSet(newSearchText) {
             let trimmed = newSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
             self.resultsKey = trimmed
             
             if searchCache[trimmed] == nil {
-                IbNet.apiSearch(q: trimmed) { response in
+                if offlineInitted {
+                    let response = IbBridge.search(query: trimmed)
                     self.searchCache[trimmed] = response.results
+                } else {
+                    IbNet.apiSearch(q: trimmed) { response in
+                        self.searchCache[trimmed] = response.results
+                    }
                 }
             }
         }
+    }
+    
+    init() {
+        // Initialize here so willSet logic fires
+        self.offlineEnabled = UserDefaults.standard.bool(forKey: "offlineEnabled")
     }
 }
 
 struct IbContentView: View {
     @ObservedObject var model: ContentViewModel = ContentViewModel();
+    @State var showingSettings = false
     
     var body: some View {
         VStack {
-            TextField("Search", text: $model.searchText)
-                .padding()
+            HStack {
+                TextField("Search", text: $model.searchText)
+                    .foregroundColor(Color.ibText)
+                    .padding(.vertical)
+                    .padding(.leading, 20)
+                Button(action: {
+                    self.showingSettings = true
+                }) {
+                    Image("fa-bars-solid").foregroundColor(Color.ibText)
+                }.frame(width: 44, height: 44)
+            }
             ScrollView(.vertical) {
                 VStack(spacing: 18) {
                     ForEach(self.model.results, id: \.self) { result in
@@ -49,6 +91,9 @@ struct IbContentView: View {
             .resignKeyboardOnDragGesture()
         }
         .background(Color.ibBackground.edgesIgnoringSafeArea(.all))
+        .sheet(isPresented: $showingSettings, content: {
+            IbSettingsSheet(offlineEnabled: self.$model.offlineEnabled, downloadProgress: self.$model.downloadProgress, downloading: self.$model.downloading)
+        })
     }
 }
 

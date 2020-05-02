@@ -4,6 +4,8 @@
 <dict>
 	<key>IB_API_BASE</key>
 	<string>${IB_API_BASE}</string>
+	<key>IB_INDEX_URL</key>
+	<string>${IB_INDEX_URL}</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>

@@ -7,9 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A92C20C9245E0DF0009A8C50 /* libbridge_c.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A9D9E15F245DFBFA000E1FF1 /* libbridge_c.a */; };
 		A9316C062439753B00A8FE0A /* IbHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9316C052439753B00A8FE0A /* IbHighlighter.swift */; };
 		A9376CDE2457A0FB008E566E /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = A9376CDD2457A0FB008E566E /* Alamofire */; };
 		A9376CE22457AD3A008E566E /* IbNet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9376CE12457AD3A008E566E /* IbNet.swift */; };
+		A9376CE42457B63F008E566E /* IbProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9376CE32457B63F008E566E /* IbProgressBar.swift */; };
+		A9376CE62458EF83008E566E /* IbSettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9376CE52458EF83008E566E /* IbSettingsSheet.swift */; };
 		A9C207B724393343008B9CB2 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C207B624393343008B9CB2 /* AppDelegate.swift */; };
 		A9C207B924393343008B9CB2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C207B824393343008B9CB2 /* SceneDelegate.swift */; };
 		A9C207BD24393344008B9CB2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A9C207BC24393344008B9CB2 /* Assets.xcassets */; };
@@ -22,12 +25,16 @@
 		A9CEE97D243935000015B572 /* engine.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE97A243935000015B572 /* engine.pb.swift */; };
 		A9CEE97E243935000015B572 /* service.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE97B243935000015B572 /* service.pb.swift */; };
 		A9CEE97F243935000015B572 /* data.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9CEE97C243935000015B572 /* data.pb.swift */; };
+		A9D9E165245E02F3000E1FF1 /* IbBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9D9E164245E02F3000E1FF1 /* IbBridge.swift */; };
 		A9DEADED24525C2A006600A4 /* IbTranslationButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9DEADEC24525C2A006600A4 /* IbTranslationButton.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A92C20C8245E0652009A8C50 /* bridge-c.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "bridge-c.h"; sourceTree = "<group>"; };
 		A9316C052439753B00A8FE0A /* IbHighlighter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IbHighlighter.swift; sourceTree = "<group>"; };
 		A9376CE12457AD3A008E566E /* IbNet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IbNet.swift; sourceTree = "<group>"; };
+		A9376CE32457B63F008E566E /* IbProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IbProgressBar.swift; sourceTree = "<group>"; };
+		A9376CE52458EF83008E566E /* IbSettingsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IbSettingsSheet.swift; sourceTree = "<group>"; };
 		A9C207B324393343008B9CB2 /* instant.bible.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = instant.bible.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9C207B624393343008B9CB2 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A9C207B824393343008B9CB2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -41,6 +48,9 @@
 		A9CEE97A243935000015B572 /* engine.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = engine.pb.swift; sourceTree = "<group>"; };
 		A9CEE97B243935000015B572 /* service.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = service.pb.swift; sourceTree = "<group>"; };
 		A9CEE97C243935000015B572 /* data.pb.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = data.pb.swift; sourceTree = "<group>"; };
+		A9D9E15F245DFBFA000E1FF1 /* libbridge_c.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libbridge_c.a; path = ../target/universal/release/libbridge_c.a; sourceTree = "<group>"; };
+		A9D9E160245DFCBB000E1FF1 /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
+		A9D9E164245E02F3000E1FF1 /* IbBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IbBridge.swift; sourceTree = "<group>"; };
 		A9DEADEC24525C2A006600A4 /* IbTranslationButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IbTranslationButton.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -51,6 +61,7 @@
 			files = (
 				A9CEE96D2439347D0015B572 /* SwiftProtobuf in Frameworks */,
 				A9376CDE2457A0FB008E566E /* Alamofire in Frameworks */,
+				A92C20C9245E0DF0009A8C50 /* libbridge_c.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -62,6 +73,7 @@
 			children = (
 				A9C207B524393343008B9CB2 /* instant.bible */,
 				A9C207B424393343008B9CB2 /* Products */,
+				A9D9E15E245DFBFA000E1FF1 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -76,7 +88,10 @@
 		A9C207B524393343008B9CB2 /* instant.bible */ = {
 			isa = PBXGroup;
 			children = (
+				A9D9E162245DFD91000E1FF1 /* bridge */,
 				A9376CE12457AD3A008E566E /* IbNet.swift */,
+				A9376CE32457B63F008E566E /* IbProgressBar.swift */,
+				A9376CE52458EF83008E566E /* IbSettingsSheet.swift */,
 				A9CEE975243934F20015B572 /* IbVerseResultView.swift */,
 				A9DEADEC24525C2A006600A4 /* IbTranslationButton.swift */,
 				A9CEE972243934F20015B572 /* IbUtil.swift */,
@@ -111,6 +126,24 @@
 			path = proto;
 			sourceTree = "<group>";
 		};
+		A9D9E15E245DFBFA000E1FF1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A9D9E160245DFCBB000E1FF1 /* libresolv.tbd */,
+				A9D9E15F245DFBFA000E1FF1 /* libbridge_c.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A9D9E162245DFD91000E1FF1 /* bridge */ = {
+			isa = PBXGroup;
+			children = (
+				A9D9E164245E02F3000E1FF1 /* IbBridge.swift */,
+				A92C20C8245E0652009A8C50 /* bridge-c.h */,
+			);
+			path = bridge;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -118,6 +151,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = A9C207C724393344008B9CB2 /* Build configuration list for PBXNativeTarget "instant.bible" */;
 			buildPhases = (
+				A92C20CA245E30FD009A8C50 /* Cargo Lipo */,
 				A9C207AF24393342008B9CB2 /* Sources */,
 				A9C207B024393342008B9CB2 /* Frameworks */,
 				A9C207B124393342008B9CB2 /* Resources */,
@@ -185,22 +219,46 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		A92C20CA245E30FD009A8C50 /* Cargo Lipo */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Cargo Lipo";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "export PATH=\"$HOME/.cargo/bin:$PATH\"\ncargo lipo --release --manifest-path ../bridge-c/Cargo.toml\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		A9C207AF24393342008B9CB2 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				A9376CE22457AD3A008E566E /* IbNet.swift in Sources */,
+				A9376CE62458EF83008E566E /* IbSettingsSheet.swift in Sources */,
 				A9CEE97D243935000015B572 /* engine.pb.swift in Sources */,
 				A9C207B724393343008B9CB2 /* AppDelegate.swift in Sources */,
 				A9316C062439753B00A8FE0A /* IbHighlighter.swift in Sources */,
 				A9CEE979243934F30015B572 /* IbVerseResultView.swift in Sources */,
 				A9DEADED24525C2A006600A4 /* IbTranslationButton.swift in Sources */,
+				A9D9E165245E02F3000E1FF1 /* IbBridge.swift in Sources */,
 				A9C207B924393343008B9CB2 /* SceneDelegate.swift in Sources */,
 				A9CEE971243934D50015B572 /* IbContentView.swift in Sources */,
 				A9CEE97F243935000015B572 /* data.pb.swift in Sources */,
 				A9CEE976243934F30015B572 /* IbUtil.swift in Sources */,
 				A9CEE97E243935000015B572 /* service.pb.swift in Sources */,
+				A9376CE42457B63F008E566E /* IbProgressBar.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -339,15 +397,19 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"instant.bible/Preview Content\"";
 				DEVELOPMENT_TEAM = 4E5G297928;
+				ENABLE_BITCODE = NO;
 				ENABLE_PREVIEWS = YES;
 				IB_API_BASE = "https://api.instant.bible";
+				IB_INDEX_URL = "https://instantbible.nyc3.digitaloceanspaces.com/index.pb";
 				INFOPLIST_FILE = instant.bible/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(PROJECT_DIR)/../target/universal/release";
 				PRODUCT_BUNDLE_IDENTIFIER = "bible.instant.instant-bible";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				"SWIFT_OBJC_BRIDGING_HEADER[arch=*]" = "$(PROJECT_DIR)/instant.bible/bridge/bridge-c.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -360,15 +422,19 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"instant.bible/Preview Content\"";
 				DEVELOPMENT_TEAM = 4E5G297928;
+				ENABLE_BITCODE = NO;
 				ENABLE_PREVIEWS = YES;
 				IB_API_BASE = "https://api.instant.bible";
+				IB_INDEX_URL = "https://instantbible.nyc3.digitaloceanspaces.com/index.pb";
 				INFOPLIST_FILE = instant.bible/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(PROJECT_DIR)/../target/universal/release";
 				PRODUCT_BUNDLE_IDENTIFIER = "bible.instant.instant-bible";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				"SWIFT_OBJC_BRIDGING_HEADER[arch=*]" = "$(PROJECT_DIR)/instant.bible/bridge/bridge-c.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

@@ -81,4 +81,6 @@ extension Color {
     static let ibText = Color("ibText")
     static let ibTextHighlight = Color("ibTextHighlight")
     static let ibTextSecondary = Color("ibTextSecondary")
+    static let ibProgressGreen = Color("ibProgressGreen")
+    static let ibProgoressBack = Color("ibProgressBack")
 }
