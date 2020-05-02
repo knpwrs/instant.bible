@@ -68,7 +68,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "bridge"
+name = "bridge-c"
+version = "0.0.0"
+dependencies = [
+ "engine 0.0.0",
+ "ffi-support 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mut_static 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "prost 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "bridge-wasm"
 version = "0.0.0"
 dependencies = [
  "engine 0.0.0",
@@ -329,6 +340,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "fake-simd"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "ffi-support"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "fixedbitset"
@@ -1901,6 +1921,7 @@ dependencies = [
 "checksum envy 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f938a4abd5b75fe3737902dbc2e79ca142cc1526827a9e40b829a086758531a9"
 "checksum error-chain 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d9435d864e017c3c6afeac1654189b06cdb491cf2ff73dbf0d73b0f292f42ff8"
 "checksum fake-simd 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "e88a8acf291dafb59c2d96e8f59828f3838bb1a70398823ade51a84de6a6deed"
+"checksum ffi-support 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "087be066eb6e85d7150f0c5400018a32802f99d688b2d3868c526f7bbfe17960"
 "checksum fixedbitset 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "37ab347416e802de484e4d03c7316c48f1ecb56574dfd4a46a80f173ce1de04d"
 "checksum fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)" = "2fad85553e09a6f881f739c29f0b00b0f01357c743266d478b68951ce23285f3"
 "checksum fst 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3f7c13470d799474d44e2b9c6a0925807def7af4d120cd4de761433be76f7579"
