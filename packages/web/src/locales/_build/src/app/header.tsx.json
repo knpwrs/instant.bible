@@ -2,8 +2,8 @@
   "Search...": {
     "origin": [
       [
-        "src/app/index.tsx",
-        31
+        "src/app/header.tsx",
+        67
       ]
     ]
   }

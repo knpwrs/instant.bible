@@ -1,0 +1,26 @@
+{
+  "Settings": {
+    "origin": [
+      [
+        "src/app/settings/modal.tsx",
+        37
+      ]
+    ]
+  },
+  "Enable Offline Mode": {
+    "origin": [
+      [
+        "src/app/settings/modal.tsx",
+        47
+      ]
+    ]
+  },
+  "Store the search index locally and search without making web requests (i.e., make instant.bible even <0>instanter</0>).": {
+    "origin": [
+      [
+        "src/app/settings/modal.tsx",
+        56
+      ]
+    ]
+  }
+}

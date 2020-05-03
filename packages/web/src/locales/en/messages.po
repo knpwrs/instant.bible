@@ -13,10 +13,30 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/app/index.tsx:31
-msgid "Search..."
+#: src/components/copy-button.tsx:75
+msgid "Copy"
 msgstr ""
 
 #: src/app/copyright.tsx:16
-msgid "copyright"
+msgid "Copyright © {0} instant.bible"
+msgstr ""
+
+#: src/app/settings/modal.tsx:47
+msgid "Enable Offline Mode"
+msgstr ""
+
+#: src/app/header.tsx:67
+msgid "Search..."
+msgstr ""
+
+#: src/app/settings/modal.tsx:37
+msgid "Settings"
+msgstr ""
+
+#: src/app/settings/modal.tsx:56
+msgid "Store the search index locally and search without making web requests (i.e., make instant.bible even <0>instanter</0>)."
+msgstr ""
+
+#: src/components/copy-button.tsx:71
+msgid "copied!"
 msgstr ""

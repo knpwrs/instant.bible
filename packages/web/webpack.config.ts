@@ -18,7 +18,7 @@ const conf: webpack.Configuration = {
   },
   output: {
     path: resolve(__dirname, './dist'),
-    filename: '[name].[contenthash].js',
+    filename: '[name].[hash].js',
   },
   optimization: {
     splitChunks: {

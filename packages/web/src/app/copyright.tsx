@@ -19,8 +19,6 @@ const Root = styled('p')`
 
 export default React.memo((props: React.HTMLProps<HTMLParagraphElement>) => (
   <Root {...props}>
-    <Trans id="copyright">
-      Copyright &copy; {new Date().getFullYear()} instant.bible
-    </Trans>
+    <Trans>Copyright &copy; {new Date().getFullYear()} instant.bible</Trans>
   </Root>
 ));
