@@ -1,6 +1,7 @@
 import * as webpack from 'webpack';
 import { resolve } from 'path';
 import * as HtmlWebpackPlugin from 'html-webpack-plugin';
+import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 
 const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin');
 
@@ -51,8 +52,7 @@ const conf: webpack.Configuration = {
     new webpack.EnvironmentPlugin({
       NODE_ENV: 'development',
       IB_API: '/api/',
-      IB_INDEX_URL:
-        'https://instantbible.nyc3.digitaloceanspaces.com/index.pb',
+      IB_INDEX_URL: 'https://instantbible.nyc3.digitaloceanspaces.com/index.pb',
     }),
     new HtmlWebpackPlugin({
       template: './src/index.html',
@@ -62,6 +62,10 @@ const conf: webpack.Configuration = {
       crateDirectory: resolve(__dirname, '../bridge-wasm'),
       forceMode: 'production',
       outDir: resolve(__dirname, 'src/wasm'),
+    }),
+    new BundleAnalyzerPlugin({
+      analyzerMode: 'static',
+      openAnalyzer: false,
     }),
   ],
   devServer: {
