@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useDispatch } from 'react-redux';
-import { PulseLoader } from 'react-spinners';
+import PulseLoader from 'react-spinners/PulseLoader';
 import { Trans } from '@lingui/macro';
 import { css } from '@emotion/core';
 import {
