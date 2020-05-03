@@ -7,16 +7,24 @@ const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin');
 
 const conf: webpack.Configuration = {
   context: __dirname,
-  entry: [
-    'react-hot-loader/patch',
-    'sanitize.css',
-    'typeface-roboto',
-    'typeface-poppins',
-    './src',
-  ],
+  entry: {
+    app: [
+      'react-hot-loader/patch',
+      'sanitize.css',
+      'typeface-roboto',
+      'typeface-poppins',
+      './src',
+    ],
+  },
   output: {
     path: resolve(__dirname, './dist'),
-    filename: 'app.bundle.js',
+    filename: '[name].[contenthash].js',
+  },
+  optimization: {
+    splitChunks: {
+      // Automatically make a vendor bundle with node_modules
+      chunks: 'all',
+    },
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.jsx', '.js'],
