@@ -151,6 +151,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = A9C207C724393344008B9CB2 /* Build configuration list for PBXNativeTarget "instant.bible" */;
 			buildPhases = (
+				A92C20CB245E3E37009A8C50 /* Generate Protobuf */,
 				A92C20CA245E30FD009A8C50 /* Cargo Lipo */,
 				A9C207AF24393342008B9CB2 /* Sources */,
 				A9C207B024393342008B9CB2 /* Frameworks */,
@@ -237,6 +238,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "export PATH=\"$HOME/.cargo/bin:$PATH\"\ncargo lipo --release --manifest-path ../bridge-c/Cargo.toml\n";
+		};
+		A92C20CB245E3E37009A8C50 /* Generate Protobuf */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Generate Protobuf";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "protoc --proto_path=../proto --swift_out=./instant.bible/proto ../proto/*.proto\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
