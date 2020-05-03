@@ -1,0 +1,16 @@
+[package]
+name = "bridge-c"
+version = "0.0.0"
+publish = false
+authors = ["Kenneth Powers <ken@kenpowers.net> (https://knpw.rs)"]
+edition = "2018"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+engine = { path = "../engine" }
+ffi-support = "0.4.0"
+lazy_static = "1.4.0"
+mut_static = "5.0.0"
+prost = "0.6.1"
