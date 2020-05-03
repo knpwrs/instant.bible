@@ -12,8 +12,8 @@ lazy_static! {
 }
 
 #[no_mangle]
-pub extern "C" fn bridge_init(raw_data: *const u8, len: usize) {
-    let data = unsafe { std::slice::from_raw_parts(raw_data, len) };
+pub unsafe extern "C" fn bridge_init(raw_data: *const u8, len: usize) {
+    let data = std::slice::from_raw_parts(raw_data, len);
     let proto = decode_index_data(data).unwrap();
     ENGINE
         .set(VersearchIndex::from_index_data_proto_struct(proto))
@@ -21,8 +21,8 @@ pub extern "C" fn bridge_init(raw_data: *const u8, len: usize) {
 }
 
 #[no_mangle]
-pub extern "C" fn bridge_search(bytes: *const c_char) -> FfiBuffer {
-    let c_str = unsafe { CStr::from_ptr(bytes) };
+pub unsafe extern "C" fn bridge_search(bytes: *const c_char) -> FfiBuffer {
+    let c_str = CStr::from_ptr(bytes);
     let query = match c_str.to_str() {
         Err(_) => "",
         Ok(string) => string,
