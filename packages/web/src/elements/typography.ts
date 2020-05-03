@@ -43,3 +43,9 @@ export const Subhead3Medium = styled(Text)`
   font-size: 14px;
   font-weight: 500;
 `;
+
+export const Button = styled(Text.withComponent('button'))`
+  border: none;
+  padding: 0;
+  background: none;
+`;

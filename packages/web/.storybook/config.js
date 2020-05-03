@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { withKnobs, optionsKnob } from '@storybook/addon-knobs';
 import { configure, addDecorator } from '@storybook/react';
+import { I18nProvider } from '@lingui/react';
 import { ThemeProvider } from 'emotion-theming';
 import styled from '../src/util/styled';
 import * as themeUtil from '../src/util/theme';
@@ -44,7 +45,12 @@ const ThemeDecorator = (storyFn, context) => {
   );
 };
 
+const LinguiDecorator = (storyFn, context) => {
+  return <I18nProvider language="en">{storyFn()}</I18nProvider>;
+};
+
 addDecorator(ThemeDecorator);
+addDecorator(LinguiDecorator);
 addDecorator(withKnobs);
 
 const req = require.context('../src', true, /.stories.tsx?$/);

@@ -1,9 +1,21 @@
 import * as React from 'react';
+import { I18n } from '@lingui/react';
+import { t } from '@lingui/macro';
 import { css } from '@emotion/core';
 import { clamp } from 'lodash';
+import copy from 'copy-text-to-clipboard';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCopy } from '@fortawesome/free-solid-svg-icons';
 import styled from '../util/styled';
 import highlightUtil from '../util/highlight';
-import { Card, H5, Body3, Subhead3Medium, Body3Highlight } from '../elements';
+import {
+  Button,
+  Card,
+  H5,
+  Body3,
+  Subhead3Medium,
+  Body3Highlight,
+} from '../elements';
 
 export type OwnProps = {
   title: string;
@@ -71,6 +83,10 @@ const Verse: React.FunctionComponent<Props> = ({
 
   const text = data[selectedKey];
 
+  const handleCopy = React.useCallback(() => {
+    copy(`${title} ${selectedKey}\n${text}`);
+  }, [title, text, selectedKey]);
+
   const chunks = React.useMemo(() => highlightUtil(text, highlight), [
     text,
     highlight,
@@ -105,7 +121,12 @@ const Verse: React.FunctionComponent<Props> = ({
         {title}
       </H5>
       <Body3>{highlightedText}</Body3>
-      <div>
+      <div
+        css={css`
+          display: flex;
+          flex-direction: row;
+        `}
+      >
         {translationKeys.map(key => (
           <Translation
             key={key}
@@ -115,6 +136,28 @@ const Verse: React.FunctionComponent<Props> = ({
             {key}
           </Translation>
         ))}
+        <I18n>
+          {({ i18n }) => (
+            <Button
+              onClick={handleCopy}
+              title={i18n._(t`Copy`)}
+              css={css`
+                margin-left: auto;
+                width: 16px;
+                height: 16px;
+                cursor: pointer;
+              `}
+            >
+              <FontAwesomeIcon
+                icon={faCopy}
+                css={css`
+                  width: 16px;
+                  height: 16px;
+                `}
+              />
+            </Button>
+          )}
+        </I18n>
       </div>
     </Card>
   );
