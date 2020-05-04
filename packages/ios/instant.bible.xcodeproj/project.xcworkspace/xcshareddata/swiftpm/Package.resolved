@@ -11,6 +11,15 @@
         }
       },
       {
+        "package": "Sentry",
+        "repositoryURL": "https://github.com/getsentry/sentry-cocoa.git",
+        "state": {
+          "branch": null,
+          "revision": "7ec74a730bf7c39376df9055151704041ea55cfa",
+          "version": "5.0.0"
+        }
+      },
+      {
         "package": "SwiftProtobuf",
         "repositoryURL": "https://github.com/apple/swift-protobuf",
         "state": {

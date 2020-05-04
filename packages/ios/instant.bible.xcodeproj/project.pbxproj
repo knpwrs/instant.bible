@@ -13,6 +13,7 @@
 		A9376CE22457AD3A008E566E /* IbNet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9376CE12457AD3A008E566E /* IbNet.swift */; };
 		A9376CE42457B63F008E566E /* IbProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9376CE32457B63F008E566E /* IbProgressBar.swift */; };
 		A9376CE62458EF83008E566E /* IbSettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9376CE52458EF83008E566E /* IbSettingsSheet.swift */; };
+		A956A5A2245F9BBE00EFEADF /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = A956A5A1245F9BBE00EFEADF /* Sentry */; };
 		A9C207B724393343008B9CB2 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C207B624393343008B9CB2 /* AppDelegate.swift */; };
 		A9C207B924393343008B9CB2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C207B824393343008B9CB2 /* SceneDelegate.swift */; };
 		A9C207BD24393344008B9CB2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A9C207BC24393344008B9CB2 /* Assets.xcassets */; };
@@ -62,6 +63,7 @@
 				A9CEE96D2439347D0015B572 /* SwiftProtobuf in Frameworks */,
 				A9376CDE2457A0FB008E566E /* Alamofire in Frameworks */,
 				A92C20C9245E0DF0009A8C50 /* libbridge_c.a in Frameworks */,
+				A956A5A2245F9BBE00EFEADF /* Sentry in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -165,6 +167,7 @@
 			packageProductDependencies = (
 				A9CEE96C2439347D0015B572 /* SwiftProtobuf */,
 				A9376CDD2457A0FB008E566E /* Alamofire */,
+				A956A5A1245F9BBE00EFEADF /* Sentry */,
 			);
 			productName = instant.bible;
 			productReference = A9C207B324393343008B9CB2 /* instant.bible.app */;
@@ -197,6 +200,7 @@
 			packageReferences = (
 				A9CEE96B2439347D0015B572 /* XCRemoteSwiftPackageReference "swift-protobuf" */,
 				A9376CDC2457A0FB008E566E /* XCRemoteSwiftPackageReference "Alamofire" */,
+				A956A5A0245F9BBE00EFEADF /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 			);
 			productRefGroup = A9C207B424393343008B9CB2 /* Products */;
 			projectDirPath = "";
@@ -428,6 +432,7 @@
 				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(PROJECT_DIR)/../target/universal/release";
 				PRODUCT_BUNDLE_IDENTIFIER = "bible.instant.instant-bible";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SENTRY_DSN = "https://f6796bcaae1842c8b3630db7adfe62fc@o387306.ingest.sentry.io/5222367";
 				"SWIFT_OBJC_BRIDGING_HEADER[arch=*]" = "$(PROJECT_DIR)/instant.bible/bridge/bridge-c.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -453,6 +458,7 @@
 				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(PROJECT_DIR)/../target/universal/release";
 				PRODUCT_BUNDLE_IDENTIFIER = "bible.instant.instant-bible";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SENTRY_DSN = "https://f6796bcaae1842c8b3630db7adfe62fc@o387306.ingest.sentry.io/5222367";
 				"SWIFT_OBJC_BRIDGING_HEADER[arch=*]" = "$(PROJECT_DIR)/instant.bible/bridge/bridge-c.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -491,6 +497,14 @@
 				version = 5.1.0;
 			};
 		};
+		A956A5A0245F9BBE00EFEADF /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa.git";
+			requirement = {
+				kind = exactVersion;
+				version = 5.0.0;
+			};
+		};
 		A9CEE96B2439347D0015B572 /* XCRemoteSwiftPackageReference "swift-protobuf" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-protobuf";
@@ -506,6 +520,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A9376CDC2457A0FB008E566E /* XCRemoteSwiftPackageReference "Alamofire" */;
 			productName = Alamofire;
+		};
+		A956A5A1245F9BBE00EFEADF /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A956A5A0245F9BBE00EFEADF /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
 		};
 		A9CEE96C2439347D0015B572 /* SwiftProtobuf */ = {
 			isa = XCSwiftPackageProductDependency;
