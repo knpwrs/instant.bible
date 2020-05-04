@@ -61,6 +61,8 @@ const conf: webpack.Configuration = {
       NODE_ENV: 'development',
       IB_API: '/api/',
       IB_INDEX_URL: 'https://instantbible.nyc3.digitaloceanspaces.com/index.pb',
+      SENTRY_DSN:
+        'https://99bef820e745470faea2680ce8d312df@o387306.ingest.sentry.io/5222354',
     }),
     new HtmlWebpackPlugin({
       template: './src/index.html',
