@@ -10,6 +10,9 @@ use warp::Filter;
 
 #[tokio::main]
 async fn main() {
+    let _guard = sentry::init(env!("SERVER_SENTRY_DSN"));
+    sentry::integrations::panic::register_panic_handler();
+
     env_logger::init();
 
     let index = Arc::new(VersearchIndex::from_index_data_proto_struct(

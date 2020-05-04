@@ -14,3 +14,4 @@ prost = "0.6.1"
 serde = { version = "1.0.104", features = ["derive"] }
 tokio = { version = "0.2.11", features = ["full"] }
 warp = "0.2.1"
+sentry = "0.18.0"
