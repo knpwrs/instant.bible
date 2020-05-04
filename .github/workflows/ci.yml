@@ -7,6 +7,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+      - uses: allenevans/set-env@v1.0.0
+        with:
+          SERVER_SENTRY_DSN: https://9965738e8eac44b9922b71951141f59d@o387306.ingest.sentry.io/5222373
       - name: Build
         working-directory: ./packages
         run: cargo build --verbose
