@@ -1,6 +1,7 @@
 import * as webpack from 'webpack';
 import { resolve } from 'path';
 import * as HtmlWebpackPlugin from 'html-webpack-plugin';
+import * as CopyPlugin from 'copy-webpack-plugin';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 
 const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin');
@@ -68,6 +69,7 @@ const conf: webpack.Configuration = {
       template: './src/index.html',
       inject: 'body',
     }),
+    new CopyPlugin(['./src/icon.svg']),
     new WasmPackPlugin({
       crateDirectory: resolve(__dirname, '../bridge-wasm'),
       forceMode: 'production',
