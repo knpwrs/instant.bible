@@ -36,6 +36,8 @@ struct IbVerseResultActivityView: UIViewControllerRepresentable {
     }
 }
 
+var translationKeys = Array(IbTranslationNameMap.keys).sorted { IbTranslationNameMap[$0]! < IbTranslationNameMap[$1]! }
+
 struct IbVerseResultView: View {
     @ObservedObject var model: IbVerseResultViewModel
     @State var showingActions: Bool = false
@@ -50,11 +52,10 @@ struct IbVerseResultView: View {
             IbHighlighter(text: self.model.getBody(), words: self.model.result.highlights)
                 .padding(.vertical)
             HStack {
-                IbTranslationButton(translation: .kjv, selectedTranslation: self.model.selectedTranslation) {
-                    self.model.selectedTranslation = .kjv
-                }
-                IbTranslationButton(translation: .net, selectedTranslation: self.model.selectedTranslation) {
-                    self.model.selectedTranslation = .net
+                ForEach(translationKeys, id: \.self) { key in
+                    IbTranslationButton(translation: key, selectedTranslation: self.model.selectedTranslation) {
+                        self.model.selectedTranslation = key
+                    }
                 }
             }
         }
