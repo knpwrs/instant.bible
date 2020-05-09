@@ -1,16 +1,21 @@
-FROM rust:1.42-slim
+# Build image
+FROM rust:1.43.1-stretch as build
 
 WORKDIR /app
-COPY . ./src
+COPY . .
 
-RUN cd ./src && \
-  cargo build --release --bin server && \
-  cd .. && \
-  cp ./src/target/release/server . && \
-  cp ./src/index.pb . && \
-  rm -r ./src
+ENV SERVER_SENTRY_DSN=https://9965738e8eac44b9922b71951141f59d@o387306.ingest.sentry.io/5222373
+
+RUN cargo build --release --bin server
+
+# Final deployment image
+FROM rust:1.43.1-slim-stretch
+
+COPY --from=build /app/target/release/server .
+COPY --from=build /app/index.pb .
+
+ENV RUST_LOG=engine=info,server=info
 
 EXPOSE 8081
 
-ENV RUST_LOG=engine=info,server=info
 CMD ./server
