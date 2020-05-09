@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 
 let IbTranslationNameMap: [Instantbible_Data_Translation: String] = [
+    .bsb: "BSB",
     .kjv: "KJV",
     .net: "NET",
 ]

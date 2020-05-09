@@ -88,6 +88,7 @@ struct IbVerseResultView_Previews: PreviewProvider {
                 }
                 $0.topTranslation = .kjv
                 $0.text = [
+                    "For God so loved the world that He gave His one and only Son, that everyone who believes in Him shall not perish but have eternal life.",
                     "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",
                     "For this is the way God loved the world: He gave his one and only Son, so that everyone who believes in him will not perish but have eternal life.",
                 ]

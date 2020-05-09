@@ -4,18 +4,6 @@ enum IbTranslationButtonError: Error {
     case invalidTranslation
 }
 
-func ibTranslationGetText(translation: Instantbible_Data_Translation) throws -> String {
-    if (translation == .kjv) {
-        return "KJV"
-    }
-    
-    if (translation == .net) {
-        return "NET"
-    }
-    
-    throw IbTranslationButtonError.invalidTranslation
-}
-
 struct IbTranslationButton: View {
     var translation: Instantbible_Data_Translation
     var selectedTranslation: Instantbible_Data_Translation
