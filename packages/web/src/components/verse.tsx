@@ -114,6 +114,7 @@ const Verse: React.FunctionComponent<Props> = ({
         css={css`
           display: flex;
           flex-direction: row;
+          font-size: 16px;
         `}
       >
         {translationKeys.map(key => (

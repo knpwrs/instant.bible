@@ -24,13 +24,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, Props>(
           cursor: pointer;
         `}
       >
-        <FontAwesomeIcon
-          icon={icon}
-          css={css`
-            width: 16px;
-            height: 16px;
-          `}
-        />
+        <FontAwesomeIcon icon={icon} />
       </Button>
     );
   },

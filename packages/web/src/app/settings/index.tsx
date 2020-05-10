@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { css } from '@emotion/core';
+import { faCog } from '@fortawesome/free-solid-svg-icons';
 import SettingsModal from './modal';
-import { Gear } from '../../elements';
+import { IconButton } from '../../elements';
 
 export default React.memo(() => {
   const [open, setOpen] = React.useState(false);
@@ -18,7 +19,8 @@ export default React.memo(() => {
 
   return (
     <>
-      <button
+      <IconButton
+        icon={faCog}
         css={css`
           position: fixed;
           top: 1em;
@@ -34,9 +36,7 @@ export default React.memo(() => {
           }
         `}
         onClick={handleToggleOpen}
-      >
-        <Gear />
-      </button>
+      />
       {open ? <SettingsModal onClose={handleToggleOpen} /> : null}
     </>
   );
