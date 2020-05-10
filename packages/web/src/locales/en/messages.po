@@ -17,7 +17,7 @@ msgstr ""
 msgid "Copy"
 msgstr ""
 
-#: src/app/copyright.tsx:16
+#: src/app/copyright.tsx:22
 msgid "Copyright © {0} instant.bible"
 msgstr ""
 
@@ -40,6 +40,14 @@ msgstr ""
 
 #: src/app/settings/modal.tsx:56
 msgid "Store the search index locally and search without making web requests (i.e., make instant.bible even <0>instanter</0>)."
+msgstr ""
+
+#: src/app/copyright.tsx:26
+msgid "The Holy Bible, Berean Study Bible, BSB Copyright ©2016, 2018, 2020 by Bible Hub Used by Permission. All Rights Reserved Worldwide."
+msgstr ""
+
+#: src/app/copyright.tsx:37
+msgid "The NET Bible® <0>https://netbible.com</0> copyright ©1996, 2019 used with permission from Biblical Studies Press, L.L.C. All rights reserved."
 msgstr ""
 
 #: src/components/copy-button.tsx:70

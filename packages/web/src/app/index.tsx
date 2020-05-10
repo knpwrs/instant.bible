@@ -25,10 +25,14 @@ export default React.memo(() => {
       <Header />
       {dirty ? <Results /> : null}
       <Copyright
-        css={css`
-          position: absolute;
-          bottom: 0;
-        `}
+        css={
+          dirty
+            ? null
+            : css`
+                position: absolute;
+                bottom: 0;
+              `
+        }
       />
       <Settings />
     </div>

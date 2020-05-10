@@ -3,7 +3,23 @@
     "origin": [
       [
         "src/app/copyright.tsx",
-        16
+        22
+      ]
+    ]
+  },
+  "The Holy Bible, Berean Study Bible, BSB Copyright ©2016, 2018, 2020 by Bible Hub Used by Permission. All Rights Reserved Worldwide.": {
+    "origin": [
+      [
+        "src/app/copyright.tsx",
+        26
+      ]
+    ]
+  },
+  "The NET Bible® <0>https://netbible.com</0> copyright ©1996, 2019 used with permission from Biblical Studies Press, L.L.C. All rights reserved.": {
+    "origin": [
+      [
+        "src/app/copyright.tsx",
+        37
       ]
     ]
   }
