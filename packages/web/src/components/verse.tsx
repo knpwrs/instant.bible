@@ -2,16 +2,19 @@ import * as React from 'react';
 import { css } from '@emotion/core';
 import { clamp } from 'lodash';
 import CopyButton from './copy-button';
+import OpenExternalButton from './open-external-button';
 import styled from '../util/styled';
 import highlightUtil from '../util/highlight';
 import { Card, H5, Body3, Subhead3Medium, Body3Highlight } from '../elements';
+import * as proto from '../proto';
 
 export type OwnProps = {
   title: string;
   data: { [key: string]: string };
-  selectedKey: string;
+  selectedTranslationKey: string;
   highlight: string[];
   onSelectKey: (key: string) => unknown;
+  verseKey: proto.instantbible.data.IVerseKey;
 };
 
 export type Props = Omit<React.HTMLProps<HTMLDivElement>, 'data'> & OwnProps;
@@ -49,11 +52,12 @@ const getPrev = (haystack: string[], needle: string): string => {
 const Verse: React.FunctionComponent<Props> = ({
   title,
   data,
-  selectedKey,
+  selectedTranslationKey: selectedKey,
   highlight,
   onSelectKey,
   tabIndex = 0,
   className,
+  verseKey,
 }) => {
   const translationKeys = Object.keys(data).sort();
 
@@ -125,10 +129,13 @@ const Verse: React.FunctionComponent<Props> = ({
           copyText={`${title} ${selectedKey}\n${text}`}
           css={css`
             margin-left: auto;
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
+            margin-right: 10px;
           `}
+        />
+        <OpenExternalButton
+          // @ts-ignore: TODO use more protobuf-native types?
+          translation={proto.instantbible.data.Translation[selectedKey]}
+          verseKey={verseKey}
         />
       </div>
     </Card>

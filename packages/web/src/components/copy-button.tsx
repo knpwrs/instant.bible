@@ -4,11 +4,10 @@ import { noop } from 'lodash';
 import { css, keyframes } from '@emotion/core';
 import { I18n } from '@lingui/react';
 import { t } from '@lingui/macro';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCopy } from '@fortawesome/free-solid-svg-icons';
 import { usePopper } from 'react-popper';
 import copy from 'copy-text-to-clipboard';
-import { Button, Text } from '../elements';
+import { IconButton, Text } from '../elements';
 
 export type Props = {
   copyText: string;
@@ -95,20 +94,13 @@ const CopyButton = ({ copyText, className }: Props) => {
                 popperRoot,
               )
             : null}
-          <Button
+          <IconButton
             ref={setBtnEl}
             className={className}
+            icon={faCopy}
             onClick={handleCopy}
             title={i18n._(t`Copy`)}
-          >
-            <FontAwesomeIcon
-              icon={faCopy}
-              css={css`
-                width: 16px;
-                height: 16px;
-              `}
-            />
-          </Button>
+          />
         </>
       )}
     </I18n>

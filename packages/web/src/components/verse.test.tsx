@@ -8,16 +8,17 @@ import render from '../opt/test-render';
 
 const renderVerse = ({
   onSelectKey = noop,
-  selectedKey = 'KJV',
+  selectedTranslationKey: selectedKey = 'KJV',
   highlight = [],
 }: Partial<VerseProps> = {}): ReturnType<typeof render> =>
   render(
     <Verse
       title="John 3:16"
       data={data}
-      selectedKey={selectedKey}
+      selectedTranslationKey={selectedKey}
       onSelectKey={onSelectKey}
       highlight={highlight}
+      verseKey={{}}
     />,
   );
 

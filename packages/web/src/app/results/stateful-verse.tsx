@@ -9,15 +9,16 @@ export type Props = {
 
 export default React.memo(({ data, ...rest }: Props) => {
   const [selectedKey, setSelectedKey] = React.useState(data.topTranslation);
-  const verse = useVerse(data.key);
+  const verse = useVerse(data.id);
 
   return (
     <Verse
-      title={data.key}
+      title={data.id}
       data={verse}
-      selectedKey={selectedKey}
+      selectedTranslationKey={selectedKey}
       highlight={data.highlights}
       onSelectKey={setSelectedKey}
+      verseKey={data.key}
       {...rest}
     />
   );

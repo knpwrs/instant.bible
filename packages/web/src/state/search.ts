@@ -4,6 +4,7 @@ import { AppThunk, RootState } from './';
 import * as api from '../util/api';
 import { ResolveType } from '../util/ts';
 import { replace } from '../util/history';
+import * as proto from '../proto';
 
 type ResType = ResolveType<ReturnType<typeof api.search>>;
 
@@ -11,7 +12,7 @@ export type SliceState = {
   readonly dirty: boolean;
   readonly query: string;
   readonly verses: {
-    readonly [key: string]: {
+    readonly [id: string]: {
       readonly [translation: string]: string;
     };
   };
@@ -19,7 +20,8 @@ export type SliceState = {
     readonly [key: string]: {
       inFlight: boolean;
       res: Array<{
-        key: string;
+        id: string;
+        key: proto.instantbible.data.IVerseKey;
         topTranslation: string;
         highlights: Array<string>;
       }>;
@@ -55,10 +57,11 @@ const { actions, reducer } = createSlice({
       if (sq && res) {
         sq.inFlight = false;
         res.forEach(r => {
-          if (!state.verses[r.key]) {
-            state.verses[r.key] = r.text;
+          if (!state.verses[r.id]) {
+            state.verses[r.id] = r.text;
           }
           sq.res = res.map(r => ({
+            id: r.id,
             key: r.key,
             topTranslation: r.topTranslation,
             highlights: r.highlights,

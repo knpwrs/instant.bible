@@ -14,6 +14,18 @@ export const verseKeyToString = (key?: proto.data.IVerseKey | null) => {
   return `${bookToString(key.book)} ${key.chapter}:${key.verse}`;
 };
 
+export const verseKeyToObject = (key?: proto.data.IVerseKey | null) => {
+  if (!key || !key.book || !key.chapter || !key.verse) {
+    throw new Error('Invalid key!');
+  }
+
+  return {
+    book: key.book,
+    chapter: key.chapter,
+    verse: key.verse,
+  };
+};
+
 const translationToString = (i: number) => {
   const t = proto.data.Translation[i];
 

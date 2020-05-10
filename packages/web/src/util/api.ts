@@ -3,6 +3,7 @@ import * as PProgress from 'p-progress';
 import pImmediate from 'p-immediate';
 import {
   verseKeyToString,
+  verseKeyToObject,
   textToTranslationsObject,
   topTranslation,
 } from './proto';
@@ -36,7 +37,8 @@ export const search = async (q: string, offline: boolean) => {
     const decoded = proto.service.Response.decode(new Uint8Array(buf));
 
     return decoded.results.map(res => ({
-      key: verseKeyToString(res.key),
+      id: verseKeyToString(res.key),
+      key: verseKeyToObject(res.key),
       text: textToTranslationsObject(res.text),
       topTranslation: topTranslation(res.topTranslation),
       highlights: res.highlights || [],

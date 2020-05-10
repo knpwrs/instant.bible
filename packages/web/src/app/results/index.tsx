@@ -14,7 +14,7 @@ export default React.memo(() => {
     >
       {query?.res.map(q => (
         <Verse
-          key={q.key}
+          key={q.id}
           data={q}
           css={css`
             margin-bottom: 15px;
