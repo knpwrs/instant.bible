@@ -13,7 +13,7 @@ export type SliceState = {
   readonly query: string;
   readonly verses: {
     readonly [id: string]: {
-      readonly [translation: string]: string;
+      readonly [key in proto.instantbible.data.Translation]: string;
     };
   };
   readonly queries: {
@@ -22,7 +22,7 @@ export type SliceState = {
       res: Array<{
         id: string;
         key: proto.instantbible.data.IVerseKey;
-        topTranslation: string;
+        topTranslation: proto.instantbible.data.Translation;
         highlights: Array<string>;
       }>;
     };

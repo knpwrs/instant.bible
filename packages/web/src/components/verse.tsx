@@ -1,19 +1,20 @@
 import * as React from 'react';
 import { css } from '@emotion/core';
-import { clamp } from 'lodash';
+import { clamp, sortBy } from 'lodash';
 import CopyButton from './copy-button';
 import OpenExternalButton from './open-external-button';
 import styled from '../util/styled';
 import highlightUtil from '../util/highlight';
 import { Card, H5, Body3, Subhead3Medium, Body3Highlight } from '../elements';
 import * as proto from '../proto';
+import { translationToString } from '../util/proto';
 
 export type OwnProps = {
   title: string;
   data: { [key: string]: string };
-  selectedTranslationKey: string;
+  selectedTranslationKey: proto.instantbible.data.Translation;
   highlight: string[];
-  onSelectKey: (key: string) => unknown;
+  onSelectKey: (key: proto.instantbible.data.Translation) => unknown;
   verseKey: proto.instantbible.data.IVerseKey;
 };
 
@@ -35,46 +36,57 @@ const Translation = styled(Subhead3Medium.withComponent('button'))<{
         `};
 `;
 
-const getNext = (haystack: string[], needle: string): string => {
+const getNext = (
+  haystack: Array<proto.instantbible.data.Translation>,
+  needle: proto.instantbible.data.Translation,
+): proto.instantbible.data.Translation => {
   const idx = haystack.findIndex(e => e === needle);
   const nidx = clamp(idx + 1, 0, haystack.length - 1);
 
   return haystack[nidx];
 };
 
-const getPrev = (haystack: string[], needle: string): string => {
+const getPrev = (
+  haystack: Array<proto.instantbible.data.Translation>,
+  needle: proto.instantbible.data.Translation,
+): proto.instantbible.data.Translation => {
   const idx = haystack.findIndex(e => e === needle);
   const pidx = clamp(idx - 1, 0, haystack.length - 1);
 
   return haystack[pidx];
 };
 
+const translationKeys = sortBy(
+  Object.values(proto.instantbible.data.Translation).filter(
+    i => i !== proto.instantbible.data.Translation.TOTAL,
+  ),
+  t => translationToString(t),
+) as Array<proto.instantbible.data.Translation>;
+
 const Verse: React.FunctionComponent<Props> = ({
   title,
   data,
-  selectedTranslationKey: selectedKey,
+  selectedTranslationKey,
   highlight,
   onSelectKey,
   tabIndex = 0,
   className,
   verseKey,
 }) => {
-  const translationKeys = Object.keys(data).sort();
-
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'h' || e.key === 'ArrowLeft') {
         e.preventDefault();
-        onSelectKey(getPrev(translationKeys, selectedKey));
+        onSelectKey(getPrev(translationKeys, selectedTranslationKey));
       } else if (e.key === 'l' || e.key === 'ArrowRight') {
         e.preventDefault();
-        onSelectKey(getNext(translationKeys, selectedKey));
+        onSelectKey(getNext(translationKeys, selectedTranslationKey));
       }
     },
-    [translationKeys, selectedKey, onSelectKey],
+    [selectedTranslationKey, onSelectKey],
   );
 
-  const text = data[selectedKey];
+  const text = data[selectedTranslationKey];
 
   const chunks = React.useMemo(() => highlightUtil(text, highlight), [
     text,
@@ -120,22 +132,21 @@ const Verse: React.FunctionComponent<Props> = ({
         {translationKeys.map(key => (
           <Translation
             key={key}
-            selected={key === selectedKey}
+            selected={key === selectedTranslationKey}
             onClick={(): unknown => onSelectKey(key)}
           >
-            {key}
+            {translationToString(key)}
           </Translation>
         ))}
         <CopyButton
-          copyText={`${title} ${selectedKey}\n${text}`}
+          copyText={`${title} ${selectedTranslationKey}\n${text}`}
           css={css`
             margin-left: auto;
             margin-right: 10px;
           `}
         />
         <OpenExternalButton
-          // @ts-ignore: TODO use more protobuf-native types?
-          translation={proto.instantbible.data.Translation[selectedKey]}
+          translation={selectedTranslationKey}
           verseKey={verseKey}
         />
       </div>

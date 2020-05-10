@@ -13,7 +13,7 @@ storiesOf('components/verse', module).add('basic', () => {
     <Verse
       title="John 3:16"
       data={data}
-      selectedTranslationKey="NET"
+      selectedTranslationKey={proto.instantbible.data.Translation.NET}
       highlight={highlight}
       onSelectKey={action('onSelectKey')}
       verseKey={{

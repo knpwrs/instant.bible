@@ -1,20 +1,24 @@
 import { isNumber } from 'lodash';
-import { instantbible as proto } from '../../proto';
+import * as proto from '../../proto';
 import en from './en';
 
-export const bookToString = (book?: proto.data.Book | null) => {
+export const bookToString = (book?: proto.instantbible.data.Book | null) => {
   if (!isNumber(book)) throw new Error('Invalid book!');
 
   return en[book];
 };
 
-export const verseKeyToString = (key?: proto.data.IVerseKey | null) => {
+export const verseKeyToString = (
+  key?: proto.instantbible.data.IVerseKey | null,
+) => {
   if (!key) throw new Error('Invalid key!');
 
   return `${bookToString(key.book)} ${key.chapter}:${key.verse}`;
 };
 
-export const verseKeyToObject = (key?: proto.data.IVerseKey | null) => {
+export const verseKeyToObject = (
+  key?: proto.instantbible.data.IVerseKey | null,
+) => {
   if (!key || !key.book || !key.chapter || !key.verse) {
     throw new Error('Invalid key!');
   }
@@ -26,26 +30,30 @@ export const verseKeyToObject = (key?: proto.data.IVerseKey | null) => {
   };
 };
 
-const translationToString = (i: number) => {
-  const t = proto.data.Translation[i];
+export const translationToString = (i: number | string) => {
+  if (typeof i === 'string') {
+    return proto.instantbible.data.Translation[parseInt(i, 10)];
+  }
 
-  return t;
+  return proto.instantbible.data.Translation[i];
 };
 
-export const textToTranslationsObject = (text?: string[] | null) => {
+export const textToTranslationsObject = (
+  text?: string[] | null,
+): { [key in proto.instantbible.data.Translation]: string } => {
   if (!text) throw new Error('Invalid text!');
 
   return text.reduce(
     (acc, txt, i) => ({
       ...acc,
-      [translationToString(i)]: txt,
+      [i]: txt,
     }),
-    {},
+    {} as ReturnType<typeof textToTranslationsObject>,
   );
 };
 
 export const topTranslation = (i?: number | null) => {
   if (!isNumber(i)) throw new Error('Invalid translation id!');
 
-  return translationToString(i);
+  return i;
 };
