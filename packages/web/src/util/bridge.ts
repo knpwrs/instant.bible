@@ -1,4 +1,4 @@
-import * as idb from 'idb-keyval';
+import * as idb from './keyval';
 
 type WasmType = typeof import('../wasm');
 
@@ -12,10 +12,9 @@ export const setWasm = (w: WasmType) => {
 
 const localBytesKey = 'indexBytes';
 
-export const getLocalBytes = () =>
-  idb.get<Uint8Array | undefined>(localBytesKey);
+export const getLocalBytes = () => idb.getLarge(localBytesKey);
 
 export const setLocalBytes = (bytes: Uint8Array) =>
-  idb.set(localBytesKey, bytes);
+  idb.setLarge(localBytesKey, bytes);
 
-export const delLocalBytes = () => idb.del(localBytesKey);
+export const delLocalBytes = () => idb.delLarge(localBytesKey);
