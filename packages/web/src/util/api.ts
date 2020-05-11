@@ -70,7 +70,7 @@ export const getIndexBytes = PProgress.fn(async progress => {
 
   while (true) {
     const { value, done } = await reader.read();
-    if (done) {
+    if (done || !value) {
       break;
     }
     array.set(value, i);
