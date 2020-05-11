@@ -12,9 +12,8 @@ import { translationToString } from '../util/proto';
 export type OwnProps = {
   title: string;
   data: { [key: string]: string };
-  selectedTranslationKey: proto.instantbible.data.Translation;
+  topTranslation: proto.instantbible.data.Translation;
   highlight: string[];
-  onSelectKey: (key: proto.instantbible.data.Translation) => unknown;
   verseKey: proto.instantbible.data.IVerseKey;
 };
 
@@ -66,27 +65,30 @@ const translationKeys = sortBy(
 const Verse: React.FunctionComponent<Props> = ({
   title,
   data,
-  selectedTranslationKey,
+  topTranslation,
   highlight,
-  onSelectKey,
   tabIndex = 0,
   className,
   verseKey,
 }) => {
+  const [selectedTranslation, setSelectedTranslation] = React.useState(
+    topTranslation,
+  );
+
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'h' || e.key === 'ArrowLeft') {
         e.preventDefault();
-        onSelectKey(getPrev(translationKeys, selectedTranslationKey));
+        setSelectedTranslation(getPrev(translationKeys, selectedTranslation));
       } else if (e.key === 'l' || e.key === 'ArrowRight') {
         e.preventDefault();
-        onSelectKey(getNext(translationKeys, selectedTranslationKey));
+        setSelectedTranslation(getNext(translationKeys, selectedTranslation));
       }
     },
-    [selectedTranslationKey, onSelectKey],
+    [selectedTranslation],
   );
 
-  const text = data[selectedTranslationKey];
+  const text = data[selectedTranslation];
 
   const chunks = React.useMemo(() => highlightUtil(text, highlight), [
     text,
@@ -129,24 +131,28 @@ const Verse: React.FunctionComponent<Props> = ({
           font-size: 16px;
         `}
       >
-        {translationKeys.map(key => (
-          <Translation
-            key={key}
-            selected={key === selectedTranslationKey}
-            onClick={(): unknown => onSelectKey(key)}
-          >
-            {translationToString(key)}
-          </Translation>
-        ))}
+        <div role="tablist">
+          {translationKeys.map(key => (
+            <Translation
+              key={key}
+              selected={key === selectedTranslation}
+              aria-selected={key === selectedTranslation}
+              role="tab"
+              onClick={(): unknown => setSelectedTranslation(key)}
+            >
+              {translationToString(key)}
+            </Translation>
+          ))}
+        </div>
         <CopyButton
-          copyText={`${title} ${selectedTranslationKey}\n${text}`}
+          copyText={`${title} ${selectedTranslation}\n${text}`}
           css={css`
             margin-left: auto;
             margin-right: 10px;
           `}
         />
         <OpenExternalButton
-          translation={selectedTranslationKey}
+          translation={selectedTranslation}
           verseKey={verseKey}
         />
       </div>

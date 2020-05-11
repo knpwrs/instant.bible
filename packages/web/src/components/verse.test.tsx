@@ -1,23 +1,20 @@
 import * as React from 'react';
 import { axe } from 'jest-axe';
-import { noop } from 'lodash';
-import { fireEvent } from '@testing-library/react';
+import { fireEvent, ByRoleOptions } from '@testing-library/react';
 import Verse, { Props as VerseProps } from './verse';
 import data from './__mocks__/verse-data';
 import render from '../opt/test-render';
 import * as proto from '../proto';
 
 const renderVerse = ({
-  onSelectKey = noop,
-  selectedTranslationKey = proto.instantbible.data.Translation.KJV,
+  topTranslation = proto.instantbible.data.Translation.KJV,
   highlight = [],
 }: Partial<VerseProps> = {}): ReturnType<typeof render> =>
   render(
     <Verse
       title="John 3:16"
       data={data}
-      selectedTranslationKey={selectedTranslationKey}
-      onSelectKey={onSelectKey}
+      topTranslation={topTranslation}
       highlight={highlight}
       verseKey={{}}
     />,
@@ -39,31 +36,24 @@ test('renders text with highlights', async () => {
 });
 
 test('responds to keydown', () => {
-  const spy = jest.fn();
-  const { getByText } = renderVerse({ onSelectKey: spy });
+  const { getByText, getByRole } = renderVerse();
   const title = getByText('John 3:16');
   expect(title).toBeInTheDocument();
+
+  let selected = getByRole('tab', { selected: true } as ByRoleOptions);
+  expect(selected).toHaveTextContent('KJV');
   if (title instanceof HTMLElement) {
     fireEvent.keyDown(title, { key: 'h' });
+    selected = getByRole('tab', { selected: true } as ByRoleOptions);
+    expect(selected).toHaveTextContent('BSB');
     fireEvent.keyDown(title, { key: 'l' });
+    selected = getByRole('tab', { selected: true } as ByRoleOptions);
+    expect(selected).toHaveTextContent('KJV');
     fireEvent.keyDown(title, { key: 'ArrowLeft' });
+    selected = getByRole('tab', { selected: true } as ByRoleOptions);
+    expect(selected).toHaveTextContent('BSB');
     fireEvent.keyDown(title, { key: 'ArrowRight' });
+    selected = getByRole('tab', { selected: true } as ByRoleOptions);
+    expect(selected).toHaveTextContent('KJV');
   }
-  expect(spy).toBeCalledTimes(4);
-  expect(spy).toHaveBeenNthCalledWith(
-    1,
-    proto.instantbible.data.Translation.BSB,
-  );
-  expect(spy).toHaveBeenNthCalledWith(
-    2,
-    proto.instantbible.data.Translation.NET,
-  );
-  expect(spy).toHaveBeenNthCalledWith(
-    3,
-    proto.instantbible.data.Translation.BSB,
-  );
-  expect(spy).toHaveBeenNthCalledWith(
-    4,
-    proto.instantbible.data.Translation.NET,
-  );
 });
