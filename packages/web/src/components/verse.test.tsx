@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { axe } from 'jest-axe';
-import { fireEvent, ByRoleOptions } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
 import Verse, { Props as VerseProps } from './verse';
 import data from './__mocks__/verse-data';
 import render from '../opt/test-render';
@@ -40,20 +40,20 @@ test('responds to keydown', () => {
   const title = getByText('John 3:16');
   expect(title).toBeInTheDocument();
 
-  let selected = getByRole('tab', { selected: true } as ByRoleOptions);
+  let selected = getByRole('tab', { selected: true });
   expect(selected).toHaveTextContent('KJV');
   if (title instanceof HTMLElement) {
     fireEvent.keyDown(title, { key: 'h' });
-    selected = getByRole('tab', { selected: true } as ByRoleOptions);
+    selected = getByRole('tab', { selected: true });
     expect(selected).toHaveTextContent('BSB');
     fireEvent.keyDown(title, { key: 'l' });
-    selected = getByRole('tab', { selected: true } as ByRoleOptions);
+    selected = getByRole('tab', { selected: true });
     expect(selected).toHaveTextContent('KJV');
     fireEvent.keyDown(title, { key: 'ArrowLeft' });
-    selected = getByRole('tab', { selected: true } as ByRoleOptions);
+    selected = getByRole('tab', { selected: true });
     expect(selected).toHaveTextContent('BSB');
     fireEvent.keyDown(title, { key: 'ArrowRight' });
-    selected = getByRole('tab', { selected: true } as ByRoleOptions);
+    selected = getByRole('tab', { selected: true });
     expect(selected).toHaveTextContent('KJV');
   }
 });
