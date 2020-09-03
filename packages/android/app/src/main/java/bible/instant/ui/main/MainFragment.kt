@@ -42,9 +42,9 @@ class MainFragment : Fragment() {
         val adapter = VerseResultAdapter()
         binding.resultsRecycler.adapter = adapter
 
-        viewModel.results.observe(viewLifecycleOwner, Observer {
-            it?.let {
-                adapter.data = it.resultsList
+        viewModel.count.observe(viewLifecycleOwner, Observer { _ ->
+            viewModel.getResults()?.resultsList.let {
+                adapter.data = it ?: emptyList()
             }
         })
 

@@ -10,10 +10,34 @@ import retrofit2.Callback
 import retrofit2.Response
 
 class MainViewModel : ViewModel() {
-    val results = MutableLiveData<Service.Response>()
+    private val resultsCache = HashMap<String, Service.Response>()
+    private var query = ""
+    val count = MutableLiveData<Int>(0)
 
-    fun doSearch(query: String) {
-        InstantBibleApi.retrofitService.search(query).enqueue(object: Callback<Service.Response> {
+    fun getResults(): Service.Response? {
+        if (query == "") {
+            return null
+        }
+
+        for (i in query.indices) {
+            val key = query.substring(0, query.length - i)
+            if (resultsCache.containsKey(key)) {
+                return resultsCache[key]
+            }
+        }
+
+        return null
+    }
+
+    fun doSearch(q: String) {
+        query = q
+
+        if (resultsCache.containsKey(q) || q == "") {
+            count.value = count.value?.inc()
+            return
+        }
+
+        InstantBibleApi.retrofitService.search(q).enqueue(object : Callback<Service.Response> {
             override fun onFailure(call: Call<Service.Response>, t: Throwable) {
                 Log.e("Error", "Error handling response: ${t.message}")
             }
@@ -23,7 +47,8 @@ class MainViewModel : ViewModel() {
                 response: Response<Service.Response>
             ) {
                 response?.body()?.let {
-                    results.value = it
+                    resultsCache[q] = it
+                    count.value = count.value?.inc()
                 }
             }
 
