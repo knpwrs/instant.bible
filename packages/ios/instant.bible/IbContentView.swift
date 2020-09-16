@@ -22,7 +22,6 @@ class ContentViewModel: ObservableObject {
     var offlineInitted = false
     @Published var offlineEnabled = false {
         willSet(newOfflineEnabled) {
-            UserDefaults.standard.set(newOfflineEnabled, forKey: "offlineEnabled")
             if (newOfflineEnabled) {
                 self.downloading = true
                 IbNet.loadIndex(onProgress: { progress in
@@ -33,7 +32,10 @@ class ContentViewModel: ObservableObject {
                         IbBridge.initialize(data: data)
                         self.offlineInitted = true
                     }
+                    UserDefaults.standard.set(newOfflineEnabled, forKey: "offlineEnabled")
                 })
+            } else {
+                UserDefaults.standard.set(newOfflineEnabled, forKey: "offlineEnabled")
             }
         }
     }
