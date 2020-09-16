@@ -7,11 +7,20 @@ import kotlin.math.round
 
 class SettingsViewModel(offline: Boolean = false) : ViewModel() {
     val offlineEnabled = MutableLiveData(offline)
+    val downloading = MutableLiveData(false)
     val progress = MutableLiveData(0)
 
     fun toggleOffline() {
         val nowEnabled = !(offlineEnabled.value ?: false)
         offlineEnabled.value = nowEnabled
+    }
+
+    fun startDownloading() {
+        downloading.postValue(true)
+    }
+
+    fun finishDownloading() {
+        downloading.postValue(false)
     }
 
     fun updateProgress(readBytes: Int, totalBytes: Int) {

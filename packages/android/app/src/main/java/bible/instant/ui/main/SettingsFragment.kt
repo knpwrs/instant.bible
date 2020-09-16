@@ -73,6 +73,8 @@ class SettingsFragment : Fragment() {
             return
         }
 
+        viewModel.startDownloading()
+
         withContext(Dispatchers.IO) {
             val url = URL(INDEX_URL)
             val conn = url.openConnection() as HttpURLConnection
@@ -106,6 +108,7 @@ class SettingsFragment : Fragment() {
             } finally {
                 conn.disconnect()
                 o.close()
+                viewModel.finishDownloading()
             }
         }
     }
