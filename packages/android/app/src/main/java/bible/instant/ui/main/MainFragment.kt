@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.core.widget.doAfterTextChanged
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
+import androidx.navigation.findNavController
 import bible.instant.R
 import bible.instant.databinding.MainFragmentBinding
 
@@ -30,7 +31,6 @@ class MainFragment : Fragment() {
 
         // Viewmodel shenanigans
         viewModel = MainViewModel();
-        binding.viewModel = viewModel
         binding.lifecycleOwner = viewLifecycleOwner
 
         // Perform searches
@@ -47,6 +47,11 @@ class MainFragment : Fragment() {
                 adapter.data = it ?: emptyList()
             }
         })
+
+        // Settings button
+        binding.settingsButton.setOnClickListener {
+            view?.findNavController()?.navigate(R.id.action_mainFragment_to_settingsFragment)
+        }
 
         // Done!
         return binding.root

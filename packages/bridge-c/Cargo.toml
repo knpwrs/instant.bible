@@ -6,11 +6,12 @@ authors = ["Kenneth Powers <ken@kenpowers.net> (https://knpw.rs)"]
 edition = "2018"
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
 engine = { path = "../engine" }
 ffi-support = "0.4.0"
+jni = "0.17.0"
 lazy_static = "1.4.0"
 mut_static = "5.0.0"
 prost = "0.6.1"
