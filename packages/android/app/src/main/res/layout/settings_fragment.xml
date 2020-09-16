@@ -25,22 +25,25 @@
             android:layout_margin="10dp"
             android:text="@string/settings"
             android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+            android:textColor="@color/ibText"
             android:textStyle="bold" />
 
         <Switch
-            android:enabled="@{!viewModel.downloading}"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
             android:checked="@{viewModel.offlineEnabled}"
+            android:enabled="@{!viewModel.downloading}"
             android:onCheckedChanged="@{() -> viewModel.toggleOffline()}"
             android:text="@string/enable_offline_mode"
+            android:textColor="@color/ibText"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
+            android:textColor="@color/ibText"
             android:text="@string/enable_offline_mode_description" />
 
         <ProgressBar
