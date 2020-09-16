@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ibBackground">#F8F8F9</color>
+    <color name="ibText">#44444F</color>
+    <color name="ibTextHighlight">#0062FF</color>
+    <color name="ibCard">#FFFFFF</color>
+</resources>

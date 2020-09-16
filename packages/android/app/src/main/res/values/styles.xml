@@ -1,0 +1,17 @@
+<resources>
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight">
+        <!-- Customize your theme here. -->
+    </style>
+
+    <style name="ibButton">
+        <item name="android:textColor">@color/ibText</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="ibButtonBold">
+        <item name="android:textColor">@color/ibText</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+</resources>
