@@ -49,6 +49,7 @@ class SettingsFragment : Fragment() {
                 }
             } else {
                 MainViewModel.deleteIndexFile()
+                viewModel.resetProgress()
             }
 
             val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE)
@@ -104,6 +105,7 @@ class SettingsFragment : Fragment() {
                 }
             } catch (e: Exception) {
                 file.delete()
+                viewModel.resetProgress()
                 Log.i("SettingsFragment", "Caught exception: $e")
             } finally {
                 conn.disconnect()
