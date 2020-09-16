@@ -4,6 +4,7 @@ buildscript {
     ext.kotlinVersion = "1.3.72"
     ext.protobufVersion = "0.8.12"
     ext.rustAndroidVersion = "0.8.3"
+    ext.sentryVersion = "2.3.1"
     ext.navVersion = "2.3.0"
 
     repositories {
