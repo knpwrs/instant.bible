@@ -23,6 +23,7 @@
             android:inputType="text"
             android:textCursorDrawable="@null"
             android:textColor="@color/ibText"
+            android:textColorHint="@color/ibTextPlaceholder"
             app:layout_constraintEnd_toStartOf="@+id/settingsButton"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
