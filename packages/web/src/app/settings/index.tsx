@@ -14,7 +14,7 @@ export default React.memo(() => {
       if (e) {
         e.preventDefault();
       }
-      setOpen(o => !o);
+      setOpen((o) => !o);
     },
     [setOpen],
   );

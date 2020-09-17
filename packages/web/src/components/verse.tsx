@@ -39,7 +39,7 @@ const getNext = (
   haystack: Array<proto.instantbible.data.Translation>,
   needle: proto.instantbible.data.Translation,
 ): proto.instantbible.data.Translation => {
-  const idx = haystack.findIndex(e => e === needle);
+  const idx = haystack.findIndex((e) => e === needle);
   const nidx = clamp(idx + 1, 0, haystack.length - 1);
 
   return haystack[nidx];
@@ -49,7 +49,7 @@ const getPrev = (
   haystack: Array<proto.instantbible.data.Translation>,
   needle: proto.instantbible.data.Translation,
 ): proto.instantbible.data.Translation => {
-  const idx = haystack.findIndex(e => e === needle);
+  const idx = haystack.findIndex((e) => e === needle);
   const pidx = clamp(idx - 1, 0, haystack.length - 1);
 
   return haystack[pidx];
@@ -57,9 +57,9 @@ const getPrev = (
 
 const translationKeys = sortBy(
   Object.values(proto.instantbible.data.Translation).filter(
-    i => i !== proto.instantbible.data.Translation.TOTAL,
+    (i) => i !== proto.instantbible.data.Translation.TOTAL,
   ),
-  t => translationToString(t),
+  (t) => translationToString(t),
 ) as Array<proto.instantbible.data.Translation>;
 
 const Verse: React.FunctionComponent<Props> = ({
@@ -132,7 +132,7 @@ const Verse: React.FunctionComponent<Props> = ({
         `}
       >
         <div role="tablist">
-          {translationKeys.map(key => (
+          {translationKeys.map((key) => (
             <Translation
               key={key}
               selected={key === selectedTranslation}

@@ -12,7 +12,7 @@ export default React.memo(() => {
         margin-top: 70px;
       `}
     >
-      {query?.res.map(q => (
+      {query?.res.map((q) => (
         <Verse
           key={q.id}
           data={q}

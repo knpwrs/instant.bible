@@ -17,7 +17,7 @@ export const replace = (path = '/', query?: object): void =>
 
 const internalSelectQuery = createSelector(
   (query: string) => query,
-  query => qs.parse(query) as AppQuery,
+  (query) => qs.parse(query) as AppQuery,
 );
 
 export const selectQuery = (): AppQuery =>

@@ -56,11 +56,11 @@ const { actions, reducer } = createSlice({
       const sq = state.queries[q];
       if (sq && res) {
         sq.inFlight = false;
-        res.forEach(r => {
+        res.forEach((r) => {
           if (!state.verses[r.id]) {
             state.verses[r.id] = r.text;
           }
-          sq.res = res.map(r => ({
+          sq.res = res.map((r) => ({
             id: r.id,
             key: r.key,
             topTranslation: r.topTranslation,
@@ -69,7 +69,7 @@ const { actions, reducer } = createSlice({
         });
       }
     },
-    reset: state => {
+    reset: (state) => {
       state.dirty = false;
       state.query = '';
     },
@@ -95,7 +95,7 @@ export const doSearch = (q: string): AppThunk => async (dispatch, getState) => {
   dispatch(endQuery({ q, res }));
 };
 
-export const doReset = (): AppThunk => async dispatch => {
+export const doReset = (): AppThunk => async (dispatch) => {
   dispatch(reset());
   replace();
 };

@@ -8,13 +8,13 @@ const highlight = (
     (chunks, word) => {
       const regex = new RegExp(`(\\b${word})`, 'gi');
 
-      return flatMap(chunks, chunk =>
+      return flatMap(chunks, (chunk) =>
         chunk.highlight
           ? chunk
           : chunk.text
               .split(regex)
               .filter(Boolean)
-              .map(text => ({ text, highlight: regex.test(text) })),
+              .map((text) => ({ text, highlight: regex.test(text) })),
       );
     },
     [{ highlight: false, text }] as ReturnType<typeof highlight>,

@@ -30,7 +30,7 @@ const { actions, reducer } = createSlice({
     setOfflineMode: (state, { payload }: PayloadAction<boolean>) => {
       state.enabled = payload;
     },
-    setInitialized: state => {
+    setInitialized: (state) => {
       state.initialized = true;
     },
     setLoading: (state, { payload }: PayloadAction<boolean>) => {
@@ -72,7 +72,7 @@ export const doInitOffline = (enable: boolean): AppThunk => async (
     dispatch(setLoading(true));
     const wasm = await import('../wasm');
     const job = getIndexBytes();
-    job.onProgress(p => dispatch(indexBytesProgress(p)));
+    job.onProgress((p) => dispatch(indexBytesProgress(p)));
     const bytes = await job;
     wasm.init(bytes);
     setWasm(wasm);
