@@ -11,15 +11,15 @@ const Root = styled('div')`
   height: 16px;
 `;
 
-const Bar = styled('div')<{ fill?: boolean }>`
+const Bar = styled('div')<{ isFill?: boolean }>`
   width: calc(100% - 44px);
   height: 8px;
   border-radius: 4px;
-  background: ${({ theme, fill }) =>
+  background: ${({ theme, isFill: fill }) =>
     fill
       ? theme.component.progress.foreground
       : theme.component.progress.background};
-  position: ${({ fill }) => (fill ? 'absolute' : 'relative')};
+  position: ${({ isFill: fill }) => (fill ? 'absolute' : 'relative')};
   left: 0;
   top: 0;
 `;
@@ -40,7 +40,7 @@ export default React.memo(({ value }: Props) => (
       {(value * 100).toFixed(0)}%
     </Text>
     <Bar>
-      <Bar fill={true} style={{ width: `${(value * 100).toFixed(0)}%` }} />
+      <Bar isFill={true} style={{ width: `${(value * 100).toFixed(0)}%` }} />
     </Bar>
   </Root>
 ));
