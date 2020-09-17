@@ -5,4 +5,5 @@
     <string name="offline_mode_enabled">offline_mode_enabled</string>
     <string name="enable_offline_mode">Enable Offline Mode</string>
     <string name="enable_offline_mode_description">Store the search index locally and search without making web requests (i.e., make instant.bible even instanter).</string>
+    <string name="download_size">Download size: %s</string>
 </resources>

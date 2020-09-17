@@ -58,6 +58,10 @@ class SettingsFragment : Fragment() {
             editor?.commit()
         })
 
+        GlobalScope.launch {
+            getIndexSize()
+        }
+
         return binding.root
     }
 
@@ -106,11 +110,29 @@ class SettingsFragment : Fragment() {
             } catch (e: Exception) {
                 file.delete()
                 viewModel.resetProgress()
-                Log.i("SettingsFragment", "Caught exception: $e")
+                Log.i("SF::downloadIndex", "Caught exception: $e")
             } finally {
                 conn.disconnect()
                 o.close()
                 viewModel.finishDownloading()
+            }
+        }
+    }
+
+    private suspend fun getIndexSize() {
+        withContext(Dispatchers.IO) {
+            val url = URL(INDEX_URL)
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "HEAD"
+
+            try {
+                conn.connect()
+                val totalBytes = conn.contentLength
+                viewModel.setIndexSize(totalBytes)
+            } catch (e: Exception) {
+                Log.i("SF::getIndexSize", "Caught exception: $e")
+            } finally {
+                conn.disconnect()
             }
         }
     }

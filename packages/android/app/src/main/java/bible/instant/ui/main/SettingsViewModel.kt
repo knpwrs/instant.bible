@@ -8,6 +8,7 @@ class SettingsViewModel(offline: Boolean = false) : ViewModel() {
     val offlineEnabled = MutableLiveData(offline)
     val downloading = MutableLiveData(false)
     val progress = MutableLiveData(0)
+    val indexSizeBytes = MutableLiveData(0)
 
     fun toggleOffline() {
         val nowEnabled = !(offlineEnabled.value ?: false)
@@ -30,5 +31,9 @@ class SettingsViewModel(offline: Boolean = false) : ViewModel() {
 
     fun resetProgress() {
         progress.postValue(0)
+    }
+
+    fun setIndexSize(bytes: Int) {
+        indexSizeBytes.postValue(bytes)
     }
 }

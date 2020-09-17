@@ -6,6 +6,8 @@
 
         <import type="android.view.View" />
 
+        <import type="android.text.format.Formatter" />
+
         <variable
             name="viewModel"
             type="bible.instant.ui.main.SettingsViewModel" />
@@ -43,8 +45,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
+            android:text="@string/enable_offline_mode_description"
+            android:textColor="@color/ibText" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:text="@{@string/download_size(Formatter.formatFileSize(context, viewModel.indexSizeBytes))}"
             android:textColor="@color/ibText"
-            android:text="@string/enable_offline_mode_description" />
+            android:visibility="@{viewModel.indexSizeBytes > 0 ? View.VISIBLE : View.GONE}" />
 
         <ProgressBar
             android:id="@+id/progressBar"
