@@ -10,7 +10,7 @@ const getColor: ThemedFn = ({ theme }) => theme.component.input.placeholder;
 const getFontStyle: ThemedFn = ({ theme }) =>
   fontToCss(theme.text.subhead4Regular);
 
-const Root = styled('p')`
+const Root = styled('footer')`
   color: ${getColor};
   ${getFontStyle}
   opacity: 0.25;
