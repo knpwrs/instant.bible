@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { useDispatch } from 'react-redux';
+import { noop } from 'lodash';
 import PulseLoader from 'react-spinners/PulseLoader';
 import { Trans } from '@lingui/macro';
 import { css } from '@emotion/core';
+import * as prettyBytes from 'pretty-bytes';
 import {
   useIndexBytesProgress,
   useOfflineEnabled,
@@ -13,6 +15,7 @@ import Modal, { Props } from '../../components/modal';
 import { Checkbox, Progress, H4, Body3 } from '../../elements';
 import styled from '../../util/styled';
 import { useTheme } from '../../util/theme';
+import { getIndexSize } from '../../util/api';
 
 const Container = styled('div')`
   width: 400px;
@@ -25,6 +28,7 @@ const Container = styled('div')`
 export default React.memo(({ onClose }: Props) => {
   const dispatch = useDispatch();
   const offlineEnabled = useOfflineEnabled();
+  const [indexSize, setIndexSize] = React.useState(0);
   const loading = useLoading();
   const indexBytesProgress = useIndexBytesProgress();
   const theme = useTheme();
@@ -40,6 +44,19 @@ export default React.memo(({ onClose }: Props) => {
     },
     [dispatch],
   );
+
+  React.useEffect(() => {
+    const effect = async () => {
+      const size = await getIndexSize();
+      if (size) {
+        setIndexSize(size);
+      }
+    };
+
+    effect();
+
+    return noop;
+  }, []);
 
   return (
     <Modal onClose={onClose}>
@@ -81,8 +98,14 @@ export default React.memo(({ onClose }: Props) => {
         >
           <Trans>
             Store the search index locally and search without making web
-            requests (i.e., make instant.bible even <em>instanter</em>).
+            requests (i.e., make instant.bible even <em>instanter</em>).{' '}
           </Trans>
+          {indexSize ? (
+            <>
+              {' '}
+              <Trans>Download size: {prettyBytes(indexSize)}.</Trans>
+            </>
+          ) : null}
         </Body3>
         {offlineEnabled ? <Progress value={indexBytesProgress} /> : null}
       </Container>

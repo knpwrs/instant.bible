@@ -36,7 +36,7 @@ export const search = async (q: string, offline: boolean) => {
     const buf = await doSearch(q, offline);
     const decoded = proto.service.Response.decode(new Uint8Array(buf));
 
-    return decoded.results.map(res => ({
+    return decoded.results.map((res) => ({
       id: verseKeyToString(res.key),
       key: verseKeyToObject(res.key),
       text: textToTranslationsObject(res.text),
@@ -49,7 +49,18 @@ export const search = async (q: string, offline: boolean) => {
   }
 };
 
-export const getIndexBytes = PProgress.fn(async progress => {
+export const getIndexSize = async () => {
+  try {
+    const res = await fetch(indexUrl, { method: 'HEAD' });
+
+    return parseInt(res.headers.get('Content-Length') || '0', 10);
+  } catch (e) {
+    debugger;
+    return null;
+  }
+};
+
+export const getIndexBytes = PProgress.fn(async (progress) => {
   const localBytes = await getLocalBytes();
 
   if (localBytes) {

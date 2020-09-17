@@ -21,7 +21,11 @@ msgstr ""
 msgid "Copyright © {0} instant.bible"
 msgstr ""
 
-#: src/app/settings/modal.tsx:47
+#: src/app/settings/modal.tsx:85
+msgid "Download size: {0}."
+msgstr ""
+
+#: src/app/settings/modal.tsx:70
 msgid "Enable Offline Mode"
 msgstr ""
 
@@ -34,11 +38,11 @@ msgid "Search..."
 msgstr ""
 
 #: src/app/settings/index.tsx:31
-#: src/app/settings/modal.tsx:37
+#: src/app/settings/modal.tsx:60
 msgid "Settings"
 msgstr ""
 
-#: src/app/settings/modal.tsx:56
+#: src/app/settings/modal.tsx:79
 msgid "Store the search index locally and search without making web requests (i.e., make instant.bible even <0>instanter</0>)."
 msgstr ""
 

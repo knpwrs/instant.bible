@@ -3,7 +3,7 @@
     "origin": [
       [
         "src/app/settings/modal.tsx",
-        37
+        60
       ]
     ]
   },
@@ -11,7 +11,7 @@
     "origin": [
       [
         "src/app/settings/modal.tsx",
-        47
+        70
       ]
     ]
   },
@@ -19,7 +19,15 @@
     "origin": [
       [
         "src/app/settings/modal.tsx",
-        56
+        79
+      ]
+    ]
+  },
+  "Download size: {0}.": {
+    "origin": [
+      [
+        "src/app/settings/modal.tsx",
+        85
       ]
     ]
   }
