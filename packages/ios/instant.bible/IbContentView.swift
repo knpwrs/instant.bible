@@ -18,6 +18,7 @@ class ContentViewModel: ObservableObject {
     
     @Published var downloading: Bool = false
     @Published var downloadProgress: Double = 0.0
+    @Published var downloadSize: Int64 = 0
     
     var offlineInitted = false
     @Published var offlineEnabled = false {
@@ -61,6 +62,9 @@ class ContentViewModel: ObservableObject {
     init() {
         // Initialize here so willSet logic fires
         self.offlineEnabled = UserDefaults.standard.bool(forKey: "offlineEnabled")
+        IbNet.getIndexSize(onSuccess: { size in
+            self.downloadSize = size
+        })
     }
 }
 
@@ -94,7 +98,7 @@ struct IbContentView: View {
         }
         .background(Color.ibBackground.edgesIgnoringSafeArea(.all))
         .sheet(isPresented: $showingSettings, content: {
-            IbSettingsSheet(offlineEnabled: self.$model.offlineEnabled, downloadProgress: self.$model.downloadProgress, downloading: self.$model.downloading)
+            IbSettingsSheet(offlineEnabled: self.$model.offlineEnabled, downloadProgress: self.$model.downloadProgress, downloading: self.$model.downloading, downloadSize: self.$model.downloadSize)
         })
     }
 }

@@ -47,4 +47,17 @@ class IbNet {
             }
         }
     }
+    
+    static func getIndexSize(onSuccess: @escaping ((Int64) -> Void)) {
+        AF.request(indexFileUrl, method: .head).response { res in
+            switch res.result {
+            case let .success(op):
+                if let data = op {
+                    onSuccess(Int64(data.count))
+                }
+            case let .failure(err):
+                debugPrint(err)
+            }
+        }
+    }
 }
