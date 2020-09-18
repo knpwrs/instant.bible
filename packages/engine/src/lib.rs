@@ -18,8 +18,6 @@ use wasm_timer::Instant;
 pub use util::{Config, MAX_PROXIMITY};
 
 static MAX_RESULTS: usize = 20;
-static PREFIX_EXPANSION_FACTOR: usize = 3;
-static PREFIX_EXPANSION_MINIMUM: usize = 4;
 static TYPO_1_LEN: usize = 4;
 static TYPO_2_LEN: usize = 8;
 pub static TRANSLATION_COUNT: usize = Translation::Total as usize;
@@ -113,15 +111,7 @@ impl VersearchIndex {
             results.sort_by_key(|(t, _)| t.len());
 
             // Process found tokens
-            for (mid, (result, rid)) in results
-                .iter()
-                .filter(|(res, _)| {
-                    // Tokens should be less than an expansion limit with a reasonable expansion for small tokens
-                    res.len()
-                        < (token.len() * PREFIX_EXPANSION_FACTOR).max(PREFIX_EXPANSION_MINIMUM)
-                })
-                .enumerate()
-            {
+            for (mid, (result, rid)) in results.iter().enumerate() {
                 let mut container =
                     found_indices
                         .entry(*rid)
@@ -146,10 +136,7 @@ impl VersearchIndex {
 
             // Store last indices
             last_indices = Vec::new();
-            for (_, idx) in results.iter().filter(|(res, _)| {
-                // Tokens should be less than an expansion limit with a reasonable expansion for small tokens
-                res.len() < (token.len() * PREFIX_EXPANSION_FACTOR).max(PREFIX_EXPANSION_MINIMUM)
-            }) {
+            for (_, idx) in results.iter() {
                 last_indices.push(*idx);
             }
         }
