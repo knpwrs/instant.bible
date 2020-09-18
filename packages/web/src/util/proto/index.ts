@@ -19,7 +19,7 @@ export const verseKeyToString = (
 export const verseKeyToObject = (
   key?: proto.instantbible.data.IVerseKey | null,
 ) => {
-  if (!key || !key.book || !key.chapter || !key.verse) {
+  if (!key || !isNumber(key.book) || !isNumber(key.chapter) || !isNumber(key.verse)) {
     throw new Error('Invalid key!');
   }
 
