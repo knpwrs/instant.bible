@@ -6,6 +6,7 @@ use crate::proto::engine::{
 use crate::TRANSLATION_COUNT;
 use anyhow::{anyhow, Context, Result};
 use fst::MapBuilder;
+use lazy_static::lazy_static;
 use log::info;
 use regex::Regex;
 use serde::Deserialize;
@@ -51,6 +52,24 @@ struct VerseStats {
 }
 
 type TranslationVerses = BTreeMap<Translation, BTreeMap<VerseKey, String>>;
+
+lazy_static! {
+    static ref STOP_WORDS: BTreeSet<&'static str> = {
+        let mut s = BTreeSet::new();
+        s.insert("THE");
+        s.insert("AND");
+        s.insert("OF");
+        s.insert("TO");
+        s.insert("IN");
+        s.insert("I");
+        s.insert("A");
+        s.insert("IS");
+        s.insert("BE");
+        s.insert("IT");
+        s.insert("ON");
+        s
+    };
+}
 
 pub fn tokenize(input: &str) -> Vec<Tokenized> {
     input
@@ -140,7 +159,11 @@ fn process_verses(
             .or_insert_with(|| verse.text.clone());
         verse_counts.entry(vkey).or_insert(0);
         // Count up tokens
-        for (i, tokenized) in verse_tokens.iter().enumerate() {
+        for (i, tokenized) in verse_tokens
+            .iter()
+            .filter(|t| !STOP_WORDS.contains(t.token.as_str()))
+            .enumerate()
+        {
             // Save word to get a highlight id later
             highlight_words.insert(tokenized.source.to_uppercase());
             // Create new stats entry if needed

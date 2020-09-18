@@ -13,6 +13,7 @@ env_logger = "0.7.1"
 envy = "0.4.1"
 fst = { version = "0.4.0", features = ["levenshtein"] }
 itertools = "0.8.2"
+lazy_static = "1.4.0"
 log = "0.4.8"
 prost = "0.6.1"
 regex = "1.3.4"
