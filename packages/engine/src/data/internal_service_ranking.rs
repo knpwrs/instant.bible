@@ -15,7 +15,6 @@ impl InternalServiceRanking {
             ranking: ServiceRanking {
                 typos: 0,
                 query_words: 0,
-                proximity: 0,
                 exact: 0,
             },
             idx,
@@ -30,10 +29,6 @@ impl InternalServiceRanking {
     pub fn inc_query_words(&mut self, query_word: usize) {
         self.query_word_matches.insert(query_word);
         self.ranking.query_words = self.query_word_matches.len() as i32;
-    }
-
-    pub fn add_proximity(&mut self, prox: i32) {
-        self.ranking.proximity += prox;
     }
 
     pub fn inc_exact(&mut self) {
@@ -61,25 +56,6 @@ impl Ord for InternalServiceRanking {
         // Sort by number of exactly matching query words descending (more exact matches == higher rank)
         if self.ranking.exact != other.ranking.exact {
             return other.ranking.exact.cmp(&self.ranking.exact);
-        }
-        // Sort by total proximity ascending (lower proximity == higher rank)
-        if self.ranking.proximity != other.ranking.proximity
-            && self.ranking.query_words != other.ranking.query_words
-        {
-            // Zero proximity is actually maximum proximity
-            let self_prox = if self.ranking.proximity == 0 {
-                std::i32::MAX
-            } else {
-                self.ranking.proximity
-            };
-
-            let other_prox = if other.ranking.proximity == 0 {
-                std::i32::MAX
-            } else {
-                other.ranking.proximity
-            };
-
-            return self_prox.cmp(&other_prox);
         }
         // Sort by typos ascending (fewer typos == higher rank)
         if self.ranking.typos != other.ranking.typos {

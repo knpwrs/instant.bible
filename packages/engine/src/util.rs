@@ -18,8 +18,6 @@ use std::io::{self, BufRead};
 use std::iter::Iterator;
 use std::time::Instant;
 
-pub static MAX_PROXIMITY: u64 = 8;
-
 #[cfg_attr(test, derive(Debug))]
 #[derive(Deserialize)]
 pub struct Config {
@@ -100,19 +98,6 @@ fn get_config() -> Result<Config> {
     Ok(conf)
 }
 
-/// Given a translation id, a verse key, and two word ids, generates a sequence
-/// of bytes which can be used as a key into an FST map
-pub fn proximity_bytes_key(tidx: u8, vkey: &[u8], w1i: u16, w2i: u16) -> Vec<u8> {
-    let capacity =
-        std::mem::size_of::<u8>() + std::mem::size_of::<u16>() * 2 + VerseKey::get_byte_size();
-    let mut v = Vec::with_capacity(capacity);
-    v.extend(&tidx.to_be_bytes());
-    v.extend(vkey);
-    v.extend(&w1i.to_be_bytes());
-    v.extend(&w2i.to_be_bytes());
-    v
-}
-
 /// Given a translation id and a verse key, generates a sequence of bytes which
 /// can be used as a key into an FST map
 pub fn translation_verses_bytes_key(tidx: u8, vkey: &VerseKey) -> Vec<u8> {
@@ -133,9 +118,6 @@ fn read_file_bytes(path: &std::path::PathBuf) -> Result<Vec<u8>> {
     Ok(file_bytes)
 }
 
-/// Stores work-in-progress proximity calculations
-type WipProximitiesMap =
-    BTreeMap<usize, BTreeMap<VerseKey, BTreeMap<String, BTreeMap<String, u64>>>>;
 // Stores work-in-progress token counts per verse and translation
 type WipTokenCountsMap = BTreeMap<String, BTreeMap<VerseKey, VerseStats>>;
 
@@ -147,7 +129,6 @@ fn process_verses(
     verse_counts: &mut BTreeMap<VerseKey, u64>,
     highlight_words: &mut BTreeSet<String>,
     wip_token_counts: &mut BTreeMap<String, BTreeMap<VerseKey, VerseStats>>,
-    proximities: &mut WipProximitiesMap,
 ) {
     for verse in verses {
         let vkey = verse.key.expect("Missing verse key");
@@ -159,10 +140,9 @@ fn process_verses(
             .or_insert_with(|| verse.text.clone());
         verse_counts.entry(vkey).or_insert(0);
         // Count up tokens
-        for (i, tokenized) in verse_tokens
+        for tokenized in verse_tokens
             .iter()
             .filter(|t| !STOP_WORDS.contains(t.token.as_str()))
-            .enumerate()
         {
             // Save word to get a highlight id later
             highlight_words.insert(tokenized.source.to_uppercase());
@@ -179,26 +159,6 @@ fn process_verses(
             entry.counts[translation_key as usize] += 1;
             // Track highlights
             entry.highlights.insert(tokenized.source.to_uppercase());
-            // Track proximities
-            for (j, other_tokenized) in verse_tokens.iter().enumerate().skip(i + 1) {
-                let prox = (j - i) as u64;
-                proximities
-                    .entry(translation_key as usize)
-                    .or_insert_with(BTreeMap::new)
-                    .entry(vkey.clone())
-                    .or_insert_with(BTreeMap::new)
-                    .entry(tokenized.token.clone())
-                    .or_insert_with(BTreeMap::new)
-                    .entry(other_tokenized.token.clone())
-                    .and_modify(|p: &mut u64| {
-                        if prox < *p {
-                            *p = prox;
-                        } else if prox > MAX_PROXIMITY {
-                            *p = MAX_PROXIMITY
-                        }
-                    })
-                    .or_insert(prox);
-            }
         }
     }
 }
@@ -209,7 +169,6 @@ fn load_translation_data(
     verse_counts: &mut BTreeMap<VerseKey, u64>,
     highlight_words: &mut BTreeSet<String>,
     wip_token_counts: &mut WipTokenCountsMap,
-    proximities: &mut WipProximitiesMap,
 ) -> Result<()> {
     let config = get_config().context("load_translation_data")?;
     info!("Loading translations from {:?}", config.translation_dir);
@@ -251,7 +210,6 @@ fn load_translation_data(
                 verse_counts,
                 highlight_words,
                 wip_token_counts,
-                proximities,
             );
             info!(
                 "Processed {} verses in {}ms",
@@ -331,43 +289,6 @@ fn build_reverse_index(
     info!("Stored {} words for highlighting", highlight_words.len());
 
     (reverse_index, fst_bytes, highlight_words)
-}
-
-fn build_proximity_fst_bytes(
-    wip_proximities: &WipProximitiesMap,
-    wip_token_counts: &WipTokenCountsMap,
-) -> Result<Vec<u8>> {
-    let ordered_tokens: Vec<_> = wip_token_counts.keys().cloned().collect();
-    let mut proximities_build = MapBuilder::memory();
-
-    for (tidx, m1) in wip_proximities {
-        for (vkey, m2) in m1 {
-            for (w1, m3) in m2 {
-                let w1i = ordered_tokens
-                    .binary_search(w1)
-                    .expect("Could not find index for token for proximity map")
-                    as u16;
-                for (w2, p) in m3 {
-                    let w2i = ordered_tokens
-                        .binary_search(w2)
-                        .expect("Could not find index for token for proximity map")
-                        as u16;
-                    proximities_build
-                        .insert(
-                            proximity_bytes_key(*tidx as u8, &vkey.to_be_bytes(), w1i, w2i),
-                            *p,
-                        )
-                        .expect("Could not insert into proximities build");
-                }
-            }
-        }
-    }
-
-    let proximities = proximities_build
-        .into_inner()
-        .context("Could not build proximities map bytes")?;
-
-    Ok(proximities)
 }
 
 fn build_translation_verses_bytes(
@@ -453,7 +374,6 @@ pub fn create_index_proto_struct() -> IndexDataProtoStruct {
     let start = Instant::now();
 
     let mut wip_token_counts = BTreeMap::new();
-    let mut wip_proximities = BTreeMap::new();
     let mut verse_counts = BTreeMap::new();
     let mut translation_verses: TranslationVerses = BTreeMap::new();
     let mut highlight_words = BTreeSet::new();
@@ -463,7 +383,6 @@ pub fn create_index_proto_struct() -> IndexDataProtoStruct {
         &mut verse_counts,
         &mut highlight_words,
         &mut wip_token_counts,
-        &mut wip_proximities,
     )
     .expect("Could not load data from disk");
 
@@ -473,18 +392,6 @@ pub fn create_index_proto_struct() -> IndexDataProtoStruct {
         build_reverse_index(&highlight_words, &wip_token_counts);
 
     info!("Indexed data {}ms", now.elapsed().as_millis());
-
-    let now = Instant::now();
-
-    let proximities_bytes = build_proximity_fst_bytes(&wip_proximities, &wip_token_counts)
-        .expect("Could not build proximities map");
-
-    info!(
-        "Proximities FST compiled: {} tokens, {} bytes in {}ms",
-        wip_token_counts.len(),
-        proximities_bytes.len(),
-        now.elapsed().as_millis()
-    );
 
     let (translation_verses_bytes, translation_verses_strings) =
         build_translation_verses_bytes(&translation_verses)
@@ -510,7 +417,6 @@ pub fn create_index_proto_struct() -> IndexDataProtoStruct {
     IndexDataProtoStruct {
         fst: fst_bytes,
         reverse_index_entries: reverse_index_bytes,
-        proximities: proximities_bytes,
         highlight_words,
         translation_verses: translation_verses_bytes,
         translation_verses_strings,

@@ -10,10 +10,8 @@ message Response {
       int32 typos = 1;
       // The number of words matched from the query
       int32 queryWords = 2;
-      // The total proximity of adjacent word pairs in the query
-      int32 proximity = 3;
       // The number of exact words matched (no prefix or typo)
-      int32 exact = 4;
+      int32 exact = 3;
     }
 
     instantbible.data.VerseKey key = 1;

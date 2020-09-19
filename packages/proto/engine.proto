@@ -10,9 +10,8 @@ message ReverseIndexEntry {
 message IndexData {
   bytes fst = 1;
   repeated ReverseIndexEntry reverseIndexEntries = 2;
-  bytes proximities = 3;
-  repeated string highlightWords = 4;
-  bytes translationVerses = 5;
-  repeated string translationVersesStrings = 6;
-  bytes popularity = 7;
+  repeated string highlightWords = 3;
+  bytes translationVerses = 4;
+  repeated string translationVersesStrings = 5;
+  bytes popularity = 6;
 }

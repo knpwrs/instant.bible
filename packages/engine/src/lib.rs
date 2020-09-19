@@ -12,10 +12,10 @@ use proto::service::{
     Response as ServiceResponse,
 };
 use std::collections::HashMap;
-use util::{proximity_bytes_key, tokenize, translation_verses_bytes_key, Tokenized};
+use util::{tokenize, translation_verses_bytes_key, Tokenized};
 use wasm_timer::Instant;
 
-pub use util::{Config, MAX_PROXIMITY};
+pub use util::Config;
 
 static MAX_RESULTS: usize = 20;
 static TYPO_1_LEN: usize = 4;
@@ -33,15 +33,12 @@ enum MatchType {
 struct ReverseIndexEntryWithMatch<'a> {
     entry: &'a ReverseIndexEntry,
     match_type: MatchType,
-    this_index: u64,
-    last_indices: Vec<u64>,
     qidx: usize,
 }
 
 pub struct VersearchIndex {
     fst_map: FstMap<Vec<u8>>,
     reverse_index: ReverseIndex,
-    proximities: FstMap<Vec<u8>>,
     highlight_words: Vec<String>,
     translation_verses_map: FstMap<Vec<u8>>,
     translation_verses_strings: Vec<String>,
@@ -60,10 +57,6 @@ impl VersearchIndex {
                 .iter()
                 .map(|b| ReverseIndexEntry::from_bytes_struct(b))
                 .collect(),
-            proximities: FstMap::from(
-                raw::Fst::new(index_data.proximities)
-                    .expect("Could not load map from proximity bytes"),
-            ),
             highlight_words: index_data.highlight_words,
             translation_verses_map: FstMap::from(
                 raw::Fst::new(index_data.translation_verses)
@@ -80,8 +73,6 @@ impl VersearchIndex {
     #[inline]
     fn traverse_fst(&self, tokens: &[Tokenized]) -> HashMap<u64, ReverseIndexEntryWithMatch> {
         let mut found_indices: HashMap<u64, ReverseIndexEntryWithMatch> = HashMap::new();
-
-        let mut last_indices: Vec<u64> = Vec::new();
 
         for (qidx, Tokenized { token, .. }) in tokens.iter().enumerate() {
             // Attempt a prefix search
@@ -122,8 +113,6 @@ impl VersearchIndex {
                             } else {
                                 MatchType::Prefix
                             },
-                            this_index: *rid,
-                            last_indices: last_indices.clone(),
                             qidx,
                         });
                 // This is an exact result if
@@ -132,12 +121,6 @@ impl VersearchIndex {
                 if (*result == *token || mid == 0) && token.len() > 1 {
                     container.match_type = MatchType::Exact;
                 }
-            }
-
-            // Store last indices
-            last_indices = Vec::new();
-            for (_, idx) in results.iter() {
-                last_indices.push(*idx);
             }
         }
 
@@ -194,9 +177,8 @@ impl VersearchIndex {
             for ReverseIndexEntryWithMatch {
                 match_type,
                 entry,
-                this_index,
-                last_indices,
                 qidx,
+                ..
             } in found_indices.values()
             {
                 // Does this found entry match the current verse?
@@ -212,30 +194,6 @@ impl VersearchIndex {
                                 MatchType::Typo => result_match.inc_typos(i),
                                 _ => {}
                             }
-                            // Calculate the proximity between current and last word
-                            let proximity = if !last_indices.is_empty() {
-                                last_indices
-                                    .iter()
-                                    .map(|li| {
-                                        if let Some(p) = self.proximities.get(proximity_bytes_key(
-                                            i as u8,
-                                            result_key,
-                                            *li as u16,
-                                            *this_index as u16,
-                                        )) {
-                                            p
-                                        } else {
-                                            0
-                                        }
-                                    })
-                                    .filter(|p| *p != 0)
-                                    .min()
-                                    .unwrap_or_else(|| 0)
-                            } else {
-                                0
-                            };
-                            // Increment proximity
-                            result_match.add_proximity(i, proximity as i32);
                         }
                     }
                 }

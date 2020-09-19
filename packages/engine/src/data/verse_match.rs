@@ -36,10 +36,6 @@ impl VerseMatch {
         self.rankings[idx].inc_query_words(query_word);
     }
 
-    pub fn add_proximity(&mut self, idx: usize, prox: i32) {
-        self.rankings[idx].add_proximity(prox);
-    }
-
     pub fn inc_exact(&mut self, idx: usize) {
         self.rankings[idx].inc_exact();
     }
