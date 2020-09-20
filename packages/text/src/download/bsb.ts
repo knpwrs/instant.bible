@@ -9,7 +9,7 @@ const { VerseText } = proto.instantbible.data;
 
 const URL = 'https://bereanbible.com/bsb.txt';
 const SHA256 =
-  'a83b94fa1ddc659eefff1c7b0a81706a2b06ee2f6c6b77654c5a30ad1a3b8c86';
+  '59d664d53c1eda25dda887776943beeaacb0a12d0647344f2d10c06304ca0cf5';
 
 const verseLine = /^(.+) (\d+):(\d+)\t(.+)$/;
 
