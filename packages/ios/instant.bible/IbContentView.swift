@@ -37,6 +37,8 @@ class ContentViewModel: ObservableObject {
                 })
             } else {
                 UserDefaults.standard.set(newOfflineEnabled, forKey: "offlineEnabled")
+                self.downloadProgress = 0
+                IbNet.deleteIndex()
             }
         }
     }

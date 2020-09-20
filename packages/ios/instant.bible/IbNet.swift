@@ -32,6 +32,16 @@ class IbNet {
         }
     }
     
+    static func deleteIndex() {
+        if (FileManager.default.fileExists(atPath: indexFileUrl.path)) {
+            do {
+                try FileManager.default.removeItem(at: indexFileUrl)
+            } catch let error as NSError {
+                print("Error: \(error.domain)")
+            }
+        }
+    }
+    
     static func downloadIndex(onProgress: @escaping ((Double) -> Void), onSuccess: @escaping ((Data) -> Void)) {
         let destination: DownloadRequest.Destination = { _, _ in
             return (indexFileUrl, [.removePreviousFile, .createIntermediateDirectories])
