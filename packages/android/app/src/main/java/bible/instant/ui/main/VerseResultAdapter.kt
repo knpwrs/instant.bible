@@ -1,6 +1,7 @@
 package bible.instant.ui.main
 
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.text.Spanned
 import android.view.LayoutInflater
@@ -19,9 +20,11 @@ import instantbible.data.Data
 import instantbible.service.Service
 
 class VerseResultViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    val verseRoot: LinearLayout = itemView.findViewById(R.id.verse_root)
     val verseTitle: TextView = itemView.findViewById(R.id.verse_title)
     val verseText: TextView = itemView.findViewById(R.id.verse_text)
     val translationsHolder: LinearLayout = itemView.findViewById(R.id.translations)
+    var copyText = ""
 }
 
 class VerseResultAdapter : RecyclerView.Adapter<VerseResultViewHolder>() {
@@ -37,9 +40,10 @@ class VerseResultAdapter : RecyclerView.Adapter<VerseResultViewHolder>() {
         val item = data[position]
 
         holder.verseTitle.text =
-            "${getBookName(item.key.book)} ${item.key.chapter}:${item.key.verse}"
+            getTitle(item)
         holder.verseText.text =
             getHighlightedText(holder.verseText.context, item)
+        holder.copyText = getCopyText(item)
 
         for (t in 0 until holder.translationsHolder.childCount) {
             val btn = holder.translationsHolder.getChildAt(t) as Button
@@ -56,6 +60,7 @@ class VerseResultAdapter : RecyclerView.Adapter<VerseResultViewHolder>() {
             val btn = holder.translationsHolder.getChildAt(t) as Button
             btn.setOnClickListener {
                 holder.verseText.text = getHighlightedText(holder.verseText.context, item, t)
+                holder.copyText = getCopyText(item, t)
                 for (t in 0 until holder.translationsHolder.childCount) {
                     setButtonStyle(
                         holder.translationsHolder.getChildAt(t) as Button,
@@ -65,7 +70,32 @@ class VerseResultAdapter : RecyclerView.Adapter<VerseResultViewHolder>() {
                 setButtonStyle(btn, R.style.ibButtonBold)
             }
         }
+
+        holder.verseRoot.setOnLongClickListener {
+            val sendIntent: Intent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_TEXT, holder.copyText)
+                type = "text/plain"
+            }
+
+            val shareIntent = Intent.createChooser(sendIntent, null)
+            holder.verseRoot.context.startActivity(shareIntent)
+
+            true
+        }
     }
+
+    private fun getTitle(item: Service.Response.VerseResult) =
+        "${getBookName(item.key.book)} ${item.key.chapter}:${item.key.verse}"
+
+    private fun getText(item: Service.Response.VerseResult, idx: Int = item.topTranslationValue) =
+        item.getText(idx)
+
+    private fun getCopyText(
+        item: Service.Response.VerseResult,
+        translationId: Int = item.topTranslationValue
+    ) =
+        "${getTitle(item)} ${getTranslationLabel(translationId)}\n${getText(item, translationId)}"
 
     private fun getHighlightedText(
         context: Context,
