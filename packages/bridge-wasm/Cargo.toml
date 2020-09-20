@@ -12,6 +12,10 @@ crate-type = ["cdylib"]
 engine = { path = "../engine" }
 lazy_static = "1.4.0"
 mut_static = "5.0.0"
-wasm-bindgen = "0.2.59"
+wasm-bindgen = "0.2.68"
 wee_alloc = "0.4.5"
 prost = "0.6.1"
+
+# https://github.com/rustwasm/wasm-pack/issues/886#issuecomment-667669802
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-Oz", "--enable-mutable-globals"]

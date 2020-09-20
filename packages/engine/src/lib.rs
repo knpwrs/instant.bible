@@ -7,13 +7,12 @@ use data::{ReverseIndex, ReverseIndexEntry, VerseMatch};
 use fst::{automaton, raw, Automaton, IntoStreamer, Map as FstMap};
 use itertools::Itertools;
 use proto::data::{Translation, VerseKey};
-use proto::service::{
-    response::{Timings, VerseResult},
-    Response as ServiceResponse,
-};
+use proto::service::{response::VerseResult, Response as ServiceResponse};
 use std::collections::HashMap;
 use util::{tokenize, translation_verses_bytes_key, Tokenized};
-use wasm_timer::Instant;
+// Previously this module was using wasm-timer, however, it turns out wasm-timer's Instant::now()
+// doesn't work in web workers https://github.com/tomaka/wasm-timer/issues/12
+// use wasm_timer::Instant;
 
 pub use util::Config;
 
@@ -250,9 +249,10 @@ impl VersearchIndex {
     /// Perform a search against the index
     pub fn search(&self, text: &str) -> ServiceResponse {
         // Tokenize input text
-        let start = Instant::now();
+        // See comment on wasm_timer above
+        // let start = Instant::now();
         let tokens = tokenize(text);
-        let tokenize_us = start.elapsed().as_micros() as i32;
+        // let tokenize_us = start.elapsed().as_micros() as i32;
 
         // If we have no tokens (empty search), bail
         if tokens.is_empty() {
@@ -263,9 +263,10 @@ impl VersearchIndex {
         }
 
         // Expand and determine score multiplier for each token
-        let start = Instant::now();
+        // See comment on wasm_timer above
+        // let start = Instant::now();
         let found_indices = self.traverse_fst(&tokens);
-        let fst_us = start.elapsed().as_micros() as i32;
+        // let fst_us = start.elapsed().as_micros() as i32;
 
         // If we found no index entries (no valid words), bail
         if found_indices.is_empty() {
@@ -276,25 +277,29 @@ impl VersearchIndex {
         }
 
         // Score all results
-        let start = Instant::now();
+        // See comment on wasm_timer above
+        // let start = Instant::now();
         let result_scores = self.score_results(&found_indices);
-        let score_us = start.elapsed().as_micros() as i32;
+        // let score_us = start.elapsed().as_micros() as i32;
 
         // Collect ranked results
-        let start = Instant::now();
+        // See comment on wasm_timer above
+        // let start = Instant::now();
         let results = self.collect_results(&result_scores);
-        let rank_us = start.elapsed().as_micros() as i32;
+        // let rank_us = start.elapsed().as_micros() as i32;
 
         // Construct and return response
         ServiceResponse {
             results,
-            timings: Some(Timings {
-                tokenize: tokenize_us,
-                fst: fst_us,
-                score: score_us,
-                rank: rank_us,
-                total: tokenize_us + fst_us + score_us + rank_us,
-            }),
+            timings: None,
+            // See comment on wasm_timer above
+            // timings: Some(Timings {
+            //     tokenize: tokenize_us,
+            //     fst: fst_us,
+            //     score: score_us,
+            //     rank: rank_us,
+            //     total: tokenize_us + fst_us + score_us + rank_us,
+            // }),
         }
     }
 }

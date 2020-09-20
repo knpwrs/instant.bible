@@ -1,48 +1,43 @@
 import { stringify } from 'qs';
 import * as PProgress from 'p-progress';
-import pImmediate from 'p-immediate';
 import {
   verseKeyToString,
   verseKeyToObject,
   textToTranslationsObject,
   topTranslation,
 } from './proto';
-import { getWasm, getLocalBytes, setLocalBytes } from './bridge';
+import { getLocalBytes, setLocalBytes } from './index-storeage';
 import { instantbible as proto } from '../proto';
 
 const apiServer = process.env.IB_API as string;
 const indexUrl = process.env.IB_INDEX_URL as string;
 const headers = { accept: 'application/protobuf' };
 
-const doSearch = async (q: string, offline: boolean) => {
-  const wasm = getWasm();
+export const decodeApiResponse = (buf: Uint8Array | ArrayBuffer) => {
+  const decoded = proto.service.Response.decode(
+    buf instanceof Uint8Array ? buf : new Uint8Array(buf),
+  );
 
-  if (wasm && offline) {
-    await pImmediate();
-    return wasm.search(q);
-  }
-
-  const query = stringify({ q });
-  const res = await fetch(`${apiServer}?${query}`, {
-    headers,
-  });
-  const buf = await res.arrayBuffer();
-
-  return buf;
+  return decoded.results.map((res) => ({
+    id: verseKeyToString(res.key),
+    key: verseKeyToObject(res.key),
+    text: textToTranslationsObject(res.text),
+    topTranslation: topTranslation(res.topTranslation),
+    highlights: res.highlights || [],
+  }));
 };
 
-export const search = async (q: string, offline: boolean) => {
+export const search = async (q: string) => {
   try {
-    const buf = await doSearch(q, offline);
-    const decoded = proto.service.Response.decode(new Uint8Array(buf));
+    const query = stringify({ q });
 
-    return decoded.results.map((res) => ({
-      id: verseKeyToString(res.key),
-      key: verseKeyToObject(res.key),
-      text: textToTranslationsObject(res.text),
-      topTranslation: topTranslation(res.topTranslation),
-      highlights: res.highlights || [],
-    }));
+    const res = await fetch(`${apiServer}?${query}`, {
+      headers,
+    });
+
+    const buf = await res.arrayBuffer();
+
+    return decodeApiResponse(buf);
   } catch (e) {
     console.error(e);
     return null;

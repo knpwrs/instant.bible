@@ -1,15 +1,5 @@
 import * as idb from './keyval';
 
-type WasmType = typeof import('../wasm');
-
-let wasm: WasmType | null = null;
-
-export const getWasm = () => wasm;
-
-export const setWasm = (w: WasmType) => {
-  wasm = w;
-};
-
 const localBytesKey = 'indexBytes';
 
 export const getLocalBytes = () => idb.getLarge(localBytesKey);

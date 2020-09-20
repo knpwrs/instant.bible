@@ -1,14 +1,17 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { useSelector } from 'react-redux';
 import { AppThunk, RootState } from './';
-import { getIndexBytes } from '../util/api';
-import { setWasm, delLocalBytes } from '../util/bridge';
+import { endQuery } from './search';
+import { getIndexBytes, decodeApiResponse } from '../util/api';
+import { delLocalBytes } from '../util/index-storeage';
+import { OutgoingData } from '../util/local-search-worker';
 
 export type SliceState = {
   readonly enabled: boolean;
   readonly indexBytesProgress: number;
   readonly initialized: boolean;
   readonly loading: boolean;
+  readonly worker: Worker | null;
   readonly error: boolean;
 };
 
@@ -17,6 +20,7 @@ const initialState: SliceState = {
   indexBytesProgress: 0,
   initialized: false,
   loading: false,
+  worker: null,
   error: false,
 };
 
@@ -30,8 +34,9 @@ const { actions, reducer } = createSlice({
     setOfflineMode: (state, { payload }: PayloadAction<boolean>) => {
       state.enabled = payload;
     },
-    setInitialized: (state) => {
+    setInitialized: (state, { payload }: PayloadAction<Worker>) => {
       state.initialized = true;
+      state.worker = payload;
     },
     setLoading: (state, { payload }: PayloadAction<boolean>) => {
       state.loading = payload;
@@ -70,13 +75,28 @@ export const doInitOffline = (enable: boolean): AppThunk => async (
 
   try {
     dispatch(setLoading(true));
-    const wasm = await import('../wasm');
+    const { default: SearchWorker } = await import(
+      'worker-loader!../util/local-search-worker'
+    );
+    const worker = new SearchWorker();
     const job = getIndexBytes();
     job.onProgress((p) => dispatch(indexBytesProgress(p)));
     const bytes = await job;
-    wasm.init(bytes);
-    setWasm(wasm);
-    dispatch(setInitialized());
+    worker.postMessage({ cmd: 'init', bytes });
+    worker.onmessage = (msg) => {
+      const data: OutgoingData = msg.data;
+      if (data.cmd === 'search') {
+        const res = decodeApiResponse(data.res);
+        dispatch(
+          endQuery({
+            q: data.q,
+            res: res,
+          }),
+        );
+      } else if (data.cmd === 'init') {
+        dispatch(setInitialized(worker));
+      }
+    };
   } catch (e) {
     console.error(e);
     dispatch(error(true));

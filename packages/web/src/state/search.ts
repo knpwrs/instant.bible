@@ -4,6 +4,7 @@ import { AppThunk, RootState } from './';
 import * as api from '../util/api';
 import { ResolveType } from '../util/ts';
 import { replace } from '../util/history';
+import { IncomingData } from '../util/local-search-worker';
 import * as proto from '../proto';
 
 type ResType = ResolveType<ReturnType<typeof api.search>>;
@@ -90,9 +91,15 @@ export const doSearch = (q: string): AppThunk => async (dispatch, getState) => {
     return;
   }
 
-  const res = await api.search(q, offlineState.enabled);
-
-  dispatch(endQuery({ q, res }));
+  if (offlineState.enabled && offlineState.initialized) {
+    offlineState.worker?.postMessage({
+      cmd: 'search',
+      q,
+    } as IncomingData);
+  } else {
+    const res = await api.search(q);
+    dispatch(endQuery({ q, res }));
+  }
 };
 
 export const doReset = (): AppThunk => async (dispatch) => {

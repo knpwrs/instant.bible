@@ -8,7 +8,7 @@ import { ThunkAction } from 'redux-thunk';
 import offline, { doInitOffline } from './offline';
 import search, { doSearch } from './search';
 import { selectQuery } from '../util/history';
-import { getLocalBytes } from '../util/bridge';
+import { getLocalBytes } from '../util/index-storeage';
 
 const rootReducer = combineReducers({
   search,
