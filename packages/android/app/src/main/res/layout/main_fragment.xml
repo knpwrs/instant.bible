@@ -21,24 +21,12 @@
             android:hint="@android:string/search_go"
             android:importantForAutofill="no"
             android:inputType="text"
-            android:textCursorDrawable="@null"
             android:textColor="@color/ibText"
             android:textColorHint="@color/ibTextPlaceholder"
-            app:layout_constraintEnd_toStartOf="@+id/settingsButton"
+            android:textCursorDrawable="@null"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageButton
-            android:id="@+id/settingsButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:layout_marginEnd="10dp"
-            android:background="@null"
-            android:contentDescription="@string/settings"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_fa_bars" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/resultsRecycler"
@@ -50,5 +38,17 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/searchInput" />
+
+        <ImageButton
+            android:id="@+id/settingsButton"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/ib_fab"
+            android:contentDescription="@string/settings"
+            app:layout_constraintBottom_toBottomOf="@+id/resultsRecycler"
+            app:layout_constraintEnd_toEndOf="@+id/resultsRecycler"
+            app:srcCompat="@drawable/ib_fa_cog" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

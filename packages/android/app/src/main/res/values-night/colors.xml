@@ -5,4 +5,5 @@
     <color name="ibTextHighlight">#FFC542</color>
     <color name="ibTextPlaceholder">#92929D</color>
     <color name="ibCard">#1C1C24</color>
+    <color name="ibShadow">#44444F</color>
 </resources>

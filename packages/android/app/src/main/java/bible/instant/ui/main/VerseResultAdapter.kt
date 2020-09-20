@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.text.Spanned
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -82,6 +83,22 @@ class VerseResultAdapter : RecyclerView.Adapter<VerseResultViewHolder>() {
             holder.verseRoot.context.startActivity(shareIntent)
 
             true
+        }
+
+        // Make sure there's space to scroll past the "FAB" (not a material FAB)
+        val displayMetrics = holder.verseRoot.context.resources.displayMetrics
+        if (position == data.lastIndex) {
+            val params = holder.verseRoot.layoutParams as RecyclerView.LayoutParams
+            val px =
+                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 100F, displayMetrics).toInt()
+            params.bottomMargin = px
+            holder.verseRoot.layoutParams = params
+        } else {
+            val params = holder.verseRoot.layoutParams as RecyclerView.LayoutParams
+            val px =
+                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10F, displayMetrics).toInt()
+            params.bottomMargin = px
+            holder.verseRoot.layoutParams = params
         }
     }
 
