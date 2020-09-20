@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "fa-bars-solid.png",
+      "filename" : "fa-cog-solid.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
@@ -12,12 +12,12 @@
           "value" : "dark"
         }
       ],
-      "filename" : "fa-bars-solid-1.png",
+      "filename" : "fa-cog-solid-1.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "fa-bars-solid@2x.png",
+      "filename" : "fa-cog-solid@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
@@ -28,12 +28,12 @@
           "value" : "dark"
         }
       ],
-      "filename" : "fa-bars-solid@2x-1.png",
+      "filename" : "fa-cog-solid@2x-1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "fa-bars-solid@3x.png",
+      "filename" : "fa-cog-solid@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     },
@@ -44,7 +44,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "fa-bars-solid@3x-1.png",
+      "filename" : "fa-cog-solid@3x-1.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

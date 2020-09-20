@@ -73,34 +73,47 @@ struct IbContentView: View {
     @State var showingSettings = false
     
     var body: some View {
-        VStack {
-            HStack {
+        ZStack(alignment: .bottomTrailing) {
+            VStack {
                 TextField("Search", text: $model.searchText)
                     .foregroundColor(Color.ibText)
                     .padding(.vertical)
                     .padding(.leading, 20)
-                Button(action: {
-                    self.showingSettings = true
-                }) {
-                    Image("fa-bars-solid").foregroundColor(Color.ibText)
-                }
-                .frame(width: 44, height: 44)
-                .sheet(isPresented: $showingSettings, content: {
-                    IbSettingsSheet(offlineEnabled: self.$model.offlineEnabled, downloadProgress: self.$model.downloadProgress, downloading: self.$model.downloading, downloadSize: self.$model.downloadSize)
-                })
-            }
-            ScrollView(.vertical) {
-                VStack(spacing: 18) {
-                    ForEach(self.model.results, id: \.self) { result in
-                        IbVerseResultView(result: result)
-                            .padding(.horizontal)
+                    .padding(.trailing, 20)
+                ScrollView(.vertical) {
+                    VStack(spacing: 18) {
+                        ForEach(self.model.results, id: \.self) { result in
+                            IbVerseResultView(result: result)
+                                .padding(.horizontal)
+                        }
                     }
+                    // Leave space for FAB to clear last card
+                    .padding(.bottom, 100)
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity)
+                .resignKeyboardOnDragGesture()
             }
-            .resignKeyboardOnDragGesture()
+            .background(Color.ibBackground.edgesIgnoringSafeArea(.all))
+            // Settings FAB
+            Button(action: {
+                self.showingSettings = true
+            }) {
+                Image("fa-cog-solid")
+                    .foregroundColor(Color.ibText)
+                    .background(
+                        Circle()
+                            .stroke(Color.ibShadow, lineWidth: 1)
+                            .frame(width: 60, height: 60, alignment: .center)
+                            .foregroundColor(Color.ibCard)
+                    )
+                    .padding()
+            }
+                
+            .frame(width: 80, height: 80)
+            .sheet(isPresented: $showingSettings, content: {
+                IbSettingsSheet(offlineEnabled: self.$model.offlineEnabled, downloadProgress: self.$model.downloadProgress, downloading: self.$model.downloading, downloadSize: self.$model.downloadSize)
+            })
         }
-        .background(Color.ibBackground.edgesIgnoringSafeArea(.all))
     }
 }
 

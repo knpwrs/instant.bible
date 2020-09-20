@@ -78,6 +78,7 @@ let IbBookNameMap: [Instantbible_Data_Book: String] = [
 
 extension Color {
     static let ibBackground = Color("ibBackground")
+    static let ibShadow = Color("ibShadow")
     static let ibCard = Color("ibCard")
     static let ibText = Color("ibText")
     static let ibTextHighlight = Color("ibTextHighlight")
