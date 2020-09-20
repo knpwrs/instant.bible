@@ -50,7 +50,7 @@ const download: Downloader = async ({ d }) => {
             chapter: parseInt(chapter, 10),
             verse: parseInt(verse, 10),
           },
-          text,
+          text: text.replace(/[“”]/g, '"'),
         }),
       );
     } catch (e) {
