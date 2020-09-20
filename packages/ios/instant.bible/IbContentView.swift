@@ -83,7 +83,11 @@ struct IbContentView: View {
                     self.showingSettings = true
                 }) {
                     Image("fa-bars-solid").foregroundColor(Color.ibText)
-                }.frame(width: 44, height: 44)
+                }
+                .frame(width: 44, height: 44)
+                .sheet(isPresented: $showingSettings, content: {
+                    IbSettingsSheet(offlineEnabled: self.$model.offlineEnabled, downloadProgress: self.$model.downloadProgress, downloading: self.$model.downloading, downloadSize: self.$model.downloadSize)
+                })
             }
             ScrollView(.vertical) {
                 VStack(spacing: 18) {
@@ -97,9 +101,6 @@ struct IbContentView: View {
             .resignKeyboardOnDragGesture()
         }
         .background(Color.ibBackground.edgesIgnoringSafeArea(.all))
-        .sheet(isPresented: $showingSettings, content: {
-            IbSettingsSheet(offlineEnabled: self.$model.offlineEnabled, downloadProgress: self.$model.downloadProgress, downloading: self.$model.downloading, downloadSize: self.$model.downloadSize)
-        })
     }
 }
 
