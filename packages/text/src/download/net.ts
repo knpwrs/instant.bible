@@ -41,7 +41,7 @@ const download: Downloader = async ({ d }) => {
       chapter: parseInt(v.chapter, 10),
       verse: parseInt(v.verse, 10),
     },
-    text: v.text,
+    text: v.text.replace(/[“”]/g, '').trim(),
   })));
 
   return verses;
