@@ -1,5 +1,5 @@
 # Build image
-FROM rust:1.43.1-stretch as build
+FROM rust:1.46-buster as build
 
 WORKDIR /app
 COPY . .
@@ -9,7 +9,7 @@ ENV SERVER_SENTRY_DSN=https://9965738e8eac44b9922b71951141f59d@o387306.ingest.se
 RUN cargo build --release --bin server
 
 # Final deployment image
-FROM rust:1.43.1-slim-stretch
+FROM rust:1.46-slim-buster
 
 COPY --from=build /app/target/release/server .
 COPY --from=build /app/index.pb .
