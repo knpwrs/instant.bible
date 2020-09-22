@@ -1,0 +1,49 @@
+name: Build and Deploy Server
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - packages/engine/**
+      - packages/kube/**
+      - packages/proto/**
+      - packages/server/**
+
+jobs:
+  build-and-deploy-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Github Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: docker.pkg.github.com
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GH_TOKEN }}
+      - name: Checkout master
+        uses: actions/checkout@master
+      - name: Prepare
+        id: prep
+        run: |
+          DOCKER_IMAGE=docker.pkg.github.com/knpwrs/instant.bible/server
+          VERSION=$(echo $GITHUB_SHA | head -c7)
+          TAG=$DOCKER_IMAGE:$VERSION
+          echo ::set-output name=tag::$TAG
+      - name: Download Data
+        working-directory: ./packages
+        run: wget https://instantbible.nyc3.digitaloceanspaces.com/index.pb
+      - name: Build Server Image
+        working-directory: ./packages
+        run: docker build -t ${{ steps.prep.outputs.tag }} .
+      - name: Push Server Image
+        working-directory: ./packages
+        run: docker push ${{ steps.prep.outputs.tag }}
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save knpwr8s
+      - name: Deploy Server Container
+        working-directory: ./packages
+        run: cat kube/api-deployment.yml | sed 's|#IMAGE|${{ steps.prep.outputs.tag }}|' | kubectl apply -f -
