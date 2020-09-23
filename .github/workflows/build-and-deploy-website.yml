@@ -1,0 +1,31 @@
+name: Build and Deploy Website
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - packages/bridge-wasm/**
+      - packages/engine/**
+      - packages/proto/**
+      - packages/web/**
+
+jobs:
+  build-and-deploy-website:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: jetli/wasm-pack-action@v0.3.0
+      - name: Checkout master
+        uses: actions/checkout@master
+      - name: Install Dependencies
+        working-directory: packages/web
+        run: npm ci
+      - name: Build
+        working-directory: packages/web
+        run: npm run build
+      - name: Deploy
+        working-directory: packages/web
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: npm run deploy -- --message $(echo $GITHUB_SHA | head -c7)
