@@ -1,6 +1,14 @@
-name: ci
+name: CI (Rust)
 
-on: [push]
+on:
+  push:
+    paths:
+      - .github/workflows/ci-rust.yml
+      - packages/bridge-c/**
+      - packages/bridge-wasm/**
+      - packages/engine/**
+      - packages/proto/**
+      - packages/server/**
 
 jobs:
   build-rust:
@@ -19,17 +27,3 @@ jobs:
       - name: Clippy
         working-directory: packages
         run: cargo clippy
-  build-web:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: jetli/wasm-pack-action@v0.3.0
-      - uses: actions/checkout@v1
-      - name: Install
-        working-directory: packages/web
-        run: npm ci
-      - name: Build
-        working-directory: packages/web
-        run: npm run build
-      - name: Check
-        working-directory: packages/web
-        run: npm run check
