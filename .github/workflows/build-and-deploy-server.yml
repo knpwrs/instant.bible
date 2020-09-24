@@ -5,6 +5,7 @@ on:
     branches:
       - master
     paths:
+      - .github/workflows/build-and-deploy-server.yml
       - packages/engine/**
       - packages/kube/**
       - packages/proto/**
@@ -14,6 +15,10 @@ jobs:
   build-and-deploy-server:
     runs-on: ubuntu-latest
     steps:
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
       - name: Login to Github Container Registry
         uses: docker/login-action@v1
         with:
@@ -30,20 +35,16 @@ jobs:
           TAG=$DOCKER_IMAGE:$VERSION
           echo ::set-output name=tag::$TAG
       - name: Download Data
-        working-directory: ./packages
+        working-directory: packages
         run: wget https://instantbible.nyc3.digitaloceanspaces.com/index.pb
       - name: Build Server Image
-        working-directory: ./packages
+        working-directory: packages
         run: docker build -t ${{ steps.prep.outputs.tag }} .
       - name: Push Server Image
-        working-directory: ./packages
+        working-directory: packages
         run: docker push ${{ steps.prep.outputs.tag }}
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
       - name: Save DigitalOcean kubeconfig
         run: doctl kubernetes cluster kubeconfig save knpwr8s
       - name: Deploy Server Container
-        working-directory: ./packages
+        working-directory: packages
         run: cat kube/api-deployment.yml | sed 's|#IMAGE|${{ steps.prep.outputs.tag }}|' | kubectl apply -f -

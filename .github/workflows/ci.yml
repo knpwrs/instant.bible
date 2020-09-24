@@ -1,4 +1,4 @@
-name: instant.bible ci
+name: ci
 
 on: [push]
 
@@ -11,13 +11,13 @@ jobs:
         with:
           SERVER_SENTRY_DSN: https://9965738e8eac44b9922b71951141f59d@o387306.ingest.sentry.io/5222373
       - name: Build
-        working-directory: ./packages
+        working-directory: packages
         run: cargo build --verbose
       - name: Test
-        working-directory: ./packages
+        working-directory: packages
         run: cargo test --verbose
       - name: Clippy
-        working-directory: ./packages
+        working-directory: packages
         run: cargo clippy
   build-web:
     runs-on: ubuntu-latest
@@ -25,11 +25,11 @@ jobs:
       - uses: jetli/wasm-pack-action@v0.3.0
       - uses: actions/checkout@v1
       - name: Install
-        working-directory: ./packages/web
+        working-directory: packages/web
         run: npm ci
       - name: Build
-        working-directory: ./packages/web
+        working-directory: packages/web
         run: npm run build
       - name: Check
-        working-directory: ./packages/web
+        working-directory: packages/web
         run: npm run check
