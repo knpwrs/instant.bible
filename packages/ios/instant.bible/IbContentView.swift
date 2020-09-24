@@ -1,4 +1,5 @@
 import SwiftUI
+import Introspect
 
 class ContentViewModel: ObservableObject {
     @Published private var searchCache: [String: [Instantbible_Service_Response.VerseResult]] = [:]
@@ -78,6 +79,9 @@ struct IbContentView: View {
         ZStack(alignment: .bottomTrailing) {
             VStack {
                 TextField("Search", text: $model.searchText)
+                    .introspectTextField { textfield in
+                        textfield.becomeFirstResponder()
+                    }
                     .foregroundColor(Color.ibText)
                     .padding(.vertical)
                     .padding(.leading, 20)
