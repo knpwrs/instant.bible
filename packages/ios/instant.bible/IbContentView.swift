@@ -101,12 +101,15 @@ struct IbContentView: View {
                 self.showingSettings = true
             }) {
                 Image("fa-cog-solid")
-                    .foregroundColor(Color.ibText)
                     .background(
-                        Circle()
-                            .stroke(Color.ibShadow, lineWidth: 1)
-                            .frame(width: 60, height: 60, alignment: .center)
-                            .foregroundColor(Color.ibCard)
+                        ZStack {
+                            Circle()
+                                .fill(Color.ibShadow)
+                                .frame(width: 62, height: 62, alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
+                            Circle()
+                                .fill(Color.ibCard)
+                                .frame(width: 60, height: 60, alignment: .center)
+                        }
                     )
                     .padding()
             }
