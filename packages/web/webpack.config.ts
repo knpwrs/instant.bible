@@ -69,7 +69,7 @@ const conf: webpack.Configuration = {
       template: './src/index.html',
       inject: 'body',
     }),
-    new CopyPlugin(['./src/icon.svg']),
+    new CopyPlugin({ patterns: ['./src/icon.svg'] }),
     new WasmPackPlugin({
       crateDirectory: resolve(__dirname, '../bridge-wasm'),
       forceMode: 'production',
