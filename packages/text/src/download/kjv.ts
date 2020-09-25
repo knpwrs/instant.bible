@@ -1,4 +1,4 @@
-import * as got from 'got';
+import got from 'got';
 import shaFn = require('crypto-js/sha256');
 import { isNumber } from 'lodash';
 import base, { Downloader } from './base';
@@ -86,7 +86,7 @@ const startVerse = /^(\d+):(\d+)/;
 const download: Downloader = async ({ d }) => {
   d('Downloading text');
 
-  const { body: rawText } = await got(URL);
+  const rawText = await got(URL).text();
   const rawTextSha = shaFn(rawText).toString();
 
   if (rawTextSha !== SHA256) {

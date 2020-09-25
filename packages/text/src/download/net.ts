@@ -1,4 +1,4 @@
-import * as got from 'got';
+import got from 'got';
 import { books } from '../meta';
 import base, { Downloader } from './base';
 import * as proto from '../proto';
@@ -27,9 +27,7 @@ const download: Downloader = async ({ d }) => {
     for (let chapter = 1; chapter <= chapters; chapter++) {
       d(`Downloading ${name} ${chapter}`);
 
-      const { body } = (await got(makeUrl(name, chapter), {
-        json: true,
-      })) as { body: Array<ResponseVerse> };
+      const body: Array<ResponseVerse> = await got(makeUrl(name, chapter)).json();
 
       data.push(...body.map(b => ({ ...b, book: proto })));
     }
@@ -41,7 +39,7 @@ const download: Downloader = async ({ d }) => {
       chapter: parseInt(v.chapter, 10),
       verse: parseInt(v.verse, 10),
     },
-    text: v.text.replace(/[“”]/g, '').trim(),
+    text: v.text.replace(/[\u201c\u201d]/g, '"').replace(/[\u2018\u2019]/g, "'"),
   })));
 
   return verses;

@@ -1,6 +1,7 @@
-import * as got from 'got';
+import got from 'got';
 import shaFn = require('crypto-js/sha256');
 import { keyBy } from 'lodash';
+import { decode } from 'iconv-lite';
 import base, { Downloader } from './base';
 import { books } from '../meta';
 import * as proto from '../proto';
@@ -9,7 +10,7 @@ const { VerseText } = proto.instantbible.data;
 
 const URL = 'https://bereanbible.com/bsb.txt';
 const SHA256 =
-  '59d664d53c1eda25dda887776943beeaacb0a12d0647344f2d10c06304ca0cf5';
+  '10bf641235bc5e97e2b4da026e66889456f607730e57ce9296e7f7a55cef62d1';
 
 const verseLine = /^(.+) (\d+):(\d+)\t(.+)$/;
 
@@ -26,7 +27,7 @@ const mapBookName = (book: string) => {
 const download: Downloader = async ({ d }) => {
   d('Downloading text');
 
-  const { body: rawText } = await got(URL);
+  const rawText = decode(await got(URL).buffer(), 'ISO-8859-1');
   const rawTextSha = shaFn(rawText).toString();
 
   if (rawTextSha !== SHA256) {
@@ -50,7 +51,7 @@ const download: Downloader = async ({ d }) => {
             chapter: parseInt(chapter, 10),
             verse: parseInt(verse, 10),
           },
-          text: text.replace(/[“”]/g, '"'),
+          text: text.replace(/[\x93\x94]/g, '"').replace(/[\x91\x92]/g, "'"),
         }),
       );
     } catch (e) {
