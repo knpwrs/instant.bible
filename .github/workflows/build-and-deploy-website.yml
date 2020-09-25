@@ -1,6 +1,7 @@
 name: Build and Deploy Website
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
