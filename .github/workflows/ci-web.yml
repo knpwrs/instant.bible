@@ -9,6 +9,13 @@ on:
       - packages/engine/**
       - packages/proto/**
       - packages/web/**
+  pull_request:
+    paths:
+      - .github/workflows/ci-web.yml
+      - packages/bridge-wasm/**
+      - packages/engine/**
+      - packages/proto/**
+      - packages/web/**
 
 jobs:
   build-web:

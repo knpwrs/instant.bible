@@ -10,6 +10,14 @@ on:
       - packages/engine/**
       - packages/proto/**
       - packages/server/**
+  pull_request:
+    paths:
+      - .github/workflows/ci-rust.yml
+      - packages/bridge-c/**
+      - packages/bridge-wasm/**
+      - packages/engine/**
+      - packages/proto/**
+      - packages/server/**
 
 jobs:
   build-rust:
