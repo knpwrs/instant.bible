@@ -12,3 +12,9 @@ if (process.env.NODE_ENV === 'production') {
 const root = document.getElementById('root');
 
 render(<Root />, root);
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js');
+  });
+}

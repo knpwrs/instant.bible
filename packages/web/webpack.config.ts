@@ -3,6 +3,8 @@ import { resolve } from 'path';
 import * as HtmlWebpackPlugin from 'html-webpack-plugin';
 import * as CopyPlugin from 'copy-webpack-plugin';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
+// @ts-ignore: no types available for workbox
+import { GenerateSW } from 'workbox-webpack-plugin';
 
 const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin');
 
@@ -79,6 +81,7 @@ const conf: webpack.Configuration = {
       analyzerMode: 'static',
       openAnalyzer: false,
     }),
+    new GenerateSW(),
   ],
   devServer: {
     hot: true,
