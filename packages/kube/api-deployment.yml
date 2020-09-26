@@ -25,5 +25,8 @@ spec:
               port: 8081
             initialDelaySeconds: 15
             periodSeconds: 20
+          resources:
+            requests:
+              cpu: 500m
       imagePullSecrets:
         - name: gh-container-registry
