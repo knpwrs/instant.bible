@@ -20,7 +20,7 @@ import java.lang.Exception
 import java.net.HttpURLConnection
 import java.net.URL
 
-const val INDEX_URL = "https://instantbible.nyc3.digitaloceanspaces.com/${MainViewModel.INDEX_FILE}"
+const val INDEX_URL = "https://f001.backblazeb2.com/file/instant-bible/${MainViewModel.INDEX_FILE}"
 
 class SettingsFragment : Fragment() {
 

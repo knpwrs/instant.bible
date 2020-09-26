@@ -427,7 +427,7 @@
 				ENABLE_BITCODE = NO;
 				ENABLE_PREVIEWS = YES;
 				IB_API_BASE = "https://api.instant.bible";
-				IB_INDEX_URL = "https://instantbible.nyc3.digitaloceanspaces.com/index.pb";
+				IB_INDEX_URL = "https://f001.backblazeb2.com/file/instant-bible/index.pb";
 				INFOPLIST_FILE = instant.bible/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -453,7 +453,7 @@
 				ENABLE_BITCODE = NO;
 				ENABLE_PREVIEWS = YES;
 				IB_API_BASE = "https://api.instant.bible";
-				IB_INDEX_URL = "https://instantbible.nyc3.digitaloceanspaces.com/index.pb";
+				IB_INDEX_URL = "https://f001.backblazeb2.com/file/instant-bible/index.pb";
 				INFOPLIST_FILE = instant.bible/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

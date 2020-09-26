@@ -61,7 +61,7 @@ const conf: webpack.Configuration = {
     new webpack.EnvironmentPlugin({
       NODE_ENV: 'development',
       IB_API: '/api/',
-      IB_INDEX_URL: 'https://instantbible.nyc3.digitaloceanspaces.com/index.pb',
+      IB_INDEX_URL: 'https://f001.backblazeb2.com/file/instant-bible/index.pb',
       SENTRY_DSN:
         'https://99bef820e745470faea2680ce8d312df@o387306.ingest.sentry.io/5222354',
     }),

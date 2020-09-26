@@ -37,7 +37,7 @@ jobs:
           echo ::set-output name=tag::$TAG
       - name: Download Data
         working-directory: packages
-        run: wget https://instantbible.nyc3.digitaloceanspaces.com/index.pb
+        run: wget https://f001.backblazeb2.com/file/instant-bible/index.pb
       - name: Build Server Image
         working-directory: packages
         run: docker build -t ${{ steps.prep.outputs.tag }} .
