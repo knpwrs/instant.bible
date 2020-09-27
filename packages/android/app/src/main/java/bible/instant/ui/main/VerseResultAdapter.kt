@@ -3,7 +3,10 @@ package bible.instant.ui.main
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.text.Spannable
+import android.text.SpannableStringBuilder
 import android.text.Spanned
+import android.text.style.ImageSpan
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -119,6 +122,12 @@ class VerseResultAdapter : RecyclerView.Adapter<VerseResultViewHolder>() {
         item: Service.Response.VerseResult,
         idx: Int = item.topTranslationValue
     ): Spanned {
+        val text = item.getText(idx)
+
+        if (text.isEmpty()) {
+            return getMissingText(context, getTranslationLabel(idx))
+        }
+
         return HtmlCompat.fromHtml(
             item.highlightsList.fold(
                 item.getText(idx),
@@ -132,6 +141,22 @@ class VerseResultAdapter : RecyclerView.Adapter<VerseResultViewHolder>() {
                 }),
             HtmlCompat.FROM_HTML_MODE_LEGACY
         )
+    }
+
+    private fun getMissingText(
+        context: Context,
+        translation: String
+    ): Spanned {
+        val ssb =
+            SpannableStringBuilder("  This verse is not available in the $translation translation")
+        ssb.setSpan(
+            ImageSpan(context, R.drawable.ic_fa_dove_solid),
+            0,
+            1,
+            Spannable.SPAN_INCLUSIVE_INCLUSIVE
+        )
+
+        return ssb
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VerseResultViewHolder {
