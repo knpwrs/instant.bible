@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { css } from '@emotion/core';
-import Verse from './stateful-verse';
+import Verse from './connected-verse';
 import { useResults } from '../../state/search';
 
 export default React.memo(() => {
