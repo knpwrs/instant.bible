@@ -9,4 +9,11 @@
     <string name="copyright_bsb">The Holy Bible, Berean Study Bible, BSB Copyright ©2016, 2018, 2020 by Bible Hub Used by Permission. All Rights Reserved Worldwide.</string>
     <string name="copyright_kjv">The Holy Bible, King James Version, KJV is in the public domain and not subject to copyright.</string>
     <string name="copyright_net">The NET Bible® https://netbible.com copyright ©1996, 2019 used with permission from Biblical Studies Press, L.L.C. All rights reserved.</string>
+    <string name="oss_ib_uses">instant.bible uses the following open source software:</string>
+    <string name="oss_disclosure">Open Source Software Disclosure</string>
+    <string name="oss_protocol_buffers">· protobuf-lite (BSD) https://github.com/protocolbuffers/protobuf</string>
+    <string name="oss_retrofit">· Retrofit (Apache 2.0) https://github.com/square/retrofit</string>
+    <string name="oss_sentry">· sentry-java (MIT) https://github.com/getsentry/sentry-java</string>
+    <string name="oss_fst">· fst (MIT) https://github.com/burntsushi/fst</string>
+    <string name="oss_fontawesome">· Font Awesome (CC By 4.0) https://fontawesome.com/license/free</string>
 </resources>

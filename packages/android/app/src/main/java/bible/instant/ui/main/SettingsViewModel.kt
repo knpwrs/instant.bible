@@ -9,10 +9,16 @@ class SettingsViewModel(offline: Boolean = false) : ViewModel() {
     val downloading = MutableLiveData(false)
     val progress = MutableLiveData(0)
     val indexSizeBytes = MutableLiveData(0)
+    val showingOpenSource = MutableLiveData(false)
 
     fun toggleOffline() {
         val nowEnabled = !(offlineEnabled.value ?: false)
         offlineEnabled.value = nowEnabled
+    }
+
+    fun toggleOpenSource() {
+        val nowEnabled = !(showingOpenSource.value ?: false)
+        showingOpenSource.value = nowEnabled
     }
 
     fun startDownloading() {
