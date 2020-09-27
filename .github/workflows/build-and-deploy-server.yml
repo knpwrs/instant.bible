@@ -26,8 +26,7 @@ jobs:
           registry: docker.pkg.github.com
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GH_TOKEN }}
-      - name: Checkout master
-        uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - name: Prepare
         id: prep
         run: |

@@ -17,8 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: jetli/wasm-pack-action@v0.3.0
-      - name: Checkout master
-        uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - name: Install Dependencies
         working-directory: packages/web
         run: npm ci
