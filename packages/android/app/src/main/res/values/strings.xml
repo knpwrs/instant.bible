@@ -6,4 +6,7 @@
     <string name="enable_offline_mode">Enable Offline Mode</string>
     <string name="enable_offline_mode_description">Store the search index locally and search without making web requests (i.e., make instant.bible even instanter).</string>
     <string name="download_size">Download size: %s</string>
+    <string name="copyright_bsb">The Holy Bible, Berean Study Bible, BSB Copyright ©2016, 2018, 2020 by Bible Hub Used by Permission. All Rights Reserved Worldwide.</string>
+    <string name="copyright_kjv">The Holy Bible, King James Version, KJV is in the public domain and not subject to copyright.</string>
+    <string name="copyright_net">The NET Bible® https://netbible.com copyright ©1996, 2019 used with permission from Biblical Studies Press, L.L.C. All rights reserved.</string>
 </resources>

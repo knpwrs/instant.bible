@@ -7,7 +7,6 @@ import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.ImageSpan
-import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -31,16 +30,38 @@ class VerseResultViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) 
     var copyText = ""
 }
 
-class VerseResultAdapter : RecyclerView.Adapter<VerseResultViewHolder>() {
+class CopyrightViewHolder(itemView: View): RecyclerView.ViewHolder(itemView)
+
+class VerseResultAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    companion object {
+        const val VERSE_VIEW: Int = 1
+        const val COPYRIGHT_VIEW: Int = 2
+    }
+
     var data = listOf<Service.Response.VerseResult>()
         set(value) {
             field = value
             notifyDataSetChanged()
         }
 
-    override fun getItemCount() = data.size
+    override fun getItemCount(): Int {
+        return if (data.isNotEmpty()) {
+            data.size + 1 // Add one for copyrights view
+        } else {
+            0
+        }
+    }
 
-    override fun onBindViewHolder(holder: VerseResultViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        if (position <= data.lastIndex) {
+            bindVerseViewHolder(position, holder as VerseResultViewHolder)
+        }
+    }
+
+    private fun bindVerseViewHolder(
+        position: Int,
+        holder: VerseResultViewHolder
+    ) {
         val item = data[position]
 
         holder.verseTitle.text =
@@ -86,22 +107,6 @@ class VerseResultAdapter : RecyclerView.Adapter<VerseResultViewHolder>() {
             holder.verseRoot.context.startActivity(shareIntent)
 
             true
-        }
-
-        // Make sure there's space to scroll past the "FAB" (not a material FAB)
-        val displayMetrics = holder.verseRoot.context.resources.displayMetrics
-        if (position == data.lastIndex) {
-            val params = holder.verseRoot.layoutParams as RecyclerView.LayoutParams
-            val px =
-                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 100F, displayMetrics).toInt()
-            params.bottomMargin = px
-            holder.verseRoot.layoutParams = params
-        } else {
-            val params = holder.verseRoot.layoutParams as RecyclerView.LayoutParams
-            val px =
-                TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10F, displayMetrics).toInt()
-            params.bottomMargin = px
-            holder.verseRoot.layoutParams = params
         }
     }
 
@@ -159,7 +164,23 @@ class VerseResultAdapter : RecyclerView.Adapter<VerseResultViewHolder>() {
         return ssb
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VerseResultViewHolder {
+    override fun getItemViewType(position: Int): Int {
+        return if (position > 0 && position > data.lastIndex) {
+            COPYRIGHT_VIEW
+        } else {
+            VERSE_VIEW
+        }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return if (viewType == VERSE_VIEW) {
+            createVerseResultViewHolder(parent)
+        } else {
+            createCopyrightViewHolder(parent)
+        }
+    }
+
+    private fun createVerseResultViewHolder(parent: ViewGroup): VerseResultViewHolder {
         val layoutInflater = LayoutInflater.from(parent.context)
         val view = layoutInflater.inflate(R.layout.verse_result_view, parent, false)
         val translationsHolder: LinearLayout = view.findViewById(R.id.translations)
@@ -185,6 +206,13 @@ class VerseResultAdapter : RecyclerView.Adapter<VerseResultViewHolder>() {
         }
 
         return VerseResultViewHolder(view)
+    }
+
+    private fun createCopyrightViewHolder(parent: ViewGroup): CopyrightViewHolder {
+        val layoutInflater = LayoutInflater.from(parent.context)
+        val view = layoutInflater.inflate(R.layout.copyright_view, parent, false)
+
+        return CopyrightViewHolder(view)
     }
 
     private fun setButtonStyle(btn: Button, style: Int) {
