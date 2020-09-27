@@ -92,6 +92,20 @@ struct IbContentView: View {
                             IbVerseResultView(result: result)
                                 .padding(.horizontal)
                         }
+                        if (!self.model.results.isEmpty) {
+                            Text("The Holy Bible, Berean Study Bible, BSB Copyright ©2016, 2018, 2020 by Bible Hub Used by Permission. All Rights Reserved Worldwide.")
+                                .foregroundColor(.ibTextSecondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                            Text("The Holy Bible, King James Version, KJV is in the public domain and not subject to copyright.")
+                                .foregroundColor(.ibTextSecondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                            Text("The NET Bible® https://netbible.com copyright ©1996, 2019 used with permission from Biblical Studies Press, L.L.C. All rights reserved.")
+                                .foregroundColor(.ibTextSecondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                        }
                     }
                     // Leave space for FAB to clear last card
                     .padding(.bottom, 100)
