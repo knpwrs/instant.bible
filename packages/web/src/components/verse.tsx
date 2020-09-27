@@ -4,6 +4,7 @@ import { clamp, sortBy } from 'lodash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDove } from '@fortawesome/free-solid-svg-icons';
 import { Trans } from '@lingui/macro';
+import { Tabs, TabList, Tab, TabPanels, TabPanel } from '@reach/tabs';
 import CopyButton from './copy-button';
 import OpenExternalButton from './open-external-button';
 import styled from '../util/styled';
@@ -29,41 +30,16 @@ export type OwnProps = {
 
 export type Props = Omit<React.HTMLProps<HTMLDivElement>, 'data'> & OwnProps;
 
-const Translation = styled(Subhead3Medium.withComponent('button'))<{
-  selected?: boolean;
-}>`
+const TranslationTab = styled(Subhead3Medium.withComponent(Tab))`
   margin-right: 5px;
   border: none;
   background: none;
   padding: 0;
 
-  ${({ selected }): null | ReturnType<typeof css> =>
-    selected
-      ? null
-      : css`
-          opacity: 0.65;
-        `};
+  &:not([data-selected]) {
+    opacity: 0.65;
+  }
 `;
-
-const getNext = (
-  haystack: Array<proto.instantbible.data.Translation>,
-  needle: proto.instantbible.data.Translation,
-): proto.instantbible.data.Translation => {
-  const idx = haystack.findIndex((e) => e === needle);
-  const nidx = clamp(idx + 1, 0, haystack.length - 1);
-
-  return haystack[nidx];
-};
-
-const getPrev = (
-  haystack: Array<proto.instantbible.data.Translation>,
-  needle: proto.instantbible.data.Translation,
-): proto.instantbible.data.Translation => {
-  const idx = haystack.findIndex((e) => e === needle);
-  const pidx = clamp(idx - 1, 0, haystack.length - 1);
-
-  return haystack[pidx];
-};
 
 const translationKeys = sortBy(
   Object.values(proto.instantbible.data.Translation).filter(
@@ -81,40 +57,43 @@ const Verse: React.FunctionComponent<Props> = ({
   className,
   verseKey,
 }) => {
-  const [selectedTranslation, setSelectedTranslation] = React.useState(
-    topTranslation,
-  );
-
-  const handleKeyDown = React.useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'h' || e.key === 'ArrowLeft') {
-        e.preventDefault();
-        setSelectedTranslation(getPrev(translationKeys, selectedTranslation));
-      } else if (e.key === 'l' || e.key === 'ArrowRight') {
-        e.preventDefault();
-        setSelectedTranslation(getNext(translationKeys, selectedTranslation));
-      }
-    },
-    [selectedTranslation],
-  );
-
-  const text = data[selectedTranslation];
-
-  const chunks = React.useMemo(() => highlightUtil(text, highlight), [
-    text,
-    highlight,
-  ]);
-
-  const highlightedText = React.useMemo(
+  const topTranslationIdx = React.useMemo(
     () =>
-      chunks.map(({ text, highlight }, i) => {
-        const key = `${text}-${highlight}-${i}`;
-        if (highlight) {
-          return <Body3Highlight key={key}>{text}</Body3Highlight>;
+      clamp(
+        translationKeys.findIndex((e) => e === topTranslation),
+        0,
+        translationKeys.length - 1,
+      ),
+    [topTranslation],
+  );
+
+  const chunkGroups = React.useMemo(
+    () =>
+      translationKeys.map((key) => {
+        const text = data[key];
+        if (!text) {
+          return null;
         }
-        return <React.Fragment key={key}>{text}</React.Fragment>;
+
+        return highlightUtil(data[key], highlight);
       }),
-    [chunks],
+    [data, highlight],
+  );
+
+  const highlightedChunks = React.useMemo(
+    () =>
+      chunkGroups.map((chunks) =>
+        chunks?.map(({ text, highlight }, i) => {
+          const key = `${text}-${highlight}-${i}`;
+
+          if (highlight) {
+            return <Body3Highlight key={key}>{text}</Body3Highlight>;
+          }
+
+          return <React.Fragment key={key}>{text}</React.Fragment>;
+        }),
+      ),
+    [chunkGroups],
   );
 
   return (
@@ -124,68 +103,75 @@ const Verse: React.FunctionComponent<Props> = ({
         width: 960px;
       `}
       tabIndex={tabIndex}
-      onKeyDown={handleKeyDown}
     >
-      <H5
-        css={css`
-          margin: 0;
-        `}
-      >
-        {title}
-      </H5>
-      {text ? (
-        <Body3>{highlightedText}</Body3>
-      ) : (
-        <Body3Bold
-          secondary
-          css={css`
-            margin: 1em 0;
-          `}
-        >
-          <FontAwesomeIcon
-            icon={faDove}
-            css={css`
-              margin: 0 0.25em;
-            `}
-          />{' '}
-          <Trans>
-            This verse is not available in the{' '}
-            {translationToString(selectedTranslation)} translation
-          </Trans>
-        </Body3Bold>
-      )}
-      <div
-        css={css`
-          display: flex;
-          flex-direction: row;
-          font-size: 16px;
-        `}
-      >
-        <div role="tablist">
-          {translationKeys.map((key) => (
-            <Translation
-              key={key}
-              selected={key === selectedTranslation}
-              aria-selected={key === selectedTranslation}
-              role="tab"
-              onClick={(): unknown => setSelectedTranslation(key)}
+      <Tabs defaultIndex={topTranslationIdx}>
+        {({ selectedIndex }: { selectedIndex: number }) => (
+          <React.Fragment>
+            <H5
+              css={css`
+                margin: 0;
+              `}
             >
-              {translationToString(key)}
-            </Translation>
-          ))}
-        </div>
-        <CopyButton
-          copyText={`${title} ${selectedTranslation}\n${text}`}
-          css={css`
-            margin-left: auto;
-            margin-right: 10px;
-          `}
-        />
-        <OpenExternalButton
-          translation={selectedTranslation}
-          verseKey={verseKey}
-        />
-      </div>
+              {title}
+            </H5>
+            <TabPanels>
+              {highlightedChunks.map((chunk, i) => (
+                <TabPanel key={translationKeys[i]}>
+                  {chunk ? (
+                    <Body3>{chunk}</Body3>
+                  ) : (
+                    <Body3Bold
+                      secondary
+                      css={css`
+                        margin: 1em 0;
+                      `}
+                    >
+                      <FontAwesomeIcon
+                        icon={faDove}
+                        css={css`
+                          margin: 0 0.25em;
+                        `}
+                      />{' '}
+                      <Trans>
+                        This verse is not available in the{' '}
+                        {translationToString(selectedIndex)} translation
+                      </Trans>
+                    </Body3Bold>
+                  )}
+                </TabPanel>
+              ))}
+            </TabPanels>
+            <div
+              css={css`
+                display: flex;
+                flex-direction: row;
+                font-size: 16px;
+              `}
+            >
+              <TabList>
+                {translationKeys.map((key) => (
+                  <TranslationTab key={key}>
+                    {translationToString(key)}
+                  </TranslationTab>
+                ))}
+              </TabList>
+              <CopyButton
+                copyText={`${title} ${translationToString(
+                  translationKeys[selectedIndex],
+                )}\n${data[translationKeys[selectedIndex]]}`}
+                css={css`
+                  margin-left: auto;
+                  margin-right: 10px;
+                `}
+              />
+              <OpenExternalButton
+                translation={translationKeys[selectedIndex]}
+                verseKey={verseKey}
+              />
+            </div>
+          </React.Fragment>
+        )}
+      </Tabs>
     </Card>
   );
 };

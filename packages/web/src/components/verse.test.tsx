@@ -26,33 +26,30 @@ test('a11y', async () => {
 });
 
 test('renders text with highlights', async () => {
-  const { getByText } = renderVerse({ highlight: ['love'] });
+  const { getByText, getAllByText } = renderVerse({ highlight: ['love'] });
   const title = getByText('John 3:16');
   expect(title).toBeInTheDocument();
-  const mark = getByText('love');
-  expect(mark).toBeInTheDocument();
-  expect(mark).toHaveTextContent('love');
-  expect((mark as HTMLElement).tagName).toBe('MARK');
+  const marks = getAllByText('love');
+  expect(marks).toHaveLength(3);
+  marks.forEach((mark) => {
+    expect(mark).toBeInTheDocument();
+    expect(mark).toHaveTextContent('love');
+    expect((mark as HTMLElement).tagName).toBe('MARK');
+  });
 });
 
 test('responds to keydown', () => {
-  const { getByText, getByRole } = renderVerse();
-  const title = getByText('John 3:16');
-  expect(title).toBeInTheDocument();
+  const { getByRole } = renderVerse();
+  const tablist = getByRole('tablist');
+  expect(tablist).toBeInTheDocument();
 
   let selected = getByRole('tab', { selected: true });
   expect(selected).toHaveTextContent('KJV');
-  if (title instanceof HTMLElement) {
-    fireEvent.keyDown(title, { key: 'h' });
+  if (tablist instanceof HTMLElement) {
+    fireEvent.keyDown(tablist, { key: 'ArrowLeft' });
     selected = getByRole('tab', { selected: true });
     expect(selected).toHaveTextContent('BSB');
-    fireEvent.keyDown(title, { key: 'l' });
-    selected = getByRole('tab', { selected: true });
-    expect(selected).toHaveTextContent('KJV');
-    fireEvent.keyDown(title, { key: 'ArrowLeft' });
-    selected = getByRole('tab', { selected: true });
-    expect(selected).toHaveTextContent('BSB');
-    fireEvent.keyDown(title, { key: 'ArrowRight' });
+    fireEvent.keyDown(tablist, { key: 'ArrowRight' });
     selected = getByRole('tab', { selected: true });
     expect(selected).toHaveTextContent('KJV');
   }
