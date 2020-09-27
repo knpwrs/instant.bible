@@ -2,7 +2,7 @@ import * as React from 'react';
 import { axe } from 'jest-axe';
 import { fireEvent } from '@testing-library/react';
 import Verse, { Props as VerseProps } from './verse';
-import data from './__mocks__/verse-data';
+import { john316 } from './__mocks__/verse-data';
 import render from '../opt/test-render';
 import * as proto from '../proto';
 
@@ -13,7 +13,7 @@ const renderVerse = ({
   render(
     <Verse
       title="John 3:16"
-      data={data}
+      data={john316}
       topTranslation={topTranslation}
       highlight={highlight}
       verseKey={{}}

@@ -1,17 +1,27 @@
 import * as React from 'react';
 import { css } from '@emotion/core';
 import { clamp, sortBy } from 'lodash';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDove } from '@fortawesome/free-solid-svg-icons';
+import { Trans } from '@lingui/macro';
 import CopyButton from './copy-button';
 import OpenExternalButton from './open-external-button';
 import styled from '../util/styled';
 import highlightUtil from '../util/highlight';
-import { Card, H5, Body3, Subhead3Medium, Body3Highlight } from '../elements';
+import {
+  Card,
+  H5,
+  Body3,
+  Body3Bold,
+  Subhead3Medium,
+  Body3Highlight,
+} from '../elements';
 import * as proto from '../proto';
 import { translationToString } from '../util/proto';
 
 export type OwnProps = {
   title: string;
-  data: { [key: string]: string };
+  data: Record<string, string>;
   topTranslation: proto.instantbible.data.Translation;
   highlight: string[];
   verseKey: proto.instantbible.data.IVerseKey;
@@ -123,7 +133,27 @@ const Verse: React.FunctionComponent<Props> = ({
       >
         {title}
       </H5>
-      <Body3>{highlightedText}</Body3>
+      {text ? (
+        <Body3>{highlightedText}</Body3>
+      ) : (
+        <Body3Bold
+          secondary
+          css={css`
+            margin: 1em 0;
+          `}
+        >
+          <FontAwesomeIcon
+            icon={faDove}
+            css={css`
+              margin: 0 0.25em;
+            `}
+          />{' '}
+          <Trans>
+            This verse is not available in the{' '}
+            {translationToString(selectedTranslation)} translation
+          </Trans>
+        </Body3Bold>
+      )}
       <div
         css={css`
           display: flex;

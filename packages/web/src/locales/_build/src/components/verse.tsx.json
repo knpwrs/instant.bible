@@ -1,0 +1,10 @@
+{
+  "This verse is not available in the {0} translation": {
+    "origin": [
+      [
+        "src/components/verse.tsx",
+        75
+      ]
+    ]
+  }
+}

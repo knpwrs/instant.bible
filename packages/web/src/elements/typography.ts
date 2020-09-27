@@ -16,6 +16,10 @@ export const Body3 = styled(Text.withComponent('p'))`
   font-size: 14px;
 `;
 
+export const Body3Bold = styled(Body3)`
+  font-weight: 700;
+`;
+
 const getHighlightColor: ThemedFn = ({ theme }) => theme.text.highlightColor;
 
 export const Body3Highlight = styled(Body3.withComponent('mark'))`
