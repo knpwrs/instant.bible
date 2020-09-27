@@ -106,9 +106,9 @@ struct IbContentView: View {
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal)
                         }
+                        // Leave space for FAB to clear the copyrights
+                        Spacer()
                     }
-                    // Leave space for FAB to clear last card
-                    .padding(.bottom, 100)
                     .frame(maxWidth: .infinity)
                 }
                 .resignKeyboardOnDragGesture()
