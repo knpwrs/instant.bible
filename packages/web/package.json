@@ -124,6 +124,7 @@
     "jest": "^26.0.1",
     "jest-axe": "^3.4.0",
     "jest-svg-transformer": "^1.0.0",
+    "license-webpack-plugin": "^2.3.0",
     "netlify-cli": "^2.64.0",
     "node": "^14.11.0",
     "npm": "^6.14.8",
