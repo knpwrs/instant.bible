@@ -2,7 +2,7 @@ import * as webpack from 'webpack';
 import { resolve } from 'path';
 import * as HtmlWebpackPlugin from 'html-webpack-plugin';
 import * as CopyPlugin from 'copy-webpack-plugin';
-import { LicenseWebpackPlugin } from 'license-webpack-plugin'
+import { LicenseWebpackPlugin } from 'license-webpack-plugin';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 
 const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin');
@@ -80,7 +80,7 @@ const conf: webpack.Configuration = {
     }),
     new LicenseWebpackPlugin({
       addBanner: true,
-      excludedPackageTest: pkg => pkg === 'bridge-wasm',
+      excludedPackageTest: (pkg) => pkg === 'bridge-wasm',
     }),
     new BundleAnalyzerPlugin({
       analyzerMode: 'static',
