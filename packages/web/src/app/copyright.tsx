@@ -13,7 +13,7 @@ const getFontStyle: ThemedFn = ({ theme }) =>
 const Root = styled('footer')`
   color: ${getColor};
   ${getFontStyle}
-  opacity: 0.25;
+  opacity: 0.5;
   text-align: center;
   &:hover {
     opacity: 1;
@@ -27,6 +27,24 @@ export default React.memo((props: React.HTMLProps<HTMLParagraphElement>) => {
     <Root {...props}>
       <p>
         <Trans>Copyright &copy; {new Date().getFullYear()} instant.bible</Trans>
+        {' | '}
+        <a
+          href="/privacy.html"
+          css={css`
+            color: inherit;
+            text-decoration: none;
+
+            &:visited {
+              color: inherit;
+            }
+
+            &:hover {
+              text-decoration: underline;
+            }
+          `}
+        >
+          <Trans>Privacy</Trans>
+        </a>
       </p>
       {dirty ? (
         <>
