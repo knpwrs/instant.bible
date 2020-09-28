@@ -22,6 +22,7 @@ const conf: webpack.Configuration = {
     path: resolve(__dirname, './dist'),
     filename: '[name].[hash].js',
   },
+  devtool: process.env.NODE_ENV === 'production' ? 'source-map' : undefined,
   optimization: {
     splitChunks: {
       // Automatically make a vendor bundle with node_modules
@@ -65,6 +66,7 @@ const conf: webpack.Configuration = {
       IB_INDEX_URL: 'https://f001.backblazeb2.com/file/instant-bible/index.pb',
       SENTRY_DSN:
         'https://99bef820e745470faea2680ce8d312df@o387306.ingest.sentry.io/5222354',
+      SENTRY_RELEASE: 'DEV',
     }),
     new HtmlWebpackPlugin({
       template: './src/index.html',

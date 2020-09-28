@@ -6,6 +6,7 @@ import Root from './root';
 if (process.env.NODE_ENV === 'production') {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
+    release: process.env.SENTRY_RELEASE,
   });
 }
 

@@ -21,9 +21,26 @@ jobs:
       - name: Install Dependencies
         working-directory: packages/web
         run: npm ci
+      - name: Prepare
+        id: prep
+        run: |
+          SENTRY_RELEASE="instantbible-web@$(echo $GITHUB_SHA | head -c7)"
+          echo ::set-output name=sentry_release::$SENTRY_RELEASE
       - name: Build
         working-directory: packages/web
+        env:
+          SENTRY_RELEASE: ${{ steps.prep.output.sentry_release }}
         run: npm run build
+      - name: Create Sentry Release
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT_WEB }}
+        with:
+          environment: production
+          sourcemaps: packages/web/dist
+          version: ${{ steps.prep.output.sentry_release }}
       - name: Deploy
         working-directory: packages/web
         env:
