@@ -143,10 +143,18 @@ export const useThemeSetting = (): ThemeSettingObj => {
       setKey(matches ? 'dark' : 'light');
     };
 
-    darkQuery.addEventListener('change', onChange);
+    if (darkQuery.addEventListener) {
+      darkQuery.addEventListener('change', onChange);
+    } else if (darkQuery.addListener) {
+      darkQuery.addListener(onChange);
+    }
 
     return (): void => {
-      darkQuery.removeEventListener('change', onChange);
+      if (darkQuery.removeEventListener) {
+        darkQuery.removeEventListener('change', onChange);
+      } else if (darkQuery.removeListener) {
+        darkQuery.removeListener(onChange);
+      }
     };
   }, [setKey]);
 
