@@ -29,7 +29,7 @@ jobs:
       - name: Build
         working-directory: packages/web
         env:
-          SENTRY_RELEASE: ${{ steps.prep.output.sentry_release }}
+          SENTRY_RELEASE: ${{ steps.prep.outputs.sentry_release }}
         run: npm run build
       - name: Create Sentry Release
         uses: getsentry/action-release@v1
@@ -40,7 +40,7 @@ jobs:
         with:
           environment: production
           sourcemaps: packages/web/dist
-          version: ${{ steps.prep.output.sentry_release }}
+          version: ${{ steps.prep.outputs.sentry_release }}
       - name: Deploy
         working-directory: packages/web
         env:
