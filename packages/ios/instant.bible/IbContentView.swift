@@ -4,6 +4,7 @@ import Introspect
 class ContentViewModel: ObservableObject {
     @Published private var searchCache: [String: [Instantbible_Service_Response.VerseResult]] = [:]
     @Published private var resultsKey = ""
+    @Published var dirty = false
     
     var results: [Instantbible_Service_Response.VerseResult] {
         for i in (0..<resultsKey.count).reversed() {
@@ -50,6 +51,9 @@ class ContentViewModel: ObservableObject {
             self.resultsKey = trimmed
             
             if searchCache[trimmed] == nil {
+                if !dirty {
+                    dirty = true
+                }
                 if offlineInitted {
                     let response = IbBridge.search(query: trimmed)
                     self.searchCache[trimmed] = response.results
@@ -78,6 +82,10 @@ struct IbContentView: View {
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             VStack {
+                if (!self.model.dirty) {
+                    Spacer()
+                    Image("ibLogo")
+                }
                 TextField("Search", text: $model.searchText)
                     .introspectTextField { textfield in
                         textfield.becomeFirstResponder()
@@ -86,32 +94,38 @@ struct IbContentView: View {
                     .padding(.vertical)
                     .padding(.leading, 20)
                     .padding(.trailing, 20)
-                ScrollView(.vertical) {
-                    VStack(spacing: 18) {
-                        ForEach(self.model.results, id: \.self) { result in
-                            IbVerseResultView(result: result)
-                                .padding(.horizontal)
-                        }
-                        if (!self.model.results.isEmpty) {
-                            Text("The Holy Bible, Berean Study Bible, BSB Copyright ©2016, 2018, 2020 by Bible Hub Used by Permission. All Rights Reserved Worldwide.")
-                                .foregroundColor(.ibTextSecondary)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal)
-                            Text("The Holy Bible, King James Version, KJV is in the public domain and not subject to copyright.")
-                                .foregroundColor(.ibTextSecondary)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal)
-                            Text("The NET Bible® https://netbible.com copyright ©1996, 2019 used with permission from Biblical Studies Press, L.L.C. All rights reserved.")
-                                .foregroundColor(.ibTextSecondary)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal)
-                        }
-                        // Leave space for FAB to clear the copyrights
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity)
+                if (!self.model.dirty) {
+                    Spacer()
                 }
-                .resignKeyboardOnDragGesture()
+                if (self.model.dirty) {
+                    ScrollView(.vertical) {
+                        VStack(spacing: 18) {
+                            ForEach(self.model.results, id: \.self) { result in
+                                IbVerseResultView(result: result)
+                                    .padding(.horizontal)
+                            }
+                            if (!self.model.results.isEmpty) {
+                                Text("The Holy Bible, Berean Study Bible, BSB Copyright ©2016, 2018, 2020 by Bible Hub Used by Permission. All Rights Reserved Worldwide.")
+                                    .foregroundColor(.ibTextSecondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                                Text("The Holy Bible, King James Version, KJV is in the public domain and not subject to copyright.")
+                                    .foregroundColor(.ibTextSecondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                                Text("The NET Bible® https://netbible.com copyright ©1996, 2019 used with permission from Biblical Studies Press, L.L.C. All rights reserved.")
+                                    .foregroundColor(.ibTextSecondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                                Spacer()
+                            }
+                            // Leave space for FAB to clear the copyrights
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .resignKeyboardOnDragGesture()
+                }
             }
             .background(Color.ibBackground.edgesIgnoringSafeArea(.all))
             // Settings FAB
