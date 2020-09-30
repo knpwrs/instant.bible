@@ -59,7 +59,7 @@ lazy_static! {
         s.insert("OF");
         s.insert("TO");
         s.insert("IN");
-        s.insert("I");
+        // s.insert("I"); // Do not use "I" as a stop word since it prevents searching for "I AM"
         s.insert("A");
         s.insert("IS");
         s.insert("BE");
