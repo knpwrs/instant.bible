@@ -6,7 +6,7 @@ class IbNet {
     static let apiUrl = URL(string: Bundle.main.object(forInfoDictionaryKey: "IB_API_BASE") as! String)!
     static let apiHeaders: HTTPHeaders = [.accept("application/protobuf")]
     static let indexUrl = URL(string: Bundle.main.object(forInfoDictionaryKey: "IB_INDEX_URL") as! String)!
-    static let indexFileUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("index.pb")
+    static let localIndexFile = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("index.pb")
     
     static func apiSearch(q: String, onSuccess: @escaping ((Instantbible_Service_Response) -> Void)) {
         var comps = URLComponents(url: self.apiUrl, resolvingAgainstBaseURL: true)!
@@ -23,9 +23,9 @@ class IbNet {
     }
     
     static func loadIndex(onProgress: @escaping ((Double) -> Void), onSuccess: @escaping ((Data) -> Void)) {
-        if (FileManager.default.fileExists(atPath: indexFileUrl.path)) {
+        if (FileManager.default.fileExists(atPath: localIndexFile.path)) {
             onProgress(1.0)
-            let data = FileManager.default.contents(atPath: indexFileUrl.path)!
+            let data = FileManager.default.contents(atPath: localIndexFile.path)!
             onSuccess(data)
         } else {
             downloadIndex(onProgress: onProgress, onSuccess: onSuccess)
@@ -33,9 +33,9 @@ class IbNet {
     }
     
     static func deleteIndex() {
-        if (FileManager.default.fileExists(atPath: indexFileUrl.path)) {
+        if (FileManager.default.fileExists(atPath: localIndexFile.path)) {
             do {
-                try FileManager.default.removeItem(at: indexFileUrl)
+                try FileManager.default.removeItem(at: localIndexFile)
             } catch let error as NSError {
                 print("Error: \(error.domain)")
             }
@@ -44,7 +44,7 @@ class IbNet {
     
     static func downloadIndex(onProgress: @escaping ((Double) -> Void), onSuccess: @escaping ((Data) -> Void)) {
         let destination: DownloadRequest.Destination = { _, _ in
-            return (indexFileUrl, [.removePreviousFile, .createIntermediateDirectories])
+            return (localIndexFile, [.removePreviousFile, .createIntermediateDirectories])
         }
         
         AF.download(self.indexUrl, to: destination)
@@ -59,14 +59,11 @@ class IbNet {
     }
     
     static func getIndexSize(onSuccess: @escaping ((Int64) -> Void)) {
-        AF.request(indexFileUrl, method: .head).response { res in
-            switch res.result {
-            case let .success(op):
-                if let data = op {
-                    onSuccess(Int64(data.count))
+        AF.request(indexUrl, method: .head).response { res in
+            if let lenStr = res.response?.headers.value(for: "Content-Length") {
+                if let len = Int64(lenStr) {
+                    onSuccess(len)
                 }
-            case let .failure(err):
-                debugPrint(err)
             }
         }
     }

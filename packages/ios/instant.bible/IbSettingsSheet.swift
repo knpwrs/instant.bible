@@ -25,7 +25,7 @@ struct IbSettingsSheet: View {
                 ).padding(.vertical)
                 
                 if (self.downloadSize > 0) {
-                    Text("Download size: \(ByteCountFormatter.string(fromByteCount: self.downloadSize, countStyle: .file)))")
+                    Text("Download size: \(ByteCountFormatter.string(fromByteCount: self.downloadSize, countStyle: .file))")
                         .padding(.top)
                 }
                 
