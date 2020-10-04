@@ -14,6 +14,8 @@ import java.io.File
 class MainViewModel : ViewModel() {
     private val resultsCache = HashMap<String, Service.Response>()
     private var query = ""
+
+    val dirty = MutableLiveData<Boolean>(false)
     val count = MutableLiveData<Int>(0)
 
     fun getResults(): Service.Response? {
@@ -32,6 +34,7 @@ class MainViewModel : ViewModel() {
     }
 
     fun doSearch(q: String) {
+        dirty.value = true
         query = q
 
         if (resultsCache.containsKey(q) || q == "") {

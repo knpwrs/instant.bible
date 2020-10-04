@@ -31,6 +31,7 @@ class MainFragment : Fragment() {
 
         // Viewmodel shenanigans
         viewModel = MainViewModel();
+        binding.viewModel = viewModel
         binding.lifecycleOwner = viewLifecycleOwner
 
         // Perform searches
