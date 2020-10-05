@@ -75,6 +75,22 @@ export default React.memo(() => {
     };
   }, [dispatch]);
 
+  // https://stackoverflow.com/a/9039885/355325
+  const isIos = React.useMemo(() => {
+    return (
+      [
+        'iPad Simulator',
+        'iPhone Simulator',
+        'iPod Simulator',
+        'iPad',
+        'iPhone',
+        'iPod',
+      ].includes(navigator.platform) ||
+      // iPad on iOS 13 detection
+      (navigator.userAgent.includes('Mac') && 'ontouchend' in document)
+    );
+  }, []);
+
   const dirty = useDirty();
 
   return (
@@ -104,7 +120,8 @@ export default React.memo(() => {
             placeholder={i18n._(t`Search...`)}
             onChange={handleChange}
             value={query}
-            autoFocus={true}
+            // Do not autoFocus on iOS
+            autoFocus={!isIos}
           />
         </Root>
       )}
