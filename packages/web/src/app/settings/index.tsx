@@ -27,14 +27,15 @@ export default React.memo(() => {
             icon={faCog}
             css={css`
               position: fixed;
-              top: 1em;
-              right: 1em;
+              top: 24px;
+              right: 24px;
               opacity: 0.5;
               font-size: 1.3em;
               background: none;
               border: none;
               cursor: pointer;
               outline: none;
+              z-index: 1;
               &:hover {
                 opacity: 1;
               }
