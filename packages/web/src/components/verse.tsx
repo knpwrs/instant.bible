@@ -100,7 +100,7 @@ const Verse: React.FunctionComponent<Props> = ({
     <Card
       className={className}
       css={css`
-        width: 960px;
+        max-width: 960px;
       `}
       tabIndex={tabIndex}
     >

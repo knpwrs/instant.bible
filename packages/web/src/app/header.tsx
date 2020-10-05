@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { t } from '@lingui/macro';
 import { css } from '@emotion/core';
 import { I18n } from '@lingui/react';
+import * as bp from '../util/breakpoints';
 import { Logo, Input } from '../elements';
 import { doSearch, doReset, useDirty, useQuery } from '../state/search';
 import styled, { ThemedFn } from '../util/styled';
@@ -11,7 +12,6 @@ const getBackgroundColor: ThemedFn = ({ theme }) => theme.background;
 
 const Root = styled('header')<{ dirty: boolean }>`
   background: ${getBackgroundColor};
-  width: ${({ dirty }) => (dirty ? '960px' : '40%')};
   display: flex;
   flex-direction: ${({ dirty }) => (dirty ? 'row' : 'column')};
   align-items: center;
@@ -20,6 +20,14 @@ const Root = styled('header')<{ dirty: boolean }>`
   padding-bottom: ${({ dirty }) => (dirty ? '15px' : '35vh')};
   position: ${({ dirty }) => (dirty ? 'fixed' : null)};
   z-index: 1;
+
+  @media (min-width: ${bp.xs}) {
+    width: ${({ dirty }) => (dirty ? '100%' : '75%')};
+  }
+
+  @media (min-width: ${bp.lg}) {
+    width: ${({ dirty }) => (dirty ? '960px' : '40%')};
+  }
 `;
 
 export default React.memo(() => {
@@ -75,7 +83,13 @@ export default React.memo(() => {
         <Root dirty={dirty}>
           <div
             css={css`
-              width: ${dirty ? '200px' : '50%'};
+              @media (min-width: ${bp.xs}) {
+                ${dirty ? 'display: none;' : 'width: 100%;'}
+              }
+
+              @media (min-width: ${bp.md}) {
+                width: ${dirty ? '200px' : '50%'};
+              }
             `}
           >
             <Logo />
