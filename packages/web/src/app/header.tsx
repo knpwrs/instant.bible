@@ -114,8 +114,18 @@ export default React.memo(() => {
             ref={inputRef}
             css={css`
               width: 100%;
-              margin-top: ${dirty ? 'none' : '30px'};
-              margin-left: ${dirty ? '15px' : 'none'};
+
+              @media (min-width: ${bp.xs}) {
+                margin: ${dirty ? '0 15px' : '30px 0'};
+              }
+
+              @media (min-width: ${bp.md}) {
+                margin: ${dirty ? '0 15px' : '30px 0'};
+              }
+
+              @media (min-width: ${bp.lg}) {
+                margin: ${dirty ? '0' : '30px 0'};
+              }
             `}
             placeholder={i18n._(t`Search...`)}
             onChange={handleChange}
