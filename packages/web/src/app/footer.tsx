@@ -39,11 +39,17 @@ export default React.memo((props: React.HTMLProps<HTMLDivElement>) => {
             google3x,
           ] as const,
         ].map(([link, one, two, three]) => (
-          <a href={link} key={link} target="_blank">
+          <a
+            href={link}
+            key={link}
+            target="_blank"
+            css={css`
+              margin-right: 12px;
+            `}
+          >
             <img
               css={css`
                 height: 40px;
-                margin-right: 12px;
                 border: none;
               `}
               src={one}
