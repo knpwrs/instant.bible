@@ -1,9 +1,33 @@
 {
-  "Copyright © {0} instant.bible": {
+  "Copyright © {0} instant.bible.": {
     "origin": [
       [
         "src/app/copyright.tsx",
-        22
+        21
+      ]
+    ]
+  },
+  "App Store and the Apple logo are trademarks of Apple Inc.": {
+    "origin": [
+      [
+        "src/app/copyright.tsx",
+        24
+      ]
+    ]
+  },
+  "Google Play and the Google Play logo are trademarks of Google LLC.": {
+    "origin": [
+      [
+        "src/app/copyright.tsx",
+        25
+      ]
+    ]
+  },
+  "Privacy Policy.": {
+    "origin": [
+      [
+        "src/app/copyright.tsx",
+        40
       ]
     ]
   },
@@ -11,7 +35,7 @@
     "origin": [
       [
         "src/app/copyright.tsx",
-        26
+        45
       ]
     ]
   },
@@ -19,7 +43,7 @@
     "origin": [
       [
         "src/app/copyright.tsx",
-        37
+        56
       ]
     ]
   }

@@ -3,6 +3,7 @@ import { css } from '@emotion/core';
 import { Trans } from '@lingui/macro';
 import styled, { ThemedFn } from '../util/styled';
 import { fontToCss } from '../util/theme';
+import * as bp from '../util/breakpoints';
 import { useDirty } from '../state/search';
 
 const getColor: ThemedFn = ({ theme }) => theme.component.input.placeholder;
@@ -10,14 +11,12 @@ const getColor: ThemedFn = ({ theme }) => theme.component.input.placeholder;
 const getFontStyle: ThemedFn = ({ theme }) =>
   fontToCss(theme.text.subhead4Regular);
 
-const Root = styled('footer')`
+const Root = styled('p')`
   color: ${getColor};
   ${getFontStyle}
-  opacity: 0.5;
   text-align: center;
-  &:hover {
-    opacity: 1;
-  }
+  margin: 0 24px;
+  max-width: ${bp.lg};
 `;
 
 export default React.memo((props: React.HTMLProps<HTMLParagraphElement>) => {
@@ -26,8 +25,13 @@ export default React.memo((props: React.HTMLProps<HTMLParagraphElement>) => {
   return (
     <Root {...props}>
       <p>
-        <Trans>Copyright &copy; {new Date().getFullYear()} instant.bible</Trans>
-        {' | '}
+        <Trans>
+          Copyright &copy; {new Date().getFullYear()} instant.bible.
+        </Trans>{' '}
+        <Trans>App Store and the Apple logo are trademarks of Apple Inc.</Trans>{' '}
+        <Trans>
+          Google Play and the Google Play logo are trademarks of Google LLC.
+        </Trans>{' '}
         <a
           href="/privacy.html"
           css={css`
@@ -43,7 +47,7 @@ export default React.memo((props: React.HTMLProps<HTMLParagraphElement>) => {
             }
           `}
         >
-          <Trans>Privacy</Trans>
+          <Trans>Privacy Policy.</Trans>
         </a>
       </p>
       {dirty ? (

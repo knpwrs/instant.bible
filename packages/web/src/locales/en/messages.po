@@ -13,12 +13,16 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/app/copyright.tsx:24
+msgid "App Store and the Apple logo are trademarks of Apple Inc."
+msgstr ""
+
 #: src/components/copy-button.tsx:74
 msgid "Copy"
 msgstr ""
 
-#: src/app/copyright.tsx:22
-msgid "Copyright © {0} instant.bible"
+#: src/app/copyright.tsx:21
+msgid "Copyright © {0} instant.bible."
 msgstr ""
 
 #: src/app/settings/modal.tsx:85
@@ -29,15 +33,23 @@ msgstr ""
 msgid "Enable Offline Mode"
 msgstr ""
 
+#: src/app/copyright.tsx:25
+msgid "Google Play and the Google Play logo are trademarks of Google LLC."
+msgstr ""
+
 #: src/components/open-external-button.tsx:31
 msgid "Open in Bible"
 msgstr ""
 
-#: src/app/header.tsx:67
+#: src/app/copyright.tsx:40
+msgid "Privacy Policy."
+msgstr ""
+
+#: src/app/header.tsx:104
 msgid "Search..."
 msgstr ""
 
-#: src/app/settings/index.tsx:31
+#: src/app/settings/index.tsx:32
 #: src/app/settings/modal.tsx:60
 msgid "Settings"
 msgstr ""
@@ -46,15 +58,15 @@ msgstr ""
 msgid "Store the search index locally and search without making web requests (i.e., make instant.bible even <0>instanter</0>)."
 msgstr ""
 
-#: src/app/copyright.tsx:26
+#: src/app/copyright.tsx:45
 msgid "The Holy Bible, Berean Study Bible, BSB Copyright ©2016, 2018, 2020 by Bible Hub Used by Permission. All Rights Reserved Worldwide."
 msgstr ""
 
-#: src/app/copyright.tsx:37
+#: src/app/copyright.tsx:56
 msgid "The NET Bible® <0>https://netbible.com</0> copyright ©1996, 2019 used with permission from Biblical Studies Press, L.L.C. All rights reserved."
 msgstr ""
 
-#: src/components/verse.tsx:75
+#: src/components/verse.tsx:60
 msgid "This verse is not available in the {0} translation"
 msgstr ""
 

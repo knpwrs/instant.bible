@@ -2,7 +2,7 @@ import * as React from 'react';
 import { css } from '@emotion/core';
 import Header from './header';
 import Results from './results';
-import Copyright from './copyright';
+import Footer from './footer';
 import Settings from './settings';
 import { useDirty } from '../state/search';
 
@@ -24,7 +24,7 @@ export default React.memo(() => {
     >
       <Header />
       {dirty ? <Results /> : null}
-      <Copyright
+      <Footer
         css={
           dirty
             ? null

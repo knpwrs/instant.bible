@@ -50,6 +50,10 @@ const conf: webpack.Configuration = {
         },
       },
       {
+        test: /\.png$/,
+        loader: 'file-loader',
+      },
+      {
         test: /\.css$/,
         loaders: ['style-loader', 'css-loader'],
       },
