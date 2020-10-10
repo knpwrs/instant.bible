@@ -54,10 +54,10 @@ export default React.memo(() => {
       }
     };
 
-    document.addEventListener('keyup', handler);
+    document.addEventListener('keydown', handler);
 
     return () => {
-      document.removeEventListener('keyup', handler);
+      document.removeEventListener('keydown', handler);
     };
   }, [inputRef]);
 
@@ -68,10 +68,10 @@ export default React.memo(() => {
       }
     };
 
-    document.addEventListener('keyup', handler);
+    document.addEventListener('keydown', handler);
 
     return () => {
-      document.removeEventListener('keyup', handler);
+      document.removeEventListener('keydown', handler);
     };
   }, [dispatch]);
 
