@@ -63,7 +63,7 @@ export default React.memo(() => {
 
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && e.shiftKey) {
         dispatch(doReset());
       }
     };
