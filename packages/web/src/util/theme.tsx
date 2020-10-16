@@ -186,6 +186,11 @@ export const ThemeProvider: React.FunctionComponent<{
     <ThemeProviderComp theme={theme}>
       <Global
         styles={css`
+          // Only show focus outline when focus was triggered using the keyboard
+          :focus:not(:focus-visible) {
+            outline: none;
+          }
+
           body {
             background: ${theme.background};
           }
