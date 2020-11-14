@@ -22,15 +22,21 @@ well as all of the individual applications. All application and engine code is
 in the [`./packages`](./packages/) directory. See `README.md` in that directory
 for further instructions on getting set up for development.
 
-If you run `npm install` in the root directory (this directory) you will also
-get some git hooks installed to help you format your commit messages to match
-[Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
+Make sure to run `npm ci` in this root repository to get some common tooling
+set up. You should also install [`direnv`] and run `direnv allow` (after reading
+`.envrc`) to make sure your environment is set up correctly.
+
+Commit messages should be formatted to match the [Conventional Commits][cc]
+format. `direnv allow` will set up a git hook for this repository to help you
+format your commit messages properly.
 
 ## License
 
 **MIT**
 
+[`direnv`]: https://direnv.net/
 [apple]: https://apps.apple.com/us/app/id1533722003 "instant.bible on the Apple App Store"
+[cc]: https://www.conventionalcommits.org/en/v1.0.0/
 [google]: https://play.google.com/store/apps/details?id=bible.instant "instant.bible on the Google Play Store"
 [mit]: https://opensource.org/licenses/MIT "MIT License"
 [shields]: https://blog.burntsushi.net/about/
