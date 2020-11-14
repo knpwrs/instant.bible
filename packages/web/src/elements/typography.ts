@@ -1,4 +1,5 @@
-import styled, { ThemedFn } from '../util/styled';
+import styled from '@emotion/styled';
+import { ThemedFn } from '../util/styled';
 
 const getColor: ThemedFn<{ secondary?: boolean }> = ({ theme, secondary }) =>
   secondary ? theme.text.secondaryColor : theme.text.color;

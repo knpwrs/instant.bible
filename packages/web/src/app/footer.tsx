@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { css } from '@emotion/core';
+import { css } from '@emotion/react';
+import styled from '@emotion/styled';
 import Copyright from './copyright';
-import styled from '../util/styled';
 import apple1x from '../images/apple.png';
 import apple2x from '../images/apple@2x.png';
 import apple3x from '../images/apple@3x.png';

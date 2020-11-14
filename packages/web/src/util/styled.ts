@@ -1,9 +1,9 @@
 import styled, { CreateStyled } from '@emotion/styled';
 import { css } from '@emotion/core';
-import { Theme } from './theme';
+import { AppTheme } from './theme';
 
-export default styled as CreateStyled<Theme>;
+export default styled as CreateStyled<AppTheme>;
 
 export type ThemedFn<Props = {}> = (
-  arg: Props & { theme: Theme },
+  arg: Props & { theme: AppTheme },
 ) => string | ReturnType<typeof css>;

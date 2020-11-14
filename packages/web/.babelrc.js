@@ -5,14 +5,16 @@ module.exports = {
       { modules: process.env.NODE_ENV === 'test' && 'commonjs' },
     ],
     '@babel/preset-typescript',
-    '@babel/preset-react',
-    '@emotion/babel-preset-css-prop',
+    [
+      '@babel/preset-react',
+      { runtime: 'automatic', importSource: '@emotion/react' },
+    ],
   ],
   plugins: [
+    '@emotion',
     '@babel/plugin-proposal-optional-chaining',
     'react-hot-loader/babel',
     'babel-plugin-lodash',
-    'emotion',
     'macros',
   ],
 };

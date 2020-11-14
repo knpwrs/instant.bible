@@ -1,5 +1,6 @@
 import { css } from '@emotion/core';
-import styled, { ThemedFn } from '../util/styled';
+import styled from '@emotion/styled';
+import{ ThemedFn } from '../util/styled';
 import { fontToCss } from '../util/theme';
 
 const getTextColor: ThemedFn = ({ theme }) => theme.text.color;

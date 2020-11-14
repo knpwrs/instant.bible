@@ -2,8 +2,9 @@ import * as React from 'react';
 import { css } from '@emotion/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import styled from '@emotion/styled';
 import { Body2 } from './typography';
-import styled, { ThemedFn } from '../util/styled';
+import { ThemedFn } from '../util/styled';
 
 const RootLabel = styled('label')`
   display: flex;

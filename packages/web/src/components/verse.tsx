@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { css } from '@emotion/core';
+import styled from '@emotion/styled';
+import { css } from '@emotion/react';
 import { clamp, sortBy } from 'lodash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDove } from '@fortawesome/free-solid-svg-icons';
@@ -7,7 +8,6 @@ import { Trans } from '@lingui/macro';
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from '@reach/tabs';
 import CopyButton from './copy-button';
 import OpenExternalButton from './open-external-button';
-import styled from '../util/styled';
 import highlightUtil from '../util/highlight';
 import {
   Card,

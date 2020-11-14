@@ -1,16 +1,14 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import styled, { ThemedFn } from '../util/styled';
+import styled from '@emotion/styled';
 
-const getFacadeColor: ThemedFn = ({ theme }) => theme.facade;
-
-const Facade = styled('div')`
+const Facade = styled.div`
   width: 100vw;
   height: 100vh;
   position: fixed;
   left: 0;
   top: 0;
-  background: ${getFacadeColor};
+  background: ${(props) => props.theme.facade};
   z-index: 3;
   display: flex;
   justify-content: center;

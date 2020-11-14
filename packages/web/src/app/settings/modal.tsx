@@ -4,6 +4,7 @@ import { noop } from 'lodash';
 import PulseLoader from 'react-spinners/PulseLoader';
 import { Trans } from '@lingui/macro';
 import { css } from '@emotion/core';
+import styled from '@emotion/styled';
 import * as prettyBytes from 'pretty-bytes';
 import {
   useIndexBytesProgress,
@@ -13,7 +14,6 @@ import {
 } from '../../state/offline';
 import Modal, { Props } from '../../components/modal';
 import { Checkbox, Progress, H4, Body3 } from '../../elements';
-import styled from '../../util/styled';
 import { useTheme } from '../../util/theme';
 import { getIndexSize } from '../../util/api';
 

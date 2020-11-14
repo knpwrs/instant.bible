@@ -3,10 +3,11 @@ import { useDispatch } from 'react-redux';
 import { t } from '@lingui/macro';
 import { css } from '@emotion/core';
 import { I18n } from '@lingui/react';
+import styled from '@emotion/styled';
 import * as bp from '../util/breakpoints';
 import { Logo, Input } from '../elements';
 import { doSearch, doReset, useDirty, useQuery } from '../state/search';
-import styled, { ThemedFn } from '../util/styled';
+import { ThemedFn } from '../util/styled';
 
 const getBackgroundColor: ThemedFn = ({ theme }) => theme.background;
 

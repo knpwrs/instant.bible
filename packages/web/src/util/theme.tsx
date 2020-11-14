@@ -82,9 +82,9 @@ export const light = {
   },
 };
 
-export type Theme = typeof light;
+export type AppTheme = typeof light;
 
-export const dark: Theme = {
+export const dark: AppTheme = {
   key: 'dark',
   ...base,
   background: colors.gray04,
@@ -115,7 +115,7 @@ export const dark: Theme = {
   },
 };
 
-export const useTheme = useThemeFn as () => Theme;
+export const useTheme = useThemeFn as () => AppTheme;
 
 const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
 const defaultKey = darkQuery.matches ? 'dark' : 'light';

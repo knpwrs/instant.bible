@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { css } from '@emotion/core';
+import styled from '@emotion/styled';
 import { Text } from './typography';
-import styled from '../util/styled';
 
 const Root = styled('div')`
   display: flex;

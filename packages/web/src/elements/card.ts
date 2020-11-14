@@ -1,21 +1,13 @@
-import styled, { ThemedFn } from '../util/styled';
+import styled from '@emotion/styled';
 
-const getBackgroundColor: ThemedFn = ({ theme }) => theme.component.background;
-
-const getFocusBackgroundColor: ThemedFn = ({ theme }) =>
-  theme.component.focus.background;
-
-const getFocusBorderColor: ThemedFn = ({ theme }) =>
-  theme.component.focus.border;
-
-export default styled('div')`
+export default styled.div`
   border: 1px solid transparent;
   border-radius: 10px;
   padding: 15px;
-  background: ${getBackgroundColor};
+  background: ${({ theme }) => theme.component.background};
   &:focus {
     outline: none;
-    background: ${getFocusBackgroundColor};
-    border: 1px solid ${getFocusBorderColor};
+    background: ${({ theme }) => theme.component.focus.background};
+    border: 1px solid ${({ theme }) => theme.component.focus.border};
   }
 `;

@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { css } from '@emotion/core';
 import { Trans } from '@lingui/macro';
-import styled, { ThemedFn } from '../util/styled';
+import styled from '@emotion/styled';
+import { ThemedFn } from '../util/styled';
 import { fontToCss } from '../util/theme';
 import * as bp from '../util/breakpoints';
 import { useDirty } from '../state/search';
