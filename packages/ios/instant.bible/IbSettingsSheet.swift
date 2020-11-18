@@ -13,10 +13,18 @@ struct IbSettingsSheet: View {
             VStack(alignment: .leading) {
                 Text("Settings").font(.largeTitle)
                 
-                Toggle(isOn: self.$offlineEnabled) {
-                    Text("Enable Offline Mode").font(.headline)
+                if #available(iOS 14.0, *) {
+                    Toggle(isOn: self.$offlineEnabled) {
+                        Text("Enable Offline Mode").font(.headline)
+                    }
+                    .toggleStyle(SwitchToggleStyle(tint: Color.ibProgressGreen))
+                    .disabled(self.downloading)
+                } else {
+                    Toggle(isOn: self.$offlineEnabled) {
+                        Text("Enable Offline Mode").font(.headline)
+                    }
+                    .disabled(self.downloading)
                 }
-                .disabled(self.downloading)
                 
                 (
                     Text("Store the search index locally and search without making web requests (i.e., make instant.bible even ")
