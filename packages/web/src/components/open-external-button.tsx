@@ -21,7 +21,7 @@ const makeUrl = (
   const chapter = verseKey.chapter;
 
   if (translation === Translation.BSB) {
-    return `https://biblehub.com/bsb/${book}/${chapter}.htm`;
+    return `https://biblemenus.com/search.php?q=${book}+${chapter}`;
   }
 
   if (translation === Translation.NET) {
