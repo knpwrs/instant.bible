@@ -1,70 +1,94 @@
-use crate::proto::engine::ReverseIndexEntry as ReverseIndexEntryBytes;
-use fst::{raw, Map as FstMap};
+use std::ops::Range;
 
-/// Different strings can end up creating the same token (e.g., it's and its both
-/// produce ITS); therefore, it is important to account for this in the index
-/// structure, particularly for when it comes to highlighting.
-pub struct ReverseIndexEntry {
-    /// VerseKey => u64 into...
-    map: FstMap<Vec<u8>>,
-    /// VerseKey => Translation Id => Token Count
-    counts: Vec<Vec<u64>>, // TODO: does this need to be u64? Refactoring would just mean changing the from_bytes stuff
-    /// VerseKey => Vec<Highlight Word Ids>
-    highlights: Vec<Vec<u64>>,
+/// Dense id of a verse within the index. Ids are assigned in verse key order, so sorting by id
+/// is the same as sorting by `VerseKey`.
+pub type VerseId = u16;
+
+/// Maps every token id to the verses containing it.
+///
+/// All entries are stored in flat arrays (compressed sparse row layout) rather than one set of
+/// heap allocations per token and per verse: entry `t` owns postings
+/// `entry_offsets[t]..entry_offsets[t + 1]`, and the verses of an entry are sorted ascending so
+/// entries can be intersected and binary searched.
+///
+/// Different strings can end up creating the same token (e.g., it's and its both produce ITS);
+/// therefore, each posting tracks the highlight words which produced the token in that verse.
+#[derive(Default)]
+pub struct ReverseIndex {
+    entry_offsets: Vec<u32>,
+    /// Posting => verse
+    verses: Vec<VerseId>,
+    /// Posting => bitmask of translations in which the verse contains the token (so at most 8
+    /// translations are supported)
+    translations: Vec<u8>,
+    /// Posting => range into `highlights`
+    highlight_offsets: Vec<u32>,
+    /// Highlight word ids
+    highlights: Vec<u32>,
 }
 
-impl ReverseIndexEntry {
-    pub fn from_bytes_struct(input: &ReverseIndexEntryBytes) -> Self {
+impl ReverseIndex {
+    pub fn with_capacity(entries: usize, postings: usize) -> Self {
+        let mut entry_offsets = Vec::with_capacity(entries + 1);
+        entry_offsets.push(0);
+        let mut highlight_offsets = Vec::with_capacity(postings + 1);
+        highlight_offsets.push(0);
         Self {
-            map: FstMap::from(
-                raw::Fst::new(input.map_bytes.clone()).expect("Could not construct map from bytes"),
-            ),
-            counts: input
-                .counts_map_data
-                .iter()
-                .map(|bytes| {
-                    let mut v = Vec::new();
-                    for i in (0..bytes.len()).step_by(8) {
-                        let mut chunk = [0u8; 8];
-                        chunk.copy_from_slice(&bytes[i..(i + 8)]);
-                        v.push(u64::from_be_bytes(chunk));
-                    }
-                    v
-                })
-                .collect(),
-            highlights: input
-                .highlights_map_data
-                .iter()
-                .map(|bytes| {
-                    let mut v = Vec::new();
-                    for i in (0..bytes.len()).step_by(8) {
-                        let mut chunk = [0u8; 8];
-                        chunk.copy_from_slice(&bytes[i..(i + 8)]);
-                        v.push(u64::from_be_bytes(chunk));
-                    }
-                    v
-                })
-                .collect(),
+            entry_offsets,
+            verses: Vec::with_capacity(postings),
+            translations: Vec::with_capacity(postings),
+            highlight_offsets,
+            highlights: Vec::with_capacity(postings),
         }
     }
 
-    pub fn len(&self) -> usize {
-        self.map.len()
+    /// Appends a posting to the entry currently being built. Postings must be pushed in
+    /// ascending verse order.
+    pub fn push_posting(&mut self, verse: VerseId, translations: u8, highlights: &[u32]) {
+        self.verses.push(verse);
+        self.translations.push(translations);
+        self.highlights.extend_from_slice(highlights);
+        self.highlight_offsets.push(self.highlights.len() as u32);
     }
 
-    pub fn get_counts(&self, verse_key: &[u8]) -> Option<&Vec<u64>> {
-        let idx = self.map.get(verse_key);
-        idx.map(|idx| &self.counts[idx as usize])
+    /// Finishes the entry currently being built
+    pub fn finish_entry(&mut self) {
+        self.entry_offsets.push(self.verses.len() as u32);
     }
 
-    pub fn get_verse_keys(&self) -> Vec<Vec<u8>> {
-        self.map.stream().into_byte_keys()
+    pub fn shrink_to_fit(&mut self) {
+        self.entry_offsets.shrink_to_fit();
+        self.verses.shrink_to_fit();
+        self.translations.shrink_to_fit();
+        self.highlight_offsets.shrink_to_fit();
+        self.highlights.shrink_to_fit();
     }
 
-    pub fn get_highlights(&self, verse_key: &[u8]) -> Option<&Vec<u64>> {
-        let idx = self.map.get(verse_key);
-        idx.map(|idx| &self.highlights[idx as usize])
+    /// Range of postings for the given entry
+    #[inline]
+    pub fn postings(&self, entry: usize) -> Range<usize> {
+        self.entry_offsets[entry] as usize..self.entry_offsets[entry + 1] as usize
+    }
+
+    #[inline]
+    pub fn len(&self, entry: usize) -> usize {
+        self.postings(entry).len()
+    }
+
+    /// Sorted verses of the given entry
+    #[inline]
+    pub fn verses(&self, entry: usize) -> &[VerseId] {
+        &self.verses[self.postings(entry)]
+    }
+
+    #[inline]
+    pub fn translations(&self, posting: usize) -> u8 {
+        self.translations[posting]
+    }
+
+    #[inline]
+    pub fn highlights(&self, posting: usize) -> &[u32] {
+        &self.highlights
+            [self.highlight_offsets[posting] as usize..self.highlight_offsets[posting + 1] as usize]
     }
 }
-
-pub type ReverseIndex = Vec<ReverseIndexEntry>;

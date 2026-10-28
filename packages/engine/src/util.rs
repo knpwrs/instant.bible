@@ -8,14 +8,15 @@ use anyhow::{anyhow, Context, Result};
 use fst::MapBuilder;
 use lazy_static::lazy_static;
 use log::info;
-use regex::Regex;
 use serde::Deserialize;
 use std::cmp::Ordering;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fs;
 use std::io::prelude::*;
-use std::io::{self, BufRead};
+use std::io::{self, BufRead, Seek};
 use std::iter::Iterator;
+use std::sync::Arc;
+use std::thread;
 use std::time::Instant;
 
 #[cfg_attr(test, derive(Debug))]
@@ -44,9 +45,40 @@ impl PartialOrd for Tokenized {
     }
 }
 
+/// Number of books, used to size crawl data counts
+const CRAWL_BOOKS: usize = Book::Revelation as usize + 1;
+/// Number of threads used to read crawl data
+const CRAWL_THREADS: u64 = 8;
+
+#[derive(Default)]
 struct VerseStats {
-    counts: Vec<usize>,
-    highlights: BTreeSet<String>,
+    counts: [u32; TRANSLATION_COUNT],
+    /// Interned highlight word ids
+    highlights: Vec<u32>,
+}
+
+/// Assigns ids to highlight words in the order they are first seen
+#[derive(Default)]
+struct HighlightWords {
+    ids: HashMap<String, u32>,
+}
+
+impl HighlightWords {
+    fn intern(&mut self, word: String) -> u32 {
+        let next = self.ids.len() as u32;
+        *self.ids.entry(word).or_insert(next)
+    }
+
+    /// Returns the sorted words and a map of interned id => index in the sorted words
+    fn into_sorted(self) -> (Vec<String>, Vec<u32>) {
+        let mut words: Vec<_> = self.ids.into_iter().collect();
+        words.sort_unstable();
+        let mut sorted_ids = vec![0; words.len()];
+        for (i, (_, id)) in words.iter().enumerate() {
+            sorted_ids[*id as usize] = i as u32;
+        }
+        (words.into_iter().map(|(w, _)| w).collect(), sorted_ids)
+    }
 }
 
 type TranslationVerses = BTreeMap<Translation, BTreeMap<VerseKey, String>>;
@@ -127,7 +159,7 @@ fn process_verses(
     verses: &[VerseText],
     translation_verses: &mut TranslationVerses,
     verse_counts: &mut BTreeMap<VerseKey, u64>,
-    highlight_words: &mut BTreeSet<String>,
+    highlight_words: &mut HighlightWords,
     wip_token_counts: &mut BTreeMap<String, BTreeMap<VerseKey, VerseStats>>,
 ) {
     for verse in verses {
@@ -145,20 +177,19 @@ fn process_verses(
             .filter(|t| !STOP_WORDS.contains(t.token.as_str()))
         {
             // Save word to get a highlight id later
-            highlight_words.insert(tokenized.source.to_uppercase());
+            let highlight = highlight_words.intern(tokenized.source.to_uppercase());
             // Create new stats entry if needed
-            let entry = wip_token_counts
+            let entry: &mut VerseStats = wip_token_counts
                 .entry(tokenized.token.clone())
                 .or_insert_with(BTreeMap::new)
-                .entry(vkey.clone())
-                .or_insert_with(|| VerseStats {
-                    counts: vec![0; TRANSLATION_COUNT],
-                    highlights: BTreeSet::new(),
-                });
+                .entry(vkey)
+                .or_default();
             // Increment counts
             entry.counts[translation_key as usize] += 1;
             // Track highlights
-            entry.highlights.insert(tokenized.source.to_uppercase());
+            if !entry.highlights.contains(&highlight) {
+                entry.highlights.push(highlight);
+            }
         }
     }
 }
@@ -167,7 +198,7 @@ fn process_verses(
 fn load_translation_data(
     translation_verses: &mut TranslationVerses,
     verse_counts: &mut BTreeMap<VerseKey, u64>,
-    highlight_words: &mut BTreeSet<String>,
+    highlight_words: &mut HighlightWords,
     wip_token_counts: &mut WipTokenCountsMap,
 ) -> Result<()> {
     let config = get_config().context("load_translation_data")?;
@@ -226,15 +257,17 @@ fn load_translation_data(
 
 /// Build and return a reverse index, fst bytes, and vector of highlight words
 fn build_reverse_index(
-    highlight_words: &BTreeSet<String>,
-    wip_token_counts: &WipTokenCountsMap,
+    highlight_words: HighlightWords,
+    wip_token_counts: WipTokenCountsMap,
 ) -> (Vec<ReverseIndexEntryBytes>, Vec<u8>, Vec<String>) {
     let mut build = MapBuilder::memory();
     let mut reverse_index = Vec::with_capacity(wip_token_counts.len());
-    let highlight_words: Vec<_> = highlight_words.iter().cloned().collect();
+    let (highlight_words, sorted_ids) = highlight_words.into_sorted();
+    let mut highlights = Vec::new();
 
-    for (i, (token, entries)) in wip_token_counts.iter().enumerate() {
-        build.insert(token.clone(), i as u64).unwrap();
+    // Consume the work-in-progress data as it is indexed to save memory
+    for (i, (token, entries)) in wip_token_counts.into_iter().enumerate() {
+        build.insert(token, i as u64).unwrap();
 
         let mut map_builder = MapBuilder::memory();
         let mut counts_map_data = Vec::new();
@@ -252,19 +285,13 @@ fn build_reverse_index(
                         .collect::<Vec<u8>>()
                 })
                 .collect();
-            let highlight_index_bytes: Vec<u8> = vs
-                .highlights
+            // Highlights are stored in sorted order
+            highlights.clear();
+            highlights.extend(vs.highlights.iter().map(|id| sorted_ids[*id as usize]));
+            highlights.sort_unstable();
+            let highlight_index_bytes: Vec<u8> = highlights
                 .iter()
-                .flat_map(|s| {
-                    (highlight_words
-                        .binary_search(s)
-                        .expect("Could not find index for highlight entry")
-                        as u64)
-                        .to_be_bytes()
-                        .iter()
-                        .copied()
-                        .collect::<Vec<u8>>()
-                })
+                .flat_map(|id| u64::from(*id).to_be_bytes().to_vec())
                 .collect();
 
             let key_bytes = key.to_be_bytes();
@@ -322,35 +349,128 @@ fn load_crawl_data(verse_rankings: &mut BTreeMap<VerseKey, u64>) -> Result<()> {
         .crawl_data
         .ok_or_else(|| anyhow!("Environment CRAWL_DATA missing"))?;
 
-    let re = Regex::new(r"^(.+)\s+(\d{1,3}):(\d{1,3})$")
-        .context("Could not compile regex for parsing crawl data")?;
+    // Only verses which exist are counted. Map each book/chapter/verse to a slot in a dense
+    // table so counting doesn't need to look up a map for every line.
+    let mut slots = vec![0u32; CRAWL_BOOKS * 256 * 256];
+    for (i, key) in verse_rankings.keys().enumerate() {
+        if let Some(idx) =
+            Book::from_i32(key.book).and_then(|b| crawl_index(b, key.chapter, key.verse))
+        {
+            slots[idx] = i as u32 + 1;
+        }
+    }
+    let slots = Arc::new(slots);
 
-    // I really did try to avoid this...
-    let file = fs::File::open(crawl_data).context("Could not open crawl data file")?;
-    for line in io::BufReader::new(file).lines().filter_map(Result::ok) {
-        if let Some(caps) = re.captures(&line) {
-            if let (Some(book), Some(chapter), Some(verse)) =
-                (caps.get(1), caps.get(2), caps.get(3))
-            {
-                if let (Ok(book), Ok(chapter), Ok(verse)) = (
-                    Book::from_string(book.as_str()),
-                    chapter.as_str().parse::<u32>(),
-                    verse.as_str().parse::<u32>(),
-                ) {
-                    let key = VerseKey {
-                        book: book as i32,
-                        chapter,
-                        verse,
-                    };
-                    verse_rankings.entry(key).and_modify(|count| {
-                        *count += 1;
-                    });
-                }
-            }
+    // Crawl data is large, count it in parallel chunks
+    let len = fs::metadata(&crawl_data)
+        .context("Could not open crawl data file")?
+        .len();
+    let verses = verse_rankings.len();
+    let handles: Vec<_> = (0..CRAWL_THREADS)
+        .map(|i| {
+            let (path, slots) = (crawl_data.clone(), Arc::clone(&slots));
+            let range = (len * i / CRAWL_THREADS, len * (i + 1) / CRAWL_THREADS);
+            thread::spawn(move || count_crawl_chunk(&path, range, &slots, verses))
+        })
+        .collect();
+    let mut counts = vec![0u64; verses];
+    for handle in handles {
+        let chunk_counts = handle
+            .join()
+            .map_err(|_| anyhow!("Crawl data thread panicked"))??;
+        for (count, chunk_count) in counts.iter_mut().zip(chunk_counts) {
+            *count += chunk_count;
         }
     }
 
+    for (count, crawl_count) in verse_rankings.values_mut().zip(counts) {
+        *count += crawl_count;
+    }
+
     Ok(())
+}
+
+/// Index into the dense crawl data slots table
+fn crawl_index(book: Book, chapter: u32, verse: u32) -> Option<usize> {
+    if chapter < 256 && verse < 256 {
+        Some(((book as usize * 256) + chapter as usize) * 256 + verse as usize)
+    } else {
+        None
+    }
+}
+
+/// Counts references to each verse slot in the lines of crawl data starting in the given byte
+/// range
+fn count_crawl_chunk(
+    path: &str,
+    (start, end): (u64, u64),
+    slots: &[u32],
+    verses: usize,
+) -> Result<Vec<u64>> {
+    let mut counts = vec![0u64; verses];
+    let mut file = fs::File::open(path).context("Could not open crawl data file")?;
+    // Start reading at the start of the first line which starts within the range
+    let mut pos = start.saturating_sub(1);
+    file.seek(io::SeekFrom::Start(pos))
+        .context("Could not seek crawl data")?;
+    let mut reader = io::BufReader::with_capacity(1 << 20, file);
+    let mut buf = Vec::new();
+    if start > 0 {
+        pos += reader
+            .read_until(b'\n', &mut buf)
+            .context("Could not read crawl data")? as u64;
+    }
+    while pos < end {
+        buf.clear();
+        let read = reader
+            .read_until(b'\n', &mut buf)
+            .context("Could not read crawl data")?;
+        if read == 0 {
+            break;
+        }
+        pos += read as u64;
+        // Strip line endings and skip invalid UTF-8 like `BufRead::lines` does
+        if buf.last() == Some(&b'\n') {
+            buf.pop();
+            if buf.last() == Some(&b'\r') {
+                buf.pop();
+            }
+        }
+        let slot = std::str::from_utf8(&buf)
+            .ok()
+            .and_then(parse_crawl_line)
+            .and_then(|(book, chapter, verse)| {
+                crawl_index(Book::from_string(book).ok()?, chapter, verse)
+            })
+            .map_or(0, |idx| slots[idx]);
+        if slot != 0 {
+            counts[slot as usize - 1] += 1;
+        }
+    }
+    Ok(counts)
+}
+
+/// Splits 1 to 3 trailing ASCII digits off of a string
+fn split_trailing_number(s: &str) -> Option<(&str, u32)> {
+    let digits = s.bytes().rev().take_while(u8::is_ascii_digit).count();
+    if digits == 0 || digits > 3 {
+        return None;
+    }
+    let (rest, number) = s.split_at(s.len() - digits);
+    Some((rest, number.parse().ok()?))
+}
+
+/// Parses a line of crawl data of the form `BOOK CHAPTER:VERSE`, equivalent to matching
+/// `^(.+)\s+(\d{1,3}):(\d{1,3})$`
+fn parse_crawl_line(line: &str) -> Option<(&str, u32, u32)> {
+    let (rest, verse) = split_trailing_number(line)?;
+    let (rest, chapter) = split_trailing_number(rest.strip_suffix(':')?)?;
+    // Greedy `(.+)\s+` leaves exactly one whitespace character before the chapter
+    let mut chars = rest.chars();
+    if !chars.next_back()?.is_whitespace() || chars.as_str().is_empty() {
+        return None;
+    }
+    Some((chars.as_str(), chapter, verse))
 }
 
 /// Processes crawl data after it is loaded and produce an FST map of verse => count
@@ -376,7 +496,7 @@ pub fn create_index_proto_struct() -> IndexDataProtoStruct {
     let mut wip_token_counts = BTreeMap::new();
     let mut verse_counts = BTreeMap::new();
     let mut translation_verses: TranslationVerses = BTreeMap::new();
-    let mut highlight_words = BTreeSet::new();
+    let mut highlight_words = HighlightWords::default();
 
     load_translation_data(
         &mut translation_verses,
@@ -389,13 +509,14 @@ pub fn create_index_proto_struct() -> IndexDataProtoStruct {
     let now = Instant::now();
 
     let (reverse_index_bytes, fst_bytes, highlight_words) =
-        build_reverse_index(&highlight_words, &wip_token_counts);
+        build_reverse_index(highlight_words, wip_token_counts);
 
     info!("Indexed data {}ms", now.elapsed().as_millis());
 
     let (translation_verses_bytes, translation_verses_strings) =
         build_translation_verses_bytes(&translation_verses)
             .expect("Could not construct translation verses fst map");
+    drop(translation_verses);
 
     let now = Instant::now();
     info!("Building popularlity index");
@@ -439,6 +560,69 @@ pub fn get_or_create_index_proto_struct() -> IndexDataProtoStruct {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_count_crawl_chunks() {
+        let data = "GENESIS 1:1\nJOHN 3:16\r\nJOHN 3:16\nnot a verse\n\nJOHN 3:17\nGENESIS 1:1";
+        let path = std::env::temp_dir().join(format!("crawl-test-{}.txt", std::process::id()));
+        fs::write(&path, data).unwrap();
+        let path_str = path.to_str().unwrap();
+        let mut slots = vec![0u32; CRAWL_BOOKS * 256 * 256];
+        slots[crawl_index(Book::Genesis, 1, 1).unwrap()] = 1;
+        slots[crawl_index(Book::John, 3, 16).unwrap()] = 2;
+        let len = data.len() as u64;
+        let count = |start, end| count_crawl_chunk(path_str, (start, end), &slots, 2).unwrap();
+        assert_eq!(count(0, len), vec![2, 2]);
+        // Every line is counted exactly once no matter where chunks are split
+        for a in 0..=len {
+            for b in a..=len {
+                let (x, y, z) = (count(0, a), count(a, b), count(b, len));
+                let total: Vec<u64> = (0..2).map(|i| x[i] + y[i] + z[i]).collect();
+                assert_eq!(total, vec![2, 2], "split at {} and {}", a, b);
+            }
+        }
+        fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn test_parse_crawl_line() {
+        // Must behave exactly like the regex it replaced
+        let re = regex::Regex::new(r"^(.+)\s+(\d{1,3}):(\d{1,3})$").unwrap();
+        for line in &[
+            "JOHN 3:16",
+            "SONG OF SOLOMON 2:1",
+            "FIRST JOHN 1:9",
+            "JOHN  3:16",
+            "JOHN\t3:16",
+            "JOHN\u{a0}3:16",
+            " 3:16",
+            "  3:16",
+            "3:16",
+            "JOHN 3:",
+            "JOHN :16",
+            "JOHN 3:1234",
+            "JOHN 1234:5",
+            "JOHN 012:016",
+            "JOHN 3:16 ",
+            "JOHN 3 16",
+            "JOHN 3::16",
+            "JOHN 3:16:1",
+            "JOHN ٣:16",
+            "JOHN 3:1٣",
+            "JOHN ٣16:5",
+            "SECOND JOHN 3",
+            "",
+        ] {
+            let expected = re.captures(line).and_then(|caps| {
+                Some((
+                    caps.get(1)?.as_str(),
+                    caps.get(2)?.as_str().parse::<u32>().ok()?,
+                    caps.get(3)?.as_str().parse::<u32>().ok()?,
+                ))
+            });
+            assert_eq!(parse_crawl_line(line), expected, "line {:?}", line);
+        }
+    }
 
     #[test]
     fn test_tokenize() {

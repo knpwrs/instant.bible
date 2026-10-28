@@ -2,7 +2,6 @@ mod response;
 mod search;
 
 use engine::proto::service::Response as ServiceResponse;
-use engine::util::get_or_create_index_proto_struct;
 use engine::VersearchIndex;
 use log::info;
 use std::sync::Arc;
@@ -15,9 +14,7 @@ async fn main() {
 
     env_logger::init();
 
-    let index = Arc::new(VersearchIndex::from_index_data_proto_struct(
-        get_or_create_index_proto_struct(),
-    ));
+    let index = Arc::new(VersearchIndex::get_or_create());
 
     info!("Starting server...");
 

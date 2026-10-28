@@ -1,4 +1,3 @@
-use engine::proto::engine::decode_index_data;
 use engine::VersearchIndex;
 use lazy_static::lazy_static;
 use mut_static::MutStatic;
@@ -14,9 +13,8 @@ lazy_static! {
 
 #[wasm_bindgen]
 pub extern "C" fn init(data: &[u8]) {
-    let proto = decode_index_data(data).unwrap();
     ENGINE
-        .set(VersearchIndex::from_index_data_proto_struct(proto))
+        .set(VersearchIndex::from_index_bytes(data).unwrap())
         .unwrap();
 }
 

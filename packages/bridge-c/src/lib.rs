@@ -1,4 +1,3 @@
-use engine::proto::engine::decode_index_data;
 use engine::VersearchIndex;
 use ffi_support::ByteBuffer as FfiBuffer;
 use jni::objects::{JObject, JString};
@@ -17,9 +16,8 @@ lazy_static! {
 #[no_mangle]
 pub unsafe extern "C" fn bridge_init(raw_data: *const u8, len: usize) {
     let data = std::slice::from_raw_parts(raw_data, len);
-    let proto = decode_index_data(data).unwrap();
     ENGINE
-        .set(VersearchIndex::from_index_data_proto_struct(proto))
+        .set(VersearchIndex::from_index_bytes(data).unwrap())
         .unwrap();
 }
 

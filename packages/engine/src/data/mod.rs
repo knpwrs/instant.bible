@@ -1,7 +1,7 @@
-mod internal_service_ranking;
+pub mod raw;
 pub mod reverse_index;
-mod verse_match;
+mod string_table;
 
-pub use internal_service_ranking::InternalServiceRanking;
-pub use reverse_index::{ReverseIndex, ReverseIndexEntry};
-pub use verse_match::VerseMatch;
+pub use raw::RawIndex;
+pub use reverse_index::{ReverseIndex, VerseId};
+pub use string_table::StringTable;
