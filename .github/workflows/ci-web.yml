@@ -21,8 +21,18 @@ jobs:
   build-web:
     runs-on: ubuntu-latest
     steps:
-      - uses: jetli/wasm-pack-action@v0.3.0
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 14
+      # The pinned wasm-bindgen doesn't build on newer Rust
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.46.0
+          targets: wasm32-unknown-unknown
+      - uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          version: v0.9.1
       - name: Install
         working-directory: packages/web
         run: npm ci

@@ -22,11 +22,15 @@ on:
 jobs:
   build-rust:
     runs-on: ubuntu-latest
+    env:
+      SERVER_SENTRY_DSN: https://9965738e8eac44b9922b71951141f59d@o387306.ingest.sentry.io/5222373
     steps:
-      - uses: actions/checkout@v2
-      - uses: allenevans/set-env@v1.0.0
+      - uses: actions/checkout@v4
+      # Matches the server's Dockerfile
+      - uses: dtolnay/rust-toolchain@master
         with:
-          SERVER_SENTRY_DSN: https://9965738e8eac44b9922b71951141f59d@o387306.ingest.sentry.io/5222373
+          toolchain: 1.46.0
+          components: clippy
       - name: Build
         working-directory: packages
         run: cargo build --verbose
