@@ -24,19 +24,16 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SERVER_SENTRY_DSN: https://9965738e8eac44b9922b71951141f59d@o387306.ingest.sentry.io/5222373
+      # Runs cargo in the same image as the server's Dockerfile: the pinned openssl-sys
+      # requires OpenSSL 1.1, which current runners don't have
+      IN_RUST_IMAGE: >-
+        docker run --rm -e SERVER_SENTRY_DSN -v ${{ github.workspace }}/packages:/app
+        -v cargo-registry:/usr/local/cargo/registry -w /app rust:1.46-buster
     steps:
       - uses: actions/checkout@v4
-      # Matches the server's Dockerfile
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: 1.46.0
-          components: clippy
       - name: Build
-        working-directory: packages
-        run: cargo build --verbose
+        run: $IN_RUST_IMAGE cargo build --verbose
       - name: Test
-        working-directory: packages
-        run: cargo test --verbose
+        run: $IN_RUST_IMAGE cargo test --verbose
       - name: Clippy
-        working-directory: packages
-        run: cargo clippy
+        run: $IN_RUST_IMAGE sh -c "rustup component add clippy && cargo clippy"
